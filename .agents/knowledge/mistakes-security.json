@@ -1,0 +1,158 @@
+[
+  {
+    "mistake_id": "security-next-postcss-upstream-2026-07-17-009",
+    "timestamp": "2026-07-17 09:19:46",
+    "category": "security",
+    "severity": "medium",
+    "title": "Latest stable Next.js bundles a vulnerable PostCSS version",
+    "description": "npm audit reports GHSA-qx2v-qp2m-jg93 through Next.js 16.2.10's private PostCSS 8.4.31 dependency. The root PostCSS is patched, but npm's automated fix proposes downgrading Next.js to 9.3.3.",
+    "context": {
+      "file": "package-lock.json",
+      "line": 1,
+      "function": "Production dependency audit",
+      "code_snippet": "node_modules/next/node_modules/postcss@8.4.31",
+      "environment": "development"
+    },
+    "error_message": "2 moderate severity vulnerabilities; fixAvailable: next@9.3.3 (SemVer major).",
+    "root_cause": "The current stable Next.js package pins a private PostCSS release below 8.5.10, and npm overrides do not replace that nested bundle safely.",
+    "solution": "Removed the ineffective override, documented the upstream risk, retained patched root PostCSS 8.5.19, and rejected npm audit fix --force because it would downgrade the framework across major versions. The app does not stringify user-controlled CSS.",
+    "prevention": {
+      "strategies": [
+        "Re-run npm audit when Next.js releases an updated stable package",
+        "Never apply audit force-fixes that silently downgrade the application framework",
+        "Do not feed untrusted user content into CSS stringification"
+      ],
+      "code_patterns": [
+        "Avoid: npm audit fix --force without reviewing the proposed dependency graph",
+        "Use: explicit risk documentation until the upstream stable package is patched"
+      ],
+      "tests_to_add": ["Run npm audit during dependency upgrade verification"],
+      "documentation_links": [
+        "https://github.com/advisories/GHSA-qx2v-qp2m-jg93"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 4,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": false,
+    "resolution_time": null,
+    "last_occurrence": "2026-07-17 11:54:39"
+  },
+  {
+    "mistake_id": "security-unregistered-src-proxy-2026-07-17-022",
+    "timestamp": "2026-07-17 10:20:02",
+    "category": "security",
+    "severity": "high",
+    "title": "Protected-route proxy was outside the src application root",
+    "description": "The auth proxy was created at repository root even though this Next.js app uses src/app, so Next did not include it in the production middleware manifest.",
+    "context": {
+      "file": "proxy.ts",
+      "line": 1,
+      "function": "Next.js request proxy discovery",
+      "code_snippet": ".next/server/middleware-manifest.json contained no middleware entries",
+      "environment": "production smoke test"
+    },
+    "error_message": "Unauthenticated GET /rooms/demo returned a streamed 200 redirect and middleware-manifest.json was empty.",
+    "root_cause": "Proxy placement followed the repository root convention without accounting for the project's src-based App Router layout.",
+    "solution": "Moved proxy.ts to src/proxy.ts and retained the Server Component identity check as defense in depth.",
+    "prevention": {
+      "strategies": [
+        "Place proxy.ts beside app when the application uses a src directory",
+        "Inspect the production middleware manifest and assert an HTTP redirect during auth smoke tests"
+      ],
+      "code_patterns": [
+        "Avoid: root proxy.ts with src/app",
+        "Use: src/proxy.ts with src/app"
+      ],
+      "tests_to_add": [
+        "Assert middleware-manifest.json contains the proxy after build",
+        "Assert unauthenticated /rooms/demo responds with a Location header to /login"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:20:02"
+  },
+  {
+    "mistake_id": "security-untrusted-session-user-2026-07-17-023",
+    "timestamp": "2026-07-17 10:23:01",
+    "category": "security",
+    "severity": "medium",
+    "title": "Authenticated context read the cookie-backed session user",
+    "description": "After validating claims, the server context also accessed session.user.id, which Supabase correctly warns is sourced from untrusted cookie storage.",
+    "context": {
+      "file": "src/lib/supabase/server.ts",
+      "line": 74,
+      "function": "getAuthenticatedContext",
+      "code_snippet": "session.user.id !== claimsData.claims.sub",
+      "environment": "production HTTP smoke test"
+    },
+    "error_message": "Using the user object as returned from supabase.auth.getSession() could be insecure.",
+    "root_cause": "A redundant consistency comparison accessed the session user even though getClaims had already established the trusted identity.",
+    "solution": "Use only getClaims().claims for identity and use getSession solely to retrieve the access token after validation.",
+    "prevention": {
+      "strategies": [
+        "Never authorize with a user object returned from getSession",
+        "Use validated claims for userId/email and limit session access to the token"
+      ],
+      "code_patterns": [
+        "Avoid: session.user.id in server authorization",
+        "Use: claimsData.claims.sub after getClaims"
+      ],
+      "tests_to_add": [
+        "Fail authenticated HTTP smoke tests on Supabase insecure-session-user warnings"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/guides/auth/server-side/nextjs"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:23:01"
+  },
+  {
+    "mistake_id": "security-environment-value-tool-output-2026-07-17-056",
+    "timestamp": "2026-07-17 16:27:55",
+    "category": "security",
+    "severity": "low",
+    "title": "Broad environment search printed a browser-visible legacy key",
+    "description": "A repository-wide search for Supabase public-key variable names also matched the local .env file and printed the configured legacy anon key in diagnostic tool output. The key is intentionally browser-visible and was already documented as stale, but environment values should not be emitted during source inspection.",
+    "context": {
+      "file": ".env",
+      "line": 3,
+      "function": "Repository environment-name audit",
+      "code_snippet": "rg matched .env while searching for NEXT_PUBLIC_SUPABASE key names",
+      "environment": "development"
+    },
+    "error_message": "A public Supabase anon-key value appeared in command output.",
+    "root_cause": "The search excluded dependencies and build output but did not exclude .env files or restrict output to filenames and variable names.",
+    "solution": "Stopped using the legacy browser key for the feature, kept password recovery server-side, and adopted environment-safe searches that exclude .env values or print only matched filenames.",
+    "prevention": {
+      "strategies": [
+        "Exclude .env and credential files from repository-wide content searches",
+        "Inspect .env.example for configuration contracts instead of local .env values",
+        "Use rg --files-with-matches or redact values when environment inspection is unavoidable"
+      ],
+      "code_patterns": [
+        "Avoid: rg KEY_PATTERN . without an .env exclusion",
+        "Use: rg --files-with-matches KEY_PATTERN -g '!.env*' or inspect .env.example"
+      ],
+      "tests_to_add": ["Keep secret-scanning checks in the release gate"],
+      "documentation_links": ["https://supabase.com/docs/guides/api/api-keys"]
+    },
+    "related_mistakes": ["deployment-supabase-public-key-drift-2026-07-17-017"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-password-reset-20260717-162755",
+    "resolved": true,
+    "resolution_time": "2026-07-17 16:27:55"
+  }
+]

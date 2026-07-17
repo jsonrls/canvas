@@ -1,0 +1,251 @@
+[
+  {
+    "mistake_id": "deployment-env-drift-2026-07-17-004",
+    "timestamp": "2026-07-17 08:54:20",
+    "category": "deployment",
+    "severity": "low",
+    "title": "Yjs environment configuration drifted across active files",
+    "description": "The active environment used the Yjs server on port 1234, while the example still used port 3001 and deployment documentation used a different variable name. An unused raw database URL also remained in both environment files.",
+    "context": {
+      "file": ".env.example",
+      "line": 8,
+      "function": "Environment configuration",
+      "code_snippet": "DATABASE_URL=...; NEXT_PUBLIC_YJS_WS_URL=ws://localhost:3001; docs used NEXT_PUBLIC_YJS_WEBSOCKET_URL",
+      "environment": "development"
+    },
+    "error_message": "Configuration inspection found mismatched Yjs variable names and ports plus an unused DATABASE_URL placeholder.",
+    "root_cause": "The active environment, example template, and documentation were updated independently instead of being verified as a single configuration contract.",
+    "solution": "Removed the unused database URL, standardized on NEXT_PUBLIC_YJS_WS_URL, and aligned local examples to port 1234.",
+    "prevention": {
+      "strategies": [
+        "Search all active configuration and documentation whenever an environment variable changes",
+        "Keep .env.example aligned with the local development defaults",
+        "Run a repository-wide stale-name and stale-port check after environment cleanup"
+      ],
+      "code_patterns": [
+        "Avoid: multiple names for the same environment value",
+        "Use: one canonical environment variable across runtime, examples, and deployment docs"
+      ],
+      "tests_to_add": [
+        "Verify active configuration contains one canonical Yjs WebSocket variable name"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-clean-env-20260717-085407",
+    "resolved": true,
+    "resolution_time": "2026-07-17 08:54:20"
+  },
+  {
+    "mistake_id": "deployment-supabase-ipv6-route-2026-07-17-016",
+    "timestamp": "2026-07-17 09:47:37",
+    "category": "deployment",
+    "severity": "low",
+    "title": "Direct Supabase database endpoint was unreachable over local IPv6",
+    "description": "The configured project's direct database endpoint exposes IPv6 only, while the local network has no usable IPv6 route. Direct hostname and host-address psql checks therefore failed.",
+    "context": {
+      "file": "Supabase database connectivity preflight",
+      "line": 1,
+      "function": "psql schema inspection",
+      "code_snippet": "psql host=db.<project-ref>.supabase.co port=5432",
+      "environment": "development"
+    },
+    "error_message": "could not translate host name; direct IPv6 connection failed with No route to host.",
+    "root_cause": "Supabase direct connections are IPv6 by default and the development network is IPv4-only.",
+    "solution": "Used the project's verified Supavisor session-mode endpoint over IPv4 and confirmed the exact target database, user, and PostgreSQL version before any write.",
+    "prevention": {
+      "strategies": [
+        "Preflight IPv6 reachability before using a Supabase direct connection",
+        "Use the documented session pooler for migration work from IPv4-only networks"
+      ],
+      "code_patterns": [
+        "Avoid: assuming db.<project-ref>.supabase.co is reachable from IPv4-only hosts",
+        "Use: the project-specific session pooler connection string"
+      ],
+      "tests_to_add": [
+        "Run a read-only current_database/current_user query before migration deployment"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/guides/database/connecting-to-postgres"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:47:37"
+  },
+  {
+    "mistake_id": "deployment-supabase-public-key-drift-2026-07-17-017",
+    "timestamp": "2026-07-17 09:47:37",
+    "category": "deployment",
+    "severity": "medium",
+    "title": "Configured Supabase public key does not match the project URL",
+    "description": "The legacy NEXT_PUBLIC_SUPABASE_ANON_KEY receives HTTP 401 from the configured project while the server-only service-role key succeeds against the same project URL.",
+    "context": {
+      "file": ".env",
+      "line": 2,
+      "function": "Supabase environment preflight",
+      "code_snippet": "GET <project-url>/rest/v1/ with configured public and service keys",
+      "environment": "development"
+    },
+    "error_message": "HTTP 401 Invalid API key for the configured legacy public key; service-role request returned HTTP 200.",
+    "root_cause": "The public browser key is stale, disabled, or belongs to a different project than NEXT_PUBLIC_SUPABASE_URL.",
+    "solution": "The implementation keeps all privileged operations server-only and does not expose the service key as a workaround. Server Actions can use the server key for Auth transport, while browser Supabase access remains disabled until a matching publishable key is supplied.",
+    "prevention": {
+      "strategies": [
+        "Validate URL and public key together whenever Supabase environment values change",
+        "Prefer a current sb_publishable key and rotate stale legacy keys",
+        "Never substitute a service-role key into a NEXT_PUBLIC variable"
+      ],
+      "code_patterns": [
+        "Avoid: NEXT_PUBLIC_SUPABASE_ANON_KEY from another project",
+        "Use: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY from the configured project's Connect dialog"
+      ],
+      "tests_to_add": [
+        "Check the configured public key receives a non-401 Data API response"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/guides/getting-started/api-keys"
+      ]
+    },
+    "related_mistakes": [
+      "deployment-env-drift-2026-07-17-004"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": false,
+    "resolution_time": null
+  },
+  {
+    "mistake_id": "deployment-untracked-psql-migrations-2026-07-17-032",
+    "timestamp": "2026-07-17 11:02:20",
+    "category": "deployment",
+    "severity": "medium",
+    "title": "Direct psql deployment left Supabase migration history uninitialized",
+    "description": "The SQL migrations were successfully applied through the verified pooler, but direct psql execution did not create or update Supabase CLI's migration history table. A future db push could therefore attempt to replay already-applied schema files.",
+    "context": {
+      "file": "supabase/migrations/*.sql",
+      "line": 1,
+      "function": "Remote migration deployment",
+      "code_snippet": "psql -v ON_ERROR_STOP=1 -f <migration>",
+      "environment": "production"
+    },
+    "error_message": "ERROR: relation supabase_migrations.schema_migrations does not exist",
+    "root_cause": "Database schema files were run directly because the linked management account could not access the configured project; unlike Supabase CLI migration commands, psql does not maintain migration metadata.",
+    "solution": "Used `supabase migration repair --db-url ... --status applied` for all three deployed versions, which initialized migration history and recorded the exact filenames; verified all rows through psql.",
+    "prevention": {
+      "strategies": [
+        "After any direct psql migration deployment, immediately inspect Supabase migration history",
+        "Repair exact deployed versions before handing off or running a later db push"
+      ],
+      "code_patterns": [
+        "Avoid: treating successful psql output as complete migration deployment metadata",
+        "Use: psql apply followed by supabase migration repair and a history query"
+      ],
+      "tests_to_add": [
+        "Assert every local migration version has one applied remote history row"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/reference/cli/supabase-migration-repair"
+      ]
+    },
+    "related_mistakes": [
+      "deployment-supabase-ipv6-route-2026-07-17-016"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-user-profiles-20260717-104729",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:02:20"
+  },
+  {
+    "mistake_id": "deployment-supabase-cli-project-unlinked-2026-07-17-046",
+    "timestamp": "2026-07-17 12:53:20",
+    "category": "deployment",
+    "severity": "low",
+    "title": "Supabase migration list assumed a linked project",
+    "description": "The discovery pass ran `supabase migration list` without a database URL even though this workspace is intentionally not linked through the active Supabase CLI profile.",
+    "context": {
+      "file": "supabase/config.toml",
+      "line": 1,
+      "function": "Remote migration status discovery",
+      "code_snippet": "npx supabase migration list",
+      "environment": "development"
+    },
+    "error_message": "LegacyProjectNotLinkedError: Cannot find project ref. Have you run supabase link?",
+    "root_cause": "The command used linked-project defaults instead of the already documented pooler database URL workflow for this workspace.",
+    "solution": "Retained the unlinked workspace state and switched subsequent migration history checks and deployment to the explicit verified pooler URL assembled from the existing environment values.",
+    "prevention": {
+      "strategies": [
+        "Inspect the workspace migration history before choosing linked-project CLI defaults",
+        "Use an explicit verified database URL for unlinked Supabase projects"
+      ],
+      "code_patterns": [
+        "Avoid: supabase migration list with no target in an unlinked workspace",
+        "Use: supabase migration list --db-url <verified-pooler-url>"
+      ],
+      "tests_to_add": [
+        "Verify local and remote migration versions match through the explicit database URL"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/reference/cli/supabase-migration-list"
+      ]
+    },
+    "related_mistakes": [
+      "deployment-untracked-psql-migrations-2026-07-17-032"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:53:20"
+  },
+  {
+    "mistake_id": "deployment-supabase-pg-delta-docker-cache-warning-2026-07-17-047",
+    "timestamp": "2026-07-17 12:58:24",
+    "category": "deployment",
+    "severity": "low",
+    "title": "Remote db push could not cache the pg-delta catalog without Docker",
+    "description": "Supabase CLI applied the remote migration and updated history, then warned that its optional pg-delta catalog export could not inspect a Docker image because Docker was intentionally removed from this workspace.",
+    "context": {
+      "file": "supabase/migrations/20260717045518_room_creation_management.sql",
+      "line": 1,
+      "function": "Supabase remote db push",
+      "code_snippet": "supabase db push --db-url <verified-pooler-url>",
+      "environment": "development"
+    },
+    "error_message": "Warning: failed to cache migrations catalog: failed to inspect docker image: Cannot connect to the Docker daemon.",
+    "root_cause": "The current Supabase CLI attempts an optional local pg-delta catalog cache after remote push, and that cache path depends on Docker even though remote migration deployment does not.",
+    "solution": "Accepted the non-fatal cache warning after the CLI reported the migration applied and finished successfully, then required remote history and direct SQL verification as the authoritative deployment evidence.",
+    "prevention": {
+      "strategies": [
+        "Treat a successful remote migration and its history row separately from optional local pg-delta caching",
+        "Verify remote schema directly when Docker is intentionally unavailable"
+      ],
+      "code_patterns": [
+        "Avoid: treating this post-apply cache warning as a migration rollback",
+        "Use: remote migration list plus focused SQL assertions after db push"
+      ],
+      "tests_to_add": [
+        "Assert the new migration version exists remotely and its functions and policies are installed"
+      ],
+      "documentation_links": [
+        "https://supabase.com/docs/reference/cli/supabase-db-push"
+      ]
+    },
+    "related_mistakes": [
+      "deployment-supabase-cli-project-unlinked-2026-07-17-046"
+    ],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:58:24",
+    "last_occurrence": "2026-07-17 13:26:52"
+  }
+]

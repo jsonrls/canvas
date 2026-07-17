@@ -1,0 +1,82 @@
+[
+  {
+    "mistake_id": "logic-ambiguous-patch-context-2026-07-17-003",
+    "timestamp": "2026-07-17 08:41:28",
+    "category": "logic",
+    "severity": "low",
+    "title": "Ambiguous patch context placed session footer before final entries",
+    "description": "Append-only log patches repeatedly used non-unique anchors: a repeated task block, an earlier matching record, a guessed timestamp, and finally a bare separator that placed a new session header at the beginning of the daily log.",
+    "context": {
+      "file": ".agents/logs/changes-2026-07-17.txt",
+      "line": 314,
+      "function": "Session log finalization",
+      "code_snippet": "@@ AGENT: Codex / TASK: Update mistake knowledge index / ... append SESSION ENDED",
+      "environment": "development"
+    },
+    "error_message": "Session footer appeared at line 314 while later change entries continued through line 375.",
+    "root_cause": "The patch used a duplicated nearby label instead of a unique final-entry context, so apply_patch selected an earlier valid match.",
+    "solution": "Preserved every audit entry while relocating the collaboration block after the current session header, then switched final appends to unique latest-entry context and verified the physical file tail.",
+    "prevention": {
+      "strategies": [
+        "Use unique multi-line context when patching repeated structured logs",
+        "Inspect the tail of append-only files after finalization",
+        "Verify that session footers are the last records"
+      ],
+      "code_patterns": [
+        "Avoid: patch anchors made only from repeated labels",
+        "Use: anchors that include a unique timestamp or description"
+      ],
+      "tests_to_add": [
+        "Assert the final non-empty log block is SESSION ENDED"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 8,
+    "agent": "Codex",
+    "session": "session-remove-docker-20260717-083730",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:14:04",
+    "last_occurrence": "2026-07-17 16:36:38"
+  },
+  {
+    "mistake_id": "logic-inaccurate-session-timestamps-2026-07-17-045",
+    "timestamp": "2026-07-17 12:30:38",
+    "category": "logic",
+    "severity": "medium",
+    "title": "Session audit entries used projected future timestamps",
+    "description": "Multiple conflict-review change entries used manually estimated timestamps that advanced beyond the actual system clock, making the session audit chronology inaccurate even though the recorded code changes were valid. The pattern recurred when a prior verified timestamp was reused for a later CSS patch instead of querying the clock again.",
+    "context": {
+      "file": ".agents/logs/changes-2026-07-17.txt",
+      "line": 1,
+      "function": "Conflict review change logging",
+      "code_snippet": "2026-07-17 12:55:42 | TEST | conflict update relevance | ...",
+      "environment": "development"
+    },
+    "error_message": "The final date check returned 2026-07-17 12:30:38 while the log contained entries through 12:55:42.",
+    "root_cause": "Change batches were assigned plausible-looking manual times instead of querying the system clock at the point of each log update.",
+    "solution": "Reconstructed a monotonic session timeline bounded by known Date.now markers from disposable fixtures and verification room slugs, corrected affected knowledge timestamps, and recorded the correction explicitly.",
+    "prevention": {
+      "strategies": [
+        "Run date immediately before every change-log patch",
+        "Never synthesize or project audit timestamps",
+        "Reject any final log entry later than the system clock"
+      ],
+      "code_patterns": [
+        "Avoid: manually incrementing timestamps between tool calls",
+        "Use: date '+%Y-%m-%d %H:%M:%S %z' before log writes"
+      ],
+      "tests_to_add": [
+        "Validate session log timestamps are monotonic and no later than final wall clock"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["logic-ambiguous-patch-context-2026-07-17-003"],
+    "occurrence_count": 3,
+    "agent": "Codex",
+    "session": "session-conflict-review-20260717-121148",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:30:38",
+    "last_occurrence": "2026-07-17 16:32:45"
+  }
+]

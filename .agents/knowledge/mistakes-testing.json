@@ -1,0 +1,742 @@
+[
+  {
+    "mistake_id": "testing-zsh-path-2026-07-17-001",
+    "timestamp": "2026-07-17 08:38:31",
+    "category": "testing",
+    "severity": "low",
+    "title": "Verification loop shadowed zsh PATH through special path variable",
+    "description": "A repository verification command used `path` as a loop variable. In zsh, `path` is a special array tied to `PATH`, so subsequent rg, tail, and shasum commands could not be found.",
+    "context": {
+      "file": "verification shell command",
+      "line": 1,
+      "function": "Docker removal verification",
+      "code_snippet": "for path in .dockerignore DOCKER.md Dockerfile docker-compose.yml; do ...; done",
+      "environment": "development"
+    },
+    "error_message": "zsh:1: command not found: rg; zsh:1: command not found: tail; zsh:1: command not found: shasum",
+    "root_cause": "The verification command overlooked that `path` is a reserved special parameter in zsh and unintentionally replaced the executable search path.",
+    "solution": "Renamed the loop variable to `target_file` and reran the repository-wide verification successfully.",
+    "prevention": {
+      "strategies": [
+        "Avoid `path` as a variable name in zsh commands",
+        "Use descriptive loop variables such as `target_file`",
+        "Rerun interrupted verification from the beginning after correcting shell state"
+      ],
+      "code_patterns": [
+        "Avoid: for path in ...",
+        "Use: for target_file in ..."
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-remove-docker-20260717-083730",
+    "resolved": true,
+    "resolution_time": "2026-07-17 08:38:31"
+  },
+  {
+    "mistake_id": "testing-residue-scope-2026-07-17-002",
+    "timestamp": "2026-07-17 08:40:14",
+    "category": "testing",
+    "severity": "low",
+    "title": "Residue scan treated audit history as active configuration",
+    "description": "The Docker residue check excluded change logs and the changelog but still scanned the mistake knowledge base, which intentionally preserved removed filenames as verification context.",
+    "context": {
+      "file": "verification shell command",
+      "line": 1,
+      "function": "Active Docker reference scan",
+      "code_snippet": "rg ... --glob '!.agents/logs/**' --glob '!.agents/CHANGELOG.md' ... .",
+      "environment": "development"
+    },
+    "error_message": "unexpected active Docker references: ./.agents/knowledge/mistakes-testing.json",
+    "root_cause": "The scan did not distinguish active project configuration and documentation from immutable operational audit artifacts.",
+    "solution": "Excluded `.agents/knowledge/**` alongside logs and the historical changelog, then reran the active-reference scan.",
+    "prevention": {
+      "strategies": [
+        "Define residue-scan scope before interpreting matches",
+        "Exclude audit and historical records that intentionally preserve removed terms",
+        "Report active and historical matches separately when both matter"
+      ],
+      "code_patterns": [
+        "Avoid: treating every repository match as active configuration",
+        "Use: explicit globs for active source and documentation scope"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-zsh-path-2026-07-17-001"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-remove-docker-20260717-083730",
+    "resolved": true,
+    "resolution_time": "2026-07-17 08:40:14"
+  },
+  {
+    "mistake_id": "testing-port-preflight-2026-07-17-010",
+    "timestamp": "2026-07-17 09:19:46",
+    "category": "testing",
+    "severity": "low",
+    "title": "Combined development launcher ran without a port preflight",
+    "description": "The smoke-test launcher attempted to start a second Yjs server on port 1234 even though a user-owned project server was already listening there.",
+    "context": {
+      "file": "package.json",
+      "line": 8,
+      "function": "Local development smoke test",
+      "code_snippet": "npm run dev:all",
+      "environment": "development"
+    },
+    "error_message": "Error: listen EADDRINUSE: address already in use ::1:1234",
+    "root_cause": "The combined launcher was executed before checking whether its two local service ports were available.",
+    "solution": "Inspected the listener without terminating it, confirmed it was an existing project Yjs process, and ran only the Next.js service for the HTTP smoke test.",
+    "prevention": {
+      "strategies": [
+        "Check expected development ports before starting combined process groups",
+        "Do not terminate existing listeners until their ownership and purpose are confirmed"
+      ],
+      "code_patterns": [
+        "Avoid: starting a second server blindly",
+        "Use: lsof -nP -iTCP:<port> -sTCP:LISTEN before a smoke-test launcher"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:19:46"
+  },
+  {
+    "mistake_id": "testing-residue-node-modules-2026-07-17-012",
+    "timestamp": "2026-07-17 09:23:19",
+    "category": "testing",
+    "severity": "low",
+    "title": "Active-reference scan did not exclude installed dependencies",
+    "description": "The final stale-reference scan searched the workspace without explicitly excluding node_modules, and this non-git workspace did not apply .gitignore filtering as expected.",
+    "context": {
+      "file": "final verification shell command",
+      "line": 1,
+      "function": "Active configuration residue scan",
+      "code_snippet": "rg 'ws://localhost:3000/yjs|@y/websocket-server|DATABASE_URL' .",
+      "environment": "development"
+    },
+    "error_message": "Matches for DATABASE_URL were reported from Next.js package documentation under node_modules.",
+    "root_cause": "The scan relied on implicit ignore behavior even though the workspace is not a Git repository.",
+    "solution": "Added an explicit --glob '!node_modules/**' exclusion and reran the active-source scan.",
+    "prevention": {
+      "strategies": [
+        "Explicitly exclude dependency and build directories in repository residue checks",
+        "Do not assume .gitignore filtering is active outside a Git worktree"
+      ],
+      "code_patterns": [
+        "Avoid: rg pattern . with implicit exclusions",
+        "Use: rg pattern --glob '!node_modules/**' --glob '!.next/**' ."
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-residue-scope-2026-07-17-002"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:23:19"
+  },
+  {
+    "mistake_id": "testing-next-types-parallel-race-2026-07-17-013",
+    "timestamp": "2026-07-17 09:27:05",
+    "category": "testing",
+    "severity": "low",
+    "title": "Shared Next type artifacts conflicted across verification processes",
+    "description": "The original verification batch started tsc and next build together, so Next.js regenerated .next/types while tsc was resolving it. The issue recurred when a user-owned dev server and prior production builds left duplicate generated files with a ` 2.ts` suffix, causing duplicate declarations during the requested acceptance retry.",
+    "context": {
+      "file": "final verification orchestration",
+      "line": 1,
+      "function": "Parallel validation batch",
+      "code_snippet": "Promise.all([npm run typecheck, npm run build])",
+      "environment": "development"
+    },
+    "error_message": "TS6200 and TS2300: duplicate declarations from .next/types/cache-life.d 2.ts and routes.d 2.ts; original occurrence reported TS6053 missing generated files.",
+    "root_cause": "Next development, production build, and standalone typecheck share the generated .next directory; overlapping or duplicated artifacts are not a safe typecheck input.",
+    "solution": "Kept the user-owned dev process running, moved only the three exact duplicate generated files to a recoverable temporary folder, and reran verification sequentially.",
+    "prevention": {
+      "strategies": [
+        "Run next build and standalone tsc sequentially",
+        "Inspect .next/types for duplicate-suffixed artifacts when a dev process remains active",
+        "Only parallelize checks that do not mutate shared generated directories"
+      ],
+      "code_patterns": [
+        "Avoid: Promise.all([typecheck, next build])",
+        "Use: npm run build && npm run typecheck"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:40:16",
+    "last_occurrence": "2026-07-17 12:40:16"
+  },
+  {
+    "mistake_id": "testing-next-dev-project-lock-2026-07-17-024",
+    "timestamp": "2026-07-17 10:18:25",
+    "category": "testing",
+    "severity": "low",
+    "title": "Alternate-port Next dev smoke test still hit the project lock",
+    "description": "A second next dev process was started on an alternate free port after port preflight showed 3000 occupied, but Next.js locks the project development directory rather than only its TCP port. The same mistake recurred during conflict-review acceptance on port 3002.",
+    "context": {
+      "file": ".next/dev/lock",
+      "line": 1,
+      "function": "Production-like HTTP smoke launcher",
+      "code_snippet": "PORT=3100 npm run dev",
+      "environment": "development"
+    },
+    "error_message": "Another next dev server is already running (most recent PID 19264).",
+    "root_cause": "The preflight checked port availability but not the per-project Next development lock.",
+    "solution": "Left the user's active dev process untouched and used the completed production build with next start on an alternate port.",
+    "prevention": {
+      "strategies": [
+        "Check both listening ports and .next/dev lock state",
+        "Use next start for an isolated smoke test after a successful build"
+      ],
+      "code_patterns": [
+        "Avoid: assuming an alternate port permits a second next dev for one worktree",
+        "Use: npm run build followed by PORT=<free> npm start"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-port-preflight-2026-07-17-010"],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:25:32"
+  },
+  {
+    "mistake_id": "testing-wrong-proxy-manifest-2026-07-17-025",
+    "timestamp": "2026-07-17 10:21:16",
+    "category": "testing",
+    "severity": "low",
+    "title": "Proxy assertion inspected the legacy middleware manifest",
+    "description": "The first post-build proxy assertion checked middleware-manifest.json, which remains empty for this Next.js 16 Node proxy even though the build registered it.",
+    "context": {
+      "file": ".next/server/middleware-manifest.json",
+      "line": 1,
+      "function": "Proxy build-output assertion",
+      "code_snippet": "Object.keys(middlewareManifest.middleware).length",
+      "environment": "production build verification"
+    },
+    "error_message": "Error: Proxy manifest is empty.",
+    "root_cause": "The assertion targeted an older manifest shape instead of Next.js 16 functions-config-manifest.json.",
+    "solution": "Verified /_middleware in functions-config-manifest.json and confirmed behavior with an actual unauthenticated HTTP 307 response.",
+    "prevention": {
+      "strategies": [
+        "Prefer an HTTP behavior assertion over internal artifact assumptions",
+        "For Next.js 16 Node proxy metadata, inspect functions-config-manifest.json"
+      ],
+      "code_patterns": [
+        "Avoid: requiring middleware entries from middleware-manifest.json",
+        "Use: functions['/_middleware'] plus an HTTP redirect smoke test"
+      ],
+      "tests_to_add": [
+        "Assert unauthenticated room requests return 307 and a /login Location"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["security-unregistered-src-proxy-2026-07-17-022"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:21:49"
+  },
+  {
+    "mistake_id": "testing-postgrest-zero-row-update-2026-07-17-026",
+    "timestamp": "2026-07-17 10:28:05",
+    "category": "testing",
+    "severity": "low",
+    "title": "RLS-denied update was mistaken for a successful write",
+    "description": "The viewer test treated a null PostgREST error as proof that UPDATE changed a row, but an RLS USING filter can produce a successful zero-row update.",
+    "context": {
+      "file": "scripts/verify-version-history.mjs",
+      "line": 266,
+      "function": "Viewer write authorization assertion",
+      "code_snippet": "if (!viewerWriteError) throw new Error(...) ",
+      "environment": "remote integration verification"
+    },
+    "error_message": "Error: A viewer modified the shared document.",
+    "root_cause": "The test asserted transport success/failure instead of database row effects.",
+    "solution": "Added .select('id') to the update and now fails only when returned affected rows are non-empty.",
+    "prevention": {
+      "strategies": [
+        "For RLS-filtered UPDATE/DELETE tests, assert affected-row count or re-read the value",
+        "Distinguish PostgREST policy errors from silent zero-row filtering"
+      ],
+      "code_patterns": [
+        "Avoid: !error as proof an RLS mutation occurred",
+        "Use: mutation.select(primaryKey) and assert data.length"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:28:05"
+  },
+  {
+    "mistake_id": "testing-cache-control-exact-string-2026-07-17-027",
+    "timestamp": "2026-07-17 10:33:06",
+    "category": "testing",
+    "severity": "low",
+    "title": "HTTP smoke required an exact Cache-Control string",
+    "description": "The token-endpoint smoke compared Cache-Control to exactly 'private, no-store', but the request proxy intentionally added stronger compatible directives.",
+    "context": {
+      "file": "final production HTTP smoke",
+      "line": 11,
+      "function": "Anonymous token response assertion",
+      "code_snippet": "response.headers.get('cache-control') !== 'private, no-store'",
+      "environment": "production runtime verification"
+    },
+    "error_message": "Error: Anonymous token response was not private 401.",
+    "root_cause": "The test treated a set-like HTTP directive field as an ordered exact string.",
+    "solution": "Parsed comma-separated directives and required both private and no-store while allowing stronger additions and arbitrary ordering.",
+    "prevention": {
+      "strategies": [
+        "Assert required Cache-Control directives semantically",
+        "Allow security-strengthening directives added by request middleware"
+      ],
+      "code_patterns": [
+        "Avoid: exact Cache-Control string equality",
+        "Use: normalized directive membership checks"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:33:29"
+  },
+  {
+    "mistake_id": "testing-shell-backtick-pattern-2026-07-17-028",
+    "timestamp": "2026-07-17 10:37:11",
+    "category": "testing",
+    "severity": "medium",
+    "title": "Backticks in a double-quoted residue pattern triggered shell substitution",
+    "description": "A final rg pattern included Markdown backticks inside a double-quoted shell command, so zsh attempted command substitution. The same unsafe nesting pattern later over-escaped a quoted status value in a Node plan-validator one-liner and produced invalid JavaScript.",
+    "context": {
+      "file": "final active-source residue scan",
+      "line": 1,
+      "function": "Documentation stale-text verification",
+      "code_snippet": "rg -n \"No `DATABASE_URL`|...\"",
+      "environment": "development verification"
+    },
+    "error_message": "zsh: command not found: DATABASE_URL",
+    "root_cause": "Shell command substitution rules were overlooked while embedding Markdown punctuation in a double-quoted command argument.",
+    "solution": "Reran the read-only scan with the entire regular expression single-quoted and no interpolated shell content.",
+    "prevention": {
+      "strategies": [
+        "Use single quotes for literal rg patterns containing backticks or dollar signs",
+        "Avoid Markdown formatting characters in shell patterns when plain text is sufficient"
+      ],
+      "code_patterns": ["Avoid: rg \"`literal`\"", "Use: rg 'literal'"],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 4,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:19:27",
+    "last_occurrence": "2026-07-17 11:19:27"
+  },
+  {
+    "mistake_id": "testing-stale-next-proxy-cache-2026-07-17-037",
+    "timestamp": "2026-07-17 11:36:55",
+    "category": "testing",
+    "severity": "low",
+    "title": "Stale Next development cache referenced the old root proxy",
+    "description": "The browser verification server reused generated Turbopack artifacts from before proxy.ts moved into src, so the login page opened a runtime error overlay instead of the current application.",
+    "context": {
+      "file": ".next/dev/server/middleware.js",
+      "line": 4,
+      "function": "Next development proxy bootstrap",
+      "code_snippet": "Could not parse module '[project]/proxy.ts', file not found",
+      "environment": "development"
+    },
+    "error_message": "Runtime Error: Could not parse module '[project]/proxy.ts', file not found.",
+    "root_cause": "The generated .next development cache retained a reference to the former root-level proxy after the source file moved to src/proxy.ts.",
+    "solution": "Stopped the test server, moved the exact .next directory to a recoverable temporary path, and restarted Next so it could discover src/proxy.ts from clean generated state.",
+    "prevention": {
+      "strategies": [
+        "Invalidate generated Next artifacts after moving proxy or middleware entry points",
+        "Run a real browser overlay check after structural framework file moves"
+      ],
+      "code_patterns": [
+        "Avoid: reusing .next after moving proxy.ts between framework discovery roots",
+        "Use: stop server, recoverably move .next, then restart"
+      ],
+      "tests_to_add": [
+        "Keep the browser error-overlay check in feature verification"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["security-unregistered-src-proxy-2026-07-17-022"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:36:55"
+  },
+  {
+    "mistake_id": "testing-disallowed-rm-generated-cache-2026-07-17-038",
+    "timestamp": "2026-07-17 11:36:55",
+    "category": "testing",
+    "severity": "low",
+    "title": "Generated cache cleanup used a rejected permanent-delete command",
+    "description": "The first attempt to invalidate the stale .next cache used rm -rf against an exact generated directory, which the command safety layer rejected.",
+    "context": {
+      "file": ".next",
+      "line": 1,
+      "function": "Browser verification cache cleanup",
+      "code_snippet": "rm -rf /Users/jaysonreales/Desktop/dev-project/boardprep-canvas/.next",
+      "environment": "development"
+    },
+    "error_message": "rm -f style commands are not permitted. Use a safer approach.",
+    "root_cause": "The cleanup chose permanent deletion even though a recoverable move was sufficient to invalidate the cache.",
+    "solution": "Validated an explicit unused temporary target and moved .next there, preserving the generated artifact for recovery.",
+    "prevention": {
+      "strategies": [
+        "Prefer recoverable moves for generated cache invalidation",
+        "Resolve and validate both source and destination paths before moving a cache"
+      ],
+      "code_patterns": [
+        "Avoid: rm -rf project/.next",
+        "Use: mv project/.next /tmp/project-next-cache-stale-<timestamp>"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-stale-next-proxy-cache-2026-07-17-037"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:36:55"
+  },
+  {
+    "mistake_id": "testing-guessed-y-websocket-utils-path-2026-07-17-040",
+    "timestamp": "2026-07-17 11:45:21",
+    "category": "testing",
+    "severity": "low",
+    "title": "Dependency source inspection guessed the wrong utils extension",
+    "description": "A diagnostic command attempted to read node_modules/y-websocket/bin/utils.js, but this package version exposes the server utility implementation as utils.cjs.",
+    "context": {
+      "file": "node_modules/y-websocket/bin/utils.cjs",
+      "line": 1,
+      "function": "Yjs handshake source inspection",
+      "code_snippet": "rg ... node_modules/y-websocket/bin/utils.js",
+      "environment": "development"
+    },
+    "error_message": "IO error: node_modules/y-websocket/bin/utils.js: No such file or directory.",
+    "root_cause": "The diagnostic assumed a JavaScript extension instead of resolving the installed package file list first.",
+    "solution": "Listed the installed y-websocket files with rg --files, located utils.cjs, and inspected the correct source.",
+    "prevention": {
+      "strategies": [
+        "Resolve dependency source filenames with rg --files before opening guessed paths",
+        "Use the installed package layout as the source of truth"
+      ],
+      "code_patterns": [
+        "Avoid: assuming dependency source file extensions",
+        "Use: rg --files node_modules/package | rg pattern"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-stale-skill-path-2026-07-17-005"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:45:21"
+  },
+  {
+    "mistake_id": "testing-unquoted-dynamic-route-path-2026-07-17-042",
+    "timestamp": "2026-07-17 12:12:36",
+    "category": "testing",
+    "severity": "low",
+    "title": "Dynamic route path was not quoted in zsh",
+    "description": "A source-inspection command passed src/app/rooms/[roomId]/actions.ts to zsh without quoting it, so zsh interpreted the brackets as a filename pattern and rejected the command before sed could read the file.",
+    "context": {
+      "file": "src/app/rooms/[roomId]/actions.ts",
+      "line": 1,
+      "function": "Conflict review source audit",
+      "code_snippet": "sed -n '1,280p' src/app/rooms/[roomId]/actions.ts",
+      "environment": "development"
+    },
+    "error_message": "zsh: no matches found: src/app/rooms/[roomId]/actions.ts",
+    "root_cause": "The diagnostic command did not quote a Next.js dynamic-route path containing shell glob metacharacters.",
+    "solution": "Reran the inspection with the complete path enclosed in single quotes and read the server action successfully.",
+    "prevention": {
+      "strategies": [
+        "Quote every filesystem path containing brackets, spaces, parentheses, or wildcard characters",
+        "Treat Next.js dynamic-route paths as shell-sensitive by default"
+      ],
+      "code_patterns": [
+        "Avoid: sed ... src/app/rooms/[roomId]/actions.ts",
+        "Use: sed ... 'src/app/rooms/[roomId]/actions.ts'"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-zsh-path-2026-07-17-001"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-conflict-review-20260717-121148",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:12:36"
+  },
+  {
+    "mistake_id": "testing-guessed-knowledge-index-path-2026-07-17-043",
+    "timestamp": "2026-07-17 12:12:52",
+    "category": "testing",
+    "severity": "low",
+    "title": "Knowledge index lookup guessed the wrong filename",
+    "description": "A diagnostic searched .agents/knowledge/index.json even though this repository stores its aggregate mistake metadata in mistakes-index.json.",
+    "context": {
+      "file": ".agents/knowledge/mistakes-index.json",
+      "line": 1,
+      "function": "Mistake recurrence audit",
+      "code_snippet": "rg ... .agents/knowledge/index.json",
+      "environment": "development"
+    },
+    "error_message": "rg: .agents/knowledge/index.json: No such file or directory",
+    "root_cause": "The command assumed a generic index filename instead of resolving the repository's knowledge files first.",
+    "solution": "Listed .agents/knowledge with rg --files, found mistakes-index.json, and inspected the correct file.",
+    "prevention": {
+      "strategies": [
+        "Resolve unfamiliar repository paths with rg --files before opening them",
+        "Reuse the exact filenames declared by project-specific skills"
+      ],
+      "code_patterns": [
+        "Avoid: guessing .agents knowledge filenames",
+        "Use: rg --files .agents/knowledge before inspection"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "testing-guessed-y-websocket-utils-path-2026-07-17-040"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-conflict-review-20260717-121148",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:12:52"
+  },
+  {
+    "mistake_id": "testing-agent-browser-cli-unavailable-2026-07-17-044",
+    "timestamp": "2026-07-17 12:22:58",
+    "category": "testing",
+    "severity": "low",
+    "title": "Browser skill command was unavailable on PATH",
+    "description": "The browser acceptance workflow invoked the agent-browser command documented by the installed Vercel skill, but this environment contains only the skill instructions and no executable on PATH. Earlier Chrome-control fallbacks reported no browser; the later password-reset session resolved the available in-app Browser plugin and completed visual acceptance there.",
+    "context": {
+      "file": "/Users/jaysonreales/.codex/plugins/cache/openai-curated-remote/vercel/1.0.0/skills/agent-browser/SKILL.md",
+      "line": 42,
+      "function": "Conflict review browser acceptance",
+      "code_snippet": "agent-browser --session conflict-a open http://localhost:3002/login",
+      "environment": "development"
+    },
+    "error_message": "zsh: command not found: agent-browser; browser runtime: No browser is available",
+    "root_cause": "The verification assumed the skill's companion CLI or a browser-control backend was available without first resolving either capability in the current environment.",
+    "solution": "Confirmed the optional CLI is absent, then resolved the installed in-app Browser plugin, selected the available Chrome instance by URL, and completed desktop, mobile, redirect, and console acceptance with that supported fallback.",
+    "prevention": {
+      "strategies": [
+        "Run command -v before relying on an optional skill companion executable",
+        "Resolve the installed in-app Browser plugin before concluding that no browser runtime is available",
+        "Do not claim visual acceptance when both the CLI and runtime backend are absent"
+      ],
+      "code_patterns": [
+        "Avoid: invoking optional browser CLIs without a preflight",
+        "Use: command -v agent-browser and verify agent.browsers.list before planning visual acceptance"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-guessed-knowledge-index-path-2026-07-17-043"],
+    "occurrence_count": 4,
+    "agent": "Codex",
+    "session": "session-conflict-review-20260717-121148",
+    "resolved": true,
+    "resolution_time": "2026-07-17 16:43:24",
+    "last_occurrence": "2026-07-17 16:43:24"
+  },
+  {
+    "mistake_id": "testing-sql-dollar-quote-collision-2026-07-17-048",
+    "timestamp": "2026-07-17 12:59:20",
+    "category": "testing",
+    "severity": "low",
+    "title": "Focused SQL assertion reused the DO block dollar delimiter",
+    "description": "The first post-migration assertion wrapped a PostgreSQL DO block in `$$` and also used `$$` for string literals inside that block, so the parser closed the block at the first inner literal.",
+    "context": {
+      "file": "remote room lifecycle schema assertion",
+      "line": 1,
+      "function": "Post-migration verification",
+      "code_snippet": "do $$ begin ... version = $$20260717045518$$ ... end $$;",
+      "environment": "development"
+    },
+    "error_message": "ERROR: syntax error at or near 20260717045518",
+    "root_cause": "The generated verification SQL used the same anonymous dollar-quote delimiter for nested lexical scopes.",
+    "solution": "Changed the outer anonymous block to a distinct `$verify$` delimiter while preserving inner dollar-quoted literals, then reran the assertions.",
+    "prevention": {
+      "strategies": [
+        "Use named dollar tags for DO blocks that contain dollar-quoted literals",
+        "Keep verification SQL syntactically isolated from shell quoting"
+      ],
+      "code_patterns": [
+        "Avoid: DO $$ with inner $$string$$ values",
+        "Use: DO $verify$ with inner $$string$$ values"
+      ],
+      "tests_to_add": ["Run the corrected remote room lifecycle assertion"],
+      "documentation_links": [
+        "https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 12:59:20"
+  },
+  {
+    "mistake_id": "testing-public-room-join-workflow-2026-07-17-052",
+    "timestamp": "2026-07-17 13:20:11",
+    "category": "testing",
+    "severity": "medium",
+    "title": "Authenticated public-room join workflow failed integration verification",
+    "description": "The first disposable room-management run passed schema assertions and public discovery but failed when an outsider attempted the explicit editor-membership insert for a public room.",
+    "context": {
+      "file": "scripts/verify-room-management.mjs",
+      "line": 312,
+      "function": "Public join verification",
+      "code_snippet": "room_members.insert({ role: 'editor', room_id, user_id }).select('user_id, role')",
+      "environment": "development"
+    },
+    "error_message": "new row violates row-level security policy for table room_members",
+    "root_cause": "The legacy direct self-insert join policy rejected the Data API insert even after the room became publicly visible; room lifecycle mutations were split between hardened RPCs and a fragile table insert path.",
+    "solution": "Added a dedicated authenticated `join_public_room(uuid)` security-definer function, revoked direct authenticated membership inserts, removed the obsolete join policy/helper, routed application and verification joins through the function, and passed the disposable public join/leave workflow.",
+    "prevention": {
+      "strategies": [
+        "Include the sanitized PostgREST error in authorization-test failures",
+        "Verify both policy predicates and returned affected rows"
+      ],
+      "code_patterns": [
+        "Avoid: authorization verifier errors that omit the database reason",
+        "Use: error.message or serialized returned rows without credentials"
+      ],
+      "tests_to_add": [
+        "Rerun the disposable public join and leave workflow after diagnosis"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-postgrest-zero-row-update-2026-07-17-026"],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:27:22",
+    "last_occurrence": "2026-07-17 13:21:15"
+  },
+  {
+    "mistake_id": "testing-offline-fixture-direct-room-insert-2026-07-17-053",
+    "timestamp": "2026-07-17 13:29:29",
+    "category": "testing",
+    "severity": "low",
+    "title": "Offline-sync fixture still used revoked direct room insertion",
+    "description": "The first collaboration regression run passed Yjs and version-history checks, then the offline-sync fixture failed before its behavior test because it still created rooms, memberships, and documents with direct table inserts.",
+    "context": {
+      "file": "scripts/verify-offline-sync.ts",
+      "line": 340,
+      "function": "verifyAuthenticatedReconnect",
+      "code_snippet": "userClient.from('rooms').insert(...)",
+      "environment": "development"
+    },
+    "error_message": "Could not create the offline verification room.",
+    "root_cause": "The dependency audit updated the version-history fixture but missed the second authenticated test fixture that depended on the now-revoked partial room insert path.",
+    "solution": "Migrated the offline fixture to `create_study_room`, consumed its generated slug/id, and selected the atomically provisioned notes document.",
+    "prevention": {
+      "strategies": [
+        "Search every test and script for writes to a table before revoking a direct mutation privilege",
+        "Keep all authenticated room fixtures on the production atomic creation boundary"
+      ],
+      "code_patterns": [
+        "Avoid: test-only sequential rooms/room_members/documents inserts",
+        "Use: create_study_room RPC and assert its invariants"
+      ],
+      "tests_to_add": ["Rerun offline-sync and conflict-review regressions"],
+      "documentation_links": []
+    },
+    "related_mistakes": ["testing-public-room-join-workflow-2026-07-17-052"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:29:29"
+  },
+  {
+    "mistake_id": "testing-shell-nested-sql-quote-2026-07-17-054",
+    "timestamp": "2026-07-17 13:38:13",
+    "category": "testing",
+    "severity": "low",
+    "title": "Inline Node database check lost nested SQL quotes",
+    "description": "A final read-only migration and residue check embedded JavaScript and SQL single-quoted literals inside a shell single-quoted `node -e` program. The shell stripped the inner SQL quotes and PostgreSQL rejected the diagnostic before executing any query.",
+    "context": {
+      "file": "final remote database consistency check",
+      "line": 1,
+      "function": "Migration and disposable-fixture audit",
+      "code_snippet": "node -e '... string_agg(version, ',' order by version) ...'",
+      "environment": "development"
+    },
+    "error_message": "ERROR: syntax error at or near comma",
+    "root_cause": "The diagnostic crossed shell, JavaScript, and SQL quoting layers without isolating the SQL source, so nested single quotes were consumed by the shell.",
+    "solution": "Use the existing environment-aware schema verifier pattern with SQL passed through a shell-safe JavaScript source form, then rerun the read-only consistency query.",
+    "prevention": {
+      "strategies": [
+        "Avoid nesting same-delimiter SQL strings inside shell-quoted inline programs",
+        "Prefer a checked script or an argument form that keeps SQL out of shell lexical parsing"
+      ],
+      "code_patterns": [
+        "Avoid: shell single quote -> node -e -> SQL single quotes",
+        "Use: shell-safe double-quoted JavaScript program with an escaped SQL template literal"
+      ],
+      "tests_to_add": [
+        "Rerun the migration history and disposable-fixture residue query"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "testing-sql-dollar-quote-collision-2026-07-17-048",
+      "testing-shell-backtick-pattern-2026-07-17-028"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:39:01"
+  }
+]

@@ -1,0 +1,199 @@
+[
+  {
+    "mistake_id": "runtime-yjs-dual-module-instance-2026-07-17-021",
+    "timestamp": "2026-07-17 10:16:36",
+    "category": "runtime",
+    "severity": "medium",
+    "title": "Yjs server loaded separate ESM and CommonJS instances",
+    "description": "The custom ESM server imported Yjs directly while requiring y-websocket's CommonJS server utilities, which caused Yjs to detect two runtime instances.",
+    "context": {
+      "file": "server/yjs-server.mjs",
+      "line": 7,
+      "function": "Module initialization",
+      "code_snippet": "import * as Y from 'yjs'; require('y-websocket/bin/utils')",
+      "environment": "development smoke test"
+    },
+    "error_message": "Yjs was already imported. This breaks constructor checks and will lead to issues!",
+    "root_cause": "An ESM Yjs import and the CommonJS import inside y-websocket resolved through different module entry points in the same process.",
+    "solution": "Removed the ESM import and obtained Yjs with the same createRequire instance used for y-websocket utilities.",
+    "prevention": {
+      "strategies": [
+        "Use one module system for Yjs and its server protocol utilities within a process",
+        "Treat the Yjs duplicate-import warning as a blocking smoke-test failure"
+      ],
+      "code_patterns": [
+        "Avoid: ESM import of yjs beside required y-websocket/bin/utils",
+        "Use: const Y = require('yjs') with required y-websocket utilities"
+      ],
+      "tests_to_add": [
+        "Assert durable server startup output contains no duplicate Yjs warning"
+      ],
+      "documentation_links": ["https://github.com/yjs/yjs/issues/438"]
+    },
+    "related_mistakes": ["build-yjs-major-mismatch-2026-07-17-007"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:16:36"
+  },
+  {
+    "mistake_id": "runtime-y-indexeddb-open-rejection-2026-07-17-034",
+    "timestamp": "2026-07-17 11:24:58",
+    "category": "runtime",
+    "severity": "medium",
+    "title": "y-indexeddb leaves a rejected constructor chain when database open is refused",
+    "description": "The storage-unavailable verification forced IndexedDB.open to fail. Although BoardPrep awaited a public provider operation and returned an unavailable fallback, y-indexeddb also creates an internal success-only promise chain whose rejection remained unhandled and terminated the Node verifier.",
+    "context": {
+      "file": "src/lib/collaboration/offline-document.ts",
+      "line": 163,
+      "function": "createOfflineDocument",
+      "code_snippet": "new IndexeddbPersistence(key, document) before an availability probe",
+      "environment": "development"
+    },
+    "error_message": "Error: IndexedDB disabled for verification at lib0/indexeddb.openDB via IndexeddbPersistence constructor.",
+    "root_cause": "y-indexeddb attaches an internal `.then(success)` without a rejection branch to its database-open promise, so open failure produces an additional unhandled rejected promise outside the caller-visible operation.",
+    "solution": "Added a harmless empty-database availability probe that handles synchronous and asynchronous open refusal before constructing IndexeddbPersistence; unsupported storage now returns the in-memory fallback immediately.",
+    "prevention": {
+      "strategies": [
+        "Preflight browser storage APIs whose third-party wrappers do not fully own their rejection chains",
+        "Keep a deterministic disabled-storage test in the offline verification suite"
+      ],
+      "code_patterns": [
+        "Avoid: constructing IndexeddbPersistence before checking IndexedDB availability",
+        "Use: an explicit IDBOpenDBRequest probe with error and success handlers"
+      ],
+      "tests_to_add": [
+        "Verify disabled IndexedDB returns unavailable while in-memory Yjs editing remains functional"
+      ],
+      "documentation_links": [
+        "https://docs.yjs.dev/ecosystem/database-provider/y-indexeddb"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:24:58"
+  },
+  {
+    "mistake_id": "runtime-browser-yjs-initial-sync-loss-2026-07-17-039",
+    "timestamp": "2026-07-17 11:45:21",
+    "category": "runtime",
+    "severity": "medium",
+    "title": "Browser WebSocket opened without completing the Yjs synced state",
+    "description": "After an offline edit and reconnect, the authenticated browser socket reopened and exchanged Yjs and awareness frames, but the server did not answer the client's initial sync-step request, leaving provider.synced false and the UI in Connecting.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 165,
+      "function": "CollaborativeRoom provider initialization",
+      "code_snippet": "new WebsocketProvider(..., { connect: false, maxBackoffTime: 4000, params: {} })",
+      "environment": "development"
+    },
+    "error_message": "Browser acceptance timed out waiting for Live sync active while the WebSocket remained open and provider.synced stayed false.",
+    "root_cause": "The initial browser sync-step request can be lost around connection setup; with the provider's default zero resync interval, no later state-vector request repairs the incomplete handshake.",
+    "solution": "Enabled the provider's built-in 2.5-second resync interval so an open connection retries the Yjs state-vector handshake while preserving the same document and editor.",
+    "prevention": {
+      "strategies": [
+        "Exercise offline-to-online transitions in a real browser in addition to Node WebSocket integration tests",
+        "Configure a bounded Yjs resync interval for long-lived collaborative clients"
+      ],
+      "code_patterns": [
+        "Avoid: relying on a single initial sync request for a long-lived browser provider",
+        "Use: resyncInterval with the stable WebsocketProvider"
+      ],
+      "tests_to_add": [
+        "Keep browser acceptance coverage for Offline to Connecting to Live transitions"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["runtime-yjs-dual-module-instance-2026-07-17-021"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:45:21"
+  },
+  {
+    "mistake_id": "runtime-next-scroll-behavior-marker-2026-07-17-041",
+    "timestamp": "2026-07-17 11:45:21",
+    "category": "runtime",
+    "severity": "low",
+    "title": "Root layout omitted Next's smooth-scroll transition marker",
+    "description": "Browser verification found Next's development warning because global CSS enables smooth scrolling but the root html element did not declare the framework marker.",
+    "context": {
+      "file": "src/app/layout.tsx",
+      "line": 29,
+      "function": "RootLayout",
+      "code_snippet": "<html lang=\"en\" className={...}>",
+      "environment": "development"
+    },
+    "error_message": "Detected scroll-behavior: smooth on the html element. Add data-scroll-behavior=\"smooth\".",
+    "root_cause": "The visual system's smooth-scroll CSS was added without the corresponding Next route-transition declaration on the document root.",
+    "solution": "Added data-scroll-behavior=\"smooth\" to the root html element.",
+    "prevention": {
+      "strategies": [
+        "Treat browser console warnings as part of the UI verification gate",
+        "Keep framework-required document attributes next to root layout concerns"
+      ],
+      "code_patterns": [
+        "Avoid: smooth html scrolling without the framework marker",
+        "Use: <html data-scroll-behavior=\"smooth\">"
+      ],
+      "tests_to_add": [
+        "Assert browser verification has no application or framework warnings"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:45:21"
+  },
+  {
+    "mistake_id": "runtime-server-action-file-exported-object-2026-07-17-055",
+    "timestamp": "2026-07-17 14:52:02",
+    "category": "runtime",
+    "severity": "high",
+    "title": "Room Server Action module exported a non-function value",
+    "description": "Creating a room reached the root App Router error boundary. The active Next development log reports that a `use server` file exported an object; the room action module exports `INITIAL_ROOM_ACTION_STATE` alongside its async Server Actions and both room client components import that object.",
+    "context": {
+      "file": "src/app/rooms/actions.ts",
+      "line": 28,
+      "function": "room Server Action module boundary",
+      "code_snippet": "export const INITIAL_ROOM_ACTION_STATE: RoomActionState = { message: '', status: 'idle' };",
+      "environment": "development"
+    },
+    "error_message": "Error: A \"use server\" file can only export async functions, found object.",
+    "root_cause": "Next.js treats every export from a module-level `use server` file as a Server Function export. The shared initial action-state object violates that runtime contract even though the production TypeScript/build gate did not expose it.",
+    "solution": "Pending implementation: move the action-state type and initial object into a neutral shared module, leaving `src/app/rooms/actions.ts` with async function exports only.",
+    "prevention": {
+      "strategies": [
+        "Keep module-level `use server` files limited to async function exports",
+        "Exercise authenticated Server Action pages in the active development runtime in addition to production build checks"
+      ],
+      "code_patterns": [
+        "Avoid: export const INITIAL_STATE = {...} from a module-level `use server` file",
+        "Use: export shared state from a neutral module and import it separately in client components"
+      ],
+      "tests_to_add": [
+        "Load the authenticated room dashboard and create a room in the Next development runtime",
+        "Assert the development log contains no invalid-use-server-value error"
+      ],
+      "documentation_links": [
+        "https://nextjs.org/docs/messages/invalid-use-server-value"
+      ]
+    },
+    "related_mistakes": [
+      "build-jsx-inside-data-fetch-try-2026-07-17-049"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-create-runtime-diagnosis-20260717-145202",
+    "resolved": false,
+    "resolution_time": null
+  }
+]

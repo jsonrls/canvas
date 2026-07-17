@@ -1,0 +1,720 @@
+[
+  {
+    "mistake_id": "build-stale-skill-path-2026-07-17-005",
+    "timestamp": "2026-07-17 09:01:30",
+    "category": "build",
+    "severity": "low",
+    "title": "Next.js skill lookup used a stale plugin cache root",
+    "description": "The initial skill-read command targeted an incorrect plugin root. The pattern recurred when relevant Next.js references were resolved beside SKILL.md even though this installed package stores them under a references subdirectory.",
+    "context": {
+      "file": "/Users/jaysonreales/.codex/plugins/cache/openai-primary-runtime/vercel/1.0.0/skills/nextjs/SKILL.md",
+      "line": 1,
+      "function": "Skill discovery",
+      "code_snippet": "wc -l /Users/jaysonreales/.codex/plugins/cache/openai-primary-runtime/vercel/1.0.0/skills/nextjs/SKILL.md",
+      "environment": "development"
+    },
+    "error_message": "No such file or directory",
+    "root_cause": "The skill-root alias from the current catalog was not expanded before constructing the filesystem path.",
+    "solution": "Resolved the current catalog path, listed the installed skill package with rg --files, and read the required references from its actual references subdirectory.",
+    "prevention": {
+      "strategies": [
+        "Expand the current skill-root alias before every skill read",
+        "Do not infer plugin cache ownership from similarly named runtime directories"
+      ],
+      "code_patterns": [
+        "Avoid: hand-constructing a cached plugin path",
+        "Use: the exact root mapping supplied in the available-skills catalog"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 5,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:47:37",
+    "last_occurrence": "2026-07-17 16:38:00"
+  },
+  {
+    "mistake_id": "build-guessed-package-versions-2026-07-17-006",
+    "timestamp": "2026-07-17 09:01:30",
+    "category": "build",
+    "severity": "low",
+    "title": "Exploratory package probe requested unpublished server versions",
+    "description": "A compatibility check guessed that @y/websocket-server versions 0.1.3 and 0.1.4 might exist instead of listing published versions first.",
+    "context": {
+      "file": "npm registry query",
+      "line": 1,
+      "function": "Yjs server compatibility discovery",
+      "code_snippet": "npm view @y/websocket-server@0.1.3 dependencies; npm view @y/websocket-server@0.1.4 dependencies",
+      "environment": "development"
+    },
+    "error_message": "npm error E404 No match found for version 0.1.3; npm error E404 No match found for version 0.1.4",
+    "root_cause": "Version-specific metadata was queried before discovering the package's published version list.",
+    "solution": "Listed published versions, ran the required protocol test, and replaced the incompatible server package with the Yjs 13-compatible server bundled by y-websocket 2.1.0.",
+    "prevention": {
+      "strategies": [
+        "Run npm view <package> versions before querying historical metadata",
+        "Prefer integration verification over assumptions about protocol compatibility"
+      ],
+      "code_patterns": [
+        "Avoid: npm view package@guessed-version",
+        "Use: npm view package versions --json before selecting a version"
+      ],
+      "tests_to_add": [
+        "Run two-client Yjs synchronization against the selected server version"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-yjs-major-mismatch-2026-07-17-007"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:19:46"
+  },
+  {
+    "mistake_id": "build-yjs-major-mismatch-2026-07-17-007",
+    "timestamp": "2026-07-17 09:19:46",
+    "category": "build",
+    "severity": "medium",
+    "title": "Selected WebSocket server used an incompatible Yjs major",
+    "description": "The initial dependency set combined Tiptap's stable Yjs 13 collaboration stack with @y/websocket-server 0.1.5, which depends on a Yjs 14 prerelease. Both test clients reported initial sync, but document updates did not replicate.",
+    "context": {
+      "file": "package.json",
+      "line": 24,
+      "function": "Yjs collaboration dependency selection",
+      "code_snippet": "yjs@13.6.31 + @y/websocket-server@0.1.5 (yjs@14.0.0-7)",
+      "environment": "development"
+    },
+    "error_message": "Timed out while replicating an edit between two clients.",
+    "root_cause": "Package-name compatibility was assumed before comparing the transitive Yjs major used by the server with Tiptap's required Yjs major.",
+    "solution": "Removed @y/websocket-server, installed y-websocket 2.1.0 whose bundled server shares the root Yjs 13 dependency, and reran the two-client test successfully.",
+    "prevention": {
+      "strategies": [
+        "Inspect peer and transitive major versions before selecting collaboration transports",
+        "Require a real update-propagation test, not only successful connection and sync flags"
+      ],
+      "code_patterns": [
+        "Avoid: mixing a Yjs 14 server with a Yjs 13 editor stack",
+        "Use: npm ls yjs y-websocket --depth=1 and a two-client replication check"
+      ],
+      "tests_to_add": [
+        "Keep npm run verify:yjs in the required verification suite"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-guessed-package-versions-2026-07-17-006"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:19:46"
+  },
+  {
+    "mistake_id": "build-eslint-peer-range-2026-07-17-008",
+    "timestamp": "2026-07-17 09:19:46",
+    "category": "build",
+    "severity": "low",
+    "title": "Selected ESLint latest before checking plugin peer ranges",
+    "description": "The first toolchain manifest used ESLint 10.7.0 even though the Next.js lint plugin chain did not yet declare compatibility with ESLint 10.",
+    "context": {
+      "file": "package.json",
+      "line": 40,
+      "function": "Frontend toolchain dependency selection",
+      "code_snippet": "eslint@10.7.0 with eslint-config-next@16.2.10",
+      "environment": "development"
+    },
+    "error_message": "npm ls reported invalid ESLint peer dependencies.",
+    "root_cause": "The registry's latest version was selected before checking the supported peer range of the installed framework lint plugins.",
+    "solution": "Pinned ESLint 9.39.5, reinstalled dependencies, and verified npm run lint with zero errors.",
+    "prevention": {
+      "strategies": [
+        "Check framework-plugin peer dependency ranges before selecting a linter major",
+        "Treat npm ls invalid output as a blocking compatibility signal"
+      ],
+      "code_patterns": [
+        "Avoid: pairing each package's independent latest major",
+        "Use: a mutually compatible framework toolchain matrix"
+      ],
+      "tests_to_add": [
+        "Run npm ls and npm run lint after dependency installation"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:19:46"
+  },
+  {
+    "mistake_id": "build-prettier-env-parser-2026-07-17-011",
+    "timestamp": "2026-07-17 09:21:17",
+    "category": "build",
+    "severity": "low",
+    "title": "Passed a dotenv example directly to Prettier without a parser",
+    "description": "The documentation-format command included .env.example in an explicit Prettier file list even though Prettier does not infer a parser for dotenv files.",
+    "context": {
+      "file": ".env.example",
+      "line": 1,
+      "function": "Documentation formatting",
+      "code_snippet": "npx prettier --write README.md .env.example ...",
+      "environment": "development"
+    },
+    "error_message": "No parser could be inferred for file .env.example.",
+    "root_cause": "An unknown file type was included without --ignore-unknown or an explicit supported parser.",
+    "solution": "Left the already-canonical dotenv file unchanged and scoped format:check to supported source, configuration, script, and README file types.",
+    "prevention": {
+      "strategies": [
+        "Do not pass dotenv files to Prettier without a dedicated plugin",
+        "Keep formatting scripts scoped to file types supported by the installed formatter"
+      ],
+      "code_patterns": [
+        "Avoid: prettier .env.example",
+        "Use: explicit supported globs or --ignore-unknown"
+      ],
+      "tests_to_add": [
+        "Run npm run format:check in the final verification suite"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-collab-notes-20260717-090000",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:21:17"
+  },
+  {
+    "mistake_id": "build-supabase-changelog-url-2026-07-17-014",
+    "timestamp": "2026-07-17 09:47:37",
+    "category": "build",
+    "severity": "low",
+    "title": "Direct Supabase changelog Markdown URL was rejected",
+    "description": "The required changelog fetch attempted to open https://supabase.com/changelog.md directly, but the web safety layer rejected that URL form.",
+    "context": {
+      "file": "Supabase documentation discovery",
+      "line": 1,
+      "function": "Current changelog verification",
+      "code_snippet": "open https://supabase.com/changelog.md",
+      "environment": "development"
+    },
+    "error_message": "URL https://supabase.com/changelog.md is not safe to open (non-retryable error).",
+    "root_cause": "The documentation fetch used a direct Markdown route unsupported by the active web safety layer.",
+    "solution": "Switched to official Supabase changelog search results and opened the relevant SSR/auth changelog entry from the supported canonical page.",
+    "prevention": {
+      "strategies": [
+        "Use official-domain search when a documentation Markdown route is rejected as non-retryable",
+        "Do not retry the same blocked URL form"
+      ],
+      "code_patterns": [
+        "Avoid: repeated direct open of a rejected .md route",
+        "Use: domain-restricted search followed by canonical page open"
+      ],
+      "tests_to_add": [],
+      "documentation_links": ["https://supabase.com/changelog?tags=auth"]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:47:37",
+    "last_occurrence": "2026-07-17 12:50:50"
+  },
+  {
+    "mistake_id": "build-supabase-doc-query-complexity-2026-07-17-015",
+    "timestamp": "2026-07-17 09:47:37",
+    "category": "build",
+    "severity": "low",
+    "title": "Combined Supabase documentation query exceeded connector complexity",
+    "description": "One GraphQL documentation request combined auth, RLS, and migration searches with nested subsection content and exceeded the connector's complexity limit.",
+    "context": {
+      "file": "Supabase documentation discovery",
+      "line": 1,
+      "function": "MCP search_docs query",
+      "code_snippet": "auth + rls + migrations aliases with nested subsections in one query",
+      "environment": "development"
+    },
+    "error_message": "Supabase Content API GraphQL error: query exceeds complexity limit.",
+    "root_cause": "The query optimized for one round trip instead of the connector's bounded GraphQL complexity.",
+    "solution": "Split discovery into focused searches with limited result counts and shallower fields, then used official pages for the relevant details.",
+    "prevention": {
+      "strategies": [
+        "Issue one focused Supabase documentation topic per search query",
+        "Request subsections only after identifying a relevant guide"
+      ],
+      "code_patterns": [
+        "Avoid: multi-topic aliased searches with full nested content",
+        "Use: small searchDocs queries with title, href, and bounded content"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 09:47:37"
+  },
+  {
+    "mistake_id": "build-partial-prop-integration-2026-07-17-018",
+    "timestamp": "2026-07-17 10:01:20",
+    "category": "build",
+    "severity": "low",
+    "title": "Type check ran between producer and consumer prop updates",
+    "description": "The protected room page began passing authenticated identity and initial version metadata before CollaborativeRoom had been updated to declare and consume those props.",
+    "context": {
+      "file": "src/app/rooms/[roomId]/page.tsx",
+      "line": 64,
+      "function": "RoomPage",
+      "code_snippet": "<CollaborativeRoom currentUser={...} initialVersions={versions} />",
+      "environment": "development"
+    },
+    "error_message": "Property 'currentUser' does not exist on type 'CollaborativeRoomProps'.",
+    "root_cause": "An intentionally incremental type check was run after the server-side interface producer changed but before the client-side consumer was wired.",
+    "solution": "Update CollaborativeRoom and its version-history rail to accept the new serializable props, then rerun type checking after the integration boundary is complete.",
+    "prevention": {
+      "strategies": [
+        "When a prop contract spans a Server and Client Component, patch both sides in the same integration batch",
+        "Treat interim type checks as diagnostics and rerun after the complete interface change"
+      ],
+      "code_patterns": [
+        "Avoid: changing only the JSX caller before a compile checkpoint",
+        "Use: update the caller and CollaborativeRoomProps together"
+      ],
+      "tests_to_add": [
+        "Keep npm run typecheck after the history UI is connected"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:04:29",
+    "last_occurrence": "2026-07-17 13:12:53"
+  },
+  {
+    "mistake_id": "build-action-result-truthiness-2026-07-17-019",
+    "timestamp": "2026-07-17 10:04:29",
+    "category": "build",
+    "severity": "low",
+    "title": "Truthy error check did not discriminate nullable action data",
+    "description": "Version-history UI branches checked a nullable string error by truthiness, which did not prove to TypeScript that the paired data field was non-null.",
+    "context": {
+      "file": "src/components/collaboration/version-history-panel.tsx",
+      "line": 58,
+      "function": "saveVersion and restoreVersion",
+      "code_snippet": "if (result.error) { ... } result.data.label",
+      "environment": "development"
+    },
+    "error_message": "TS18047: 'result.data' is possibly 'null'.",
+    "root_cause": "The result union used correlated nullable fields rather than a literal status discriminator, and truthiness allowed an empty string case in TypeScript's control-flow model.",
+    "solution": "Guard on result.data === null so the remaining branch has a non-null success payload.",
+    "prevention": {
+      "strategies": [
+        "Narrow correlated action-result unions using an exact null check",
+        "Prefer a literal ok discriminator for more complex result contracts"
+      ],
+      "code_patterns": [
+        "Avoid: if (result.error) followed by result.data access",
+        "Use: if (result.data === null) return; then access result.data"
+      ],
+      "tests_to_add": [
+        "Keep strict TypeScript checking for client/server action boundaries"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-partial-prop-integration-2026-07-17-018"],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:04:29",
+    "last_occurrence": "2026-07-17 16:32:45"
+  },
+  {
+    "mistake_id": "build-react-effect-reset-2026-07-17-020",
+    "timestamp": "2026-07-17 10:07:27",
+    "category": "build",
+    "severity": "low",
+    "title": "Connection effect synchronously reset React state",
+    "description": "The first authenticated connection implementation reset several display states directly in the effect body before synchronizing with fetch and WebSocket systems.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 153,
+      "function": "CollaborativeRoom connection effect",
+      "code_snippet": "useEffect(() => { setConnection(null); setConnectionStatus('connecting'); ... })",
+      "environment": "development"
+    },
+    "error_message": "react-hooks/set-state-in-effect: Calling setState synchronously within an effect can trigger cascading renders.",
+    "root_cause": "Retry-display initialization was placed in the external-system effect instead of the user event that changes the retry attempt.",
+    "solution": "Moved retry resets into the reconnect callback and keyed the room client component so navigation initializes a fresh state boundary.",
+    "prevention": {
+      "strategies": [
+        "Initialize state in useState and reset it in the event that changes an effect dependency",
+        "Keep effect bodies focused on subscriptions and asynchronous external synchronization"
+      ],
+      "code_patterns": [
+        "Avoid: synchronous setState calls at the top of a connection effect",
+        "Use: reset in reconnect handler, then increment connectionAttempt"
+      ],
+      "tests_to_add": ["Keep React hook lint rules enabled"],
+      "documentation_links": [
+        "https://react.dev/learn/you-might-not-need-an-effect"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-secure-version-history-20260717-094555",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:07:27",
+    "last_occurrence": "2026-07-17 13:12:53"
+  },
+  {
+    "mistake_id": "build-generated-patch-prefix-2026-07-17-029",
+    "timestamp": "2026-07-17 10:52:18",
+    "category": "build",
+    "severity": "low",
+    "title": "Generated apply_patch additions omitted line prefixes",
+    "description": "A dynamically assembled audit-log patch prefixed only the first generated entry with a plus sign, so apply_patch rejected the remaining lines as invalid hunk syntax.",
+    "context": {
+      "file": ".agents/logs/changes-2026-07-17.txt",
+      "line": 1,
+      "function": "Audit log append",
+      "code_snippet": "lines.join(\"\\n\") inside an addition hunk",
+      "environment": "development"
+    },
+    "error_message": "apply_patch verification failed: invalid hunk; Expected update hunk to start with a @@ context marker",
+    "root_cause": "The generated array entries were joined without mapping each physical patch line to an addition line beginning with +.",
+    "solution": "Mapped every generated log entry to a plus-prefixed line before joining and reapplied the audit patch successfully.",
+    "prevention": {
+      "strategies": [
+        "Prefix every dynamically generated addition line before composing an apply_patch hunk",
+        "Keep generated patches small and anchored to exact tail context"
+      ],
+      "code_patterns": [
+        "Avoid: entries.join(\"\\n\")",
+        "Use: entries.map((entry) => `+${entry}`).join(\"\\n\")"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["logic-ambiguous-patch-context-2026-07-17-003"],
+    "occurrence_count": 3,
+    "agent": "Codex",
+    "session": "session-user-profiles-20260717-104729",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:52:18",
+    "last_occurrence": "2026-07-17 13:24:12"
+  },
+  {
+    "mistake_id": "build-profile-formatting-2026-07-17-030",
+    "timestamp": "2026-07-17 10:54:02",
+    "category": "build",
+    "severity": "low",
+    "title": "Profile integration changes missed repository formatting",
+    "description": "The first formatting gate found two newly edited files whose multiline expressions did not match the repository's Prettier output.",
+    "context": {
+      "file": "src/app/login/actions.ts; scripts/verify-version-history.mjs",
+      "line": 1,
+      "function": "Profile signup and verification integration",
+      "code_snippet": "Hand-formatted multiline validation and Supabase query expressions",
+      "environment": "development"
+    },
+    "error_message": "Code style issues found in 2 files. Run Prettier with --write to fix.",
+    "root_cause": "The edited multiline TypeScript and JavaScript expressions were not formatted before running the formatting gate.",
+    "solution": "Ran the pinned Prettier version on the two reported files and scheduled the formatting check to run again.",
+    "prevention": {
+      "strategies": [
+        "Format touched source and verification files before the full static-check batch",
+        "Use the repository-pinned formatter instead of manually predicting line wrapping"
+      ],
+      "code_patterns": [
+        "Avoid: relying on manual wrapping for nested conditions",
+        "Use: npx prettier --write on the exact touched files"
+      ],
+      "tests_to_add": [
+        "Keep npm run format:check in the required verification gate"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-prettier-env-parser-2026-07-17-011"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-user-profiles-20260717-104729",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:54:02"
+  },
+  {
+    "mistake_id": "build-index-timestamp-regex-2026-07-17-031",
+    "timestamp": "2026-07-17 10:54:34",
+    "category": "build",
+    "severity": "low",
+    "title": "Index timestamp parser ignored trailing JSON punctuation",
+    "description": "A helper script tried to extract the mistake-index timestamp with a regular expression that required a quote at end of line, but the JSON property correctly ended with a comma.",
+    "context": {
+      "file": ".agents/knowledge/mistakes-index.json",
+      "line": 3,
+      "function": "Knowledge index timestamp update",
+      "code_snippet": "output.match(/\\\"([^\\\"]+)\\\"\\s*$/)",
+      "environment": "development"
+    },
+    "error_message": "Could not parse index timestamp",
+    "root_cause": "The parser assumed the captured JSON string was the final token on the line and did not account for the required trailing comma.",
+    "solution": "Read the existing property directly and applied an exact-context patch without parsing it through a fragile end-of-line expression.",
+    "prevention": {
+      "strategies": [
+        "Use exact JSON property context for small apply_patch updates",
+        "When parsing JSON, parse the document structurally instead of matching punctuation with a regular expression"
+      ],
+      "code_patterns": [
+        "Avoid: regexes that assume JSON property punctuation",
+        "Use: exact apply_patch context or JSON.parse for read-only extraction"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-generated-patch-prefix-2026-07-17-029"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-user-profiles-20260717-104729",
+    "resolved": true,
+    "resolution_time": "2026-07-17 10:54:34"
+  },
+  {
+    "mistake_id": "build-offline-verifier-contracts-2026-07-17-033",
+    "timestamp": "2026-07-17 11:22:51",
+    "category": "build",
+    "severity": "low",
+    "title": "Initial offline verifier mixed CJS execution with browser and Node type assumptions",
+    "description": "The first TypeScript offline verifier used top-level await under the repository's CommonJS package mode, typed an ignored stdin child as fully piped, retained possibly undefined environment values across closures, and passed the ws constructor where y-websocket declared the DOM WebSocket shape.",
+    "context": {
+      "file": "scripts/verify-offline-sync.ts",
+      "line": 1,
+      "function": "Offline verification bootstrap",
+      "code_snippet": "top-level await; ChildProcessWithoutNullStreams with ignored stdin; WebSocketPolyfill: WebSocket",
+      "environment": "development"
+    },
+    "error_message": "TS2322/TS2345 type errors and tsx: Top-level await is currently not supported with the cjs output format.",
+    "root_cause": "The new verifier copied runtime patterns from untyped ESM scripts without adapting them to strict TypeScript and the package's CommonJS module classification.",
+    "solution": "Wrapped execution in an async main function, piped all child streams, validated environment values through a string-returning helper, guarded indexed array access, and explicitly bridged the ws constructor to y-websocket's browser-facing option type.",
+    "prevention": {
+      "strategies": [
+        "Match test bootstrap style to the repository module mode before the first run",
+        "Run strict typecheck alongside every new TypeScript integration verifier"
+      ],
+      "code_patterns": [
+        "Avoid: top-level await in a CommonJS-classified TypeScript script",
+        "Use: async main().catch(...) with explicit Node/browser type boundaries"
+      ],
+      "tests_to_add": [
+        "Keep npm run typecheck and verify:offline-sync in the same feature gate"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-action-result-truthiness-2026-07-17-019"],
+    "occurrence_count": 3,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:22:51",
+    "last_occurrence": "2026-07-17 16:35:26"
+  },
+  {
+    "mistake_id": "build-mutable-provider-in-react-state-2026-07-17-035",
+    "timestamp": "2026-07-17 11:30:18",
+    "category": "build",
+    "severity": "low",
+    "title": "Mutable WebSocket provider was reachable through React state",
+    "description": "The first local-first refactor stored the WebsocketProvider inside a useState connection object and later updated its params and connection state during token refresh.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 308,
+      "function": "openRemoteConnection",
+      "code_snippet": "connection.provider.params = { access_token }; connection.provider.connect()",
+      "environment": "development"
+    },
+    "error_message": "react-hooks/immutability: Modifying a value returned from useState(), which should not be modified directly.",
+    "root_cause": "A mutable external-system object was grouped with render state for convenience, making legitimate provider mutations look like direct React state mutation.",
+    "solution": "Kept mutable provider operations behind a ref and exposed the same stable provider as a read-only render handle in the connection state.",
+    "prevention": {
+      "strategies": [
+        "Store mutable external clients in refs and expose only immutable render data through state",
+        "Run React hook lint immediately after connection lifecycle refactors"
+      ],
+      "code_patterns": [
+        "Avoid: state.provider.params = value",
+        "Use: providerRef.current.params = value for mutations and a stable state handle for child props"
+      ],
+      "tests_to_add": [
+        "Keep react-hooks/immutability enabled in the required lint gate"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-react-effect-reset-2026-07-17-020"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:30:18"
+  },
+  {
+    "mistake_id": "build-provider-ref-read-during-render-2026-07-17-036",
+    "timestamp": "2026-07-17 11:33:25",
+    "category": "build",
+    "severity": "low",
+    "title": "Provider ref was read during React render",
+    "description": "The first fix for mutable provider state moved the WebsocketProvider entirely to a ref, but then read providerRef.current while deciding whether to render the editor and while passing its provider prop.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 545,
+      "function": "CollaborativeRoom render",
+      "code_snippet": "connection && providerRef.current; provider={providerRef.current}",
+      "environment": "development"
+    },
+    "error_message": "react-hooks/refs: Cannot access refs during render.",
+    "root_cause": "The ref-only design satisfied the immutability rule for mutations but violated the React compiler rule that refs are not render data and do not trigger updates.",
+    "solution": "Stored the same stable provider as an immutable handle in the initialized connection state for rendering while retaining the ref as the only path used for mutable lifecycle operations.",
+    "prevention": {
+      "strategies": [
+        "Separate the render handle for an external client from the ref used to mutate its lifecycle",
+        "Treat refs as effect and event-handler storage, never as render conditions or JSX props"
+      ],
+      "code_patterns": [
+        "Avoid: provider={providerRef.current}",
+        "Use: provider={connection.provider} while lifecycle effects mutate providerRef.current"
+      ],
+      "tests_to_add": [
+        "Keep react-hooks/refs enabled in the required lint gate"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "build-mutable-provider-in-react-state-2026-07-17-035"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-offline-sync-20260717-111330",
+    "resolved": true,
+    "resolution_time": "2026-07-17 11:33:25"
+  },
+  {
+    "mistake_id": "build-jsx-inside-data-fetch-try-2026-07-17-049",
+    "timestamp": "2026-07-17 13:12:53",
+    "category": "build",
+    "severity": "low",
+    "title": "Room settings JSX was returned inside a data-fetch try block",
+    "description": "The owner settings Server Component returned its JSX from the same try block used to classify repository access errors, which React lint rejects because render errors are not caught by that try/catch.",
+    "context": {
+      "file": "src/app/rooms/[roomId]/settings/page.tsx",
+      "line": 29,
+      "function": "RoomSettingsPage",
+      "code_snippet": "try { const room = await getRoomSettings(...); return <RoomSettingsPanel room={room} />; }",
+      "environment": "development"
+    },
+    "error_message": "react-hooks/error-boundaries: Avoid constructing JSX within try/catch",
+    "root_cause": "Data-access error classification and component construction were kept in one lexical block instead of ending the try after the awaited read.",
+    "solution": "Store the fetched settings in a variable inside the try/catch and return JSX only after the catch block.",
+    "prevention": {
+      "strategies": [
+        "Limit Server Component try blocks to awaited operations that are expected to throw",
+        "Construct JSX after access-error classification"
+      ],
+      "code_patterns": [
+        "Avoid: return <Component /> inside data-fetch try",
+        "Use: let data; try { data = await read(); } catch { ... } return <Component data={data} />"
+      ],
+      "tests_to_add": ["Keep react-hooks/error-boundaries enabled"],
+      "documentation_links": [
+        "https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary"
+      ]
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:12:53"
+  },
+  {
+    "mistake_id": "build-unused-room-wiring-contracts-2026-07-17-050",
+    "timestamp": "2026-07-17 13:12:53",
+    "category": "build",
+    "severity": "low",
+    "title": "Room wiring left retired imports and action contract parameters unused",
+    "description": "The first focused lint pass found retired placeholder-control icons, an unused room-name prop, and required useActionState contract parameters that the current ESLint configuration does not exempt by underscore prefix.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 14,
+      "function": "Room UI integration",
+      "code_snippet": "MoreHorizontal, Search, Settings2; _state; _formData",
+      "environment": "development"
+    },
+    "error_message": "@typescript-eslint/no-unused-vars warnings for retired imports, roomName, and Server Action parameters",
+    "root_cause": "Placeholder controls were removed without pruning all imports, and action signatures retained unnamed contract inputs without explicitly consuming them.",
+    "solution": "Remove retired imports, render the real room name, and explicitly consume required action-state/form arguments with void expressions.",
+    "prevention": {
+      "strategies": [
+        "Prune imports in the same patch that replaces placeholder controls",
+        "Explicitly consume framework-required callback parameters under strict unused-variable rules"
+      ],
+      "code_patterns": [
+        "Avoid: relying on underscore prefixes when ESLint is not configured to ignore them",
+        "Use: void state; void formData for required-but-unused callback inputs"
+      ],
+      "tests_to_add": [
+        "Run focused ESLint immediately after UI contract wiring"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-partial-prop-integration-2026-07-17-018"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:12:53"
+  },
+  {
+    "mistake_id": "build-room-verifier-format-preflight-2026-07-17-051",
+    "timestamp": "2026-07-17 13:18:56",
+    "category": "build",
+    "severity": "low",
+    "title": "New room verifier scripts failed their first formatting preflight",
+    "description": "Prettier check reported the newly created room-management verifier and the adapted version-history verifier needed mechanical formatting before execution.",
+    "context": {
+      "file": "scripts/verify-room-management.mjs",
+      "line": 1,
+      "function": "Verifier formatting preflight",
+      "code_snippet": "npx prettier --check scripts/verify-room-management.mjs scripts/verify-version-history.mjs",
+      "environment": "development"
+    },
+    "error_message": "Code style issues found in 2 files. Run Prettier with --write to fix.",
+    "root_cause": "The large verifier patch was checked before the repository formatter had been applied to the new JavaScript structure.",
+    "solution": "Applied Prettier to both verifier files before running functional verification.",
+    "prevention": {
+      "strategies": [
+        "Format newly created verifier scripts before the first formatting gate"
+      ],
+      "code_patterns": [
+        "Avoid: expecting a large generated script patch to already match mechanical wrapping",
+        "Use: prettier --write followed by prettier --check"
+      ],
+      "tests_to_add": ["Rerun the focused formatting check"],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-room-creation-management-20260717-124944",
+    "resolved": true,
+    "resolution_time": "2026-07-17 13:18:56"
+  }
+]

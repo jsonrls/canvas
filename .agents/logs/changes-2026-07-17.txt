@@ -1,0 +1,2866 @@
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-remove-docker-20260717-083730
+DATE: 2026-07-17
+TIME: 08:37:30
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Remove Docker setup and all active Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:30
+SESSION: session-remove-docker-20260717-083730
+OPERATION: CREATE
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the required change log for the Docker-removal session.
+
+BEFORE:
+File did not exist.
+
+AFTER:
+Session header and structured change entries for this task.
+
+CONTEXT:
+- Related files: All files changed in session-remove-docker-20260717-083730
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker setup and all active Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: DELETE
+FILE: .dockerignore
+================================================================================
+CHANGE DESCRIPTION:
+Deleted the Docker build-context ignore configuration because the project no longer uses Docker.
+
+BEFORE:
+550-byte file; SHA-256 6f65144c8230f247151668d2c5e30c5a1ce61ac1d7ef0482a40a35d6563878ac.
+
+AFTER:
+File removed.
+
+CONTEXT:
+- Related files: Dockerfile, docker-compose.yml, DOCKER.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker setup
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: DELETE
+FILE: DOCKER.md
+================================================================================
+CHANGE DESCRIPTION:
+Deleted the Docker development guide so onboarding no longer instructs contributors to use a removed workflow.
+
+BEFORE:
+7,812-byte file; SHA-256 2570de318cdbc7a94e30514a7aa684ed5a084977025f10a8582647fc5124e38c.
+
+AFTER:
+File removed.
+
+CONTEXT:
+- Related files: .agents/ENVIRONMENT.md, .agents/DEPLOYMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: DELETE
+FILE: Dockerfile
+================================================================================
+CHANGE DESCRIPTION:
+Deleted the application container build definition.
+
+BEFORE:
+1,528-byte file; SHA-256 a0204b182443d3d50daddd6dc078b66aaabe7e6f3cd7976d1a8182b77380f7b3.
+
+AFTER:
+File removed.
+
+CONTEXT:
+- Related files: .dockerignore, docker-compose.yml
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker setup
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: DELETE
+FILE: docker-compose.yml
+================================================================================
+CHANGE DESCRIPTION:
+Deleted the local container orchestration configuration.
+
+BEFORE:
+1,189-byte file; SHA-256 2164e2811d4af313a2230e7f22b5e750798e77f02e00c52ddca0fe00ec77539c.
+
+AFTER:
+File removed.
+
+CONTEXT:
+- Related files: .dockerignore, Dockerfile, DOCKER.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker setup
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/ARCHITECTURE.md:188
+================================================================================
+CHANGE DESCRIPTION:
+Updated the development architecture to use native Node.js tooling and the Supabase CLI.
+
+BEFORE:
+- **Local Development**: Docker Compose for local services
+
+AFTER:
+- **Local Development**: Native Node.js tooling and Supabase CLI for local services
+
+CONTEXT:
+- Related files: .agents/ENVIRONMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/DECISIONS.md:341
+================================================================================
+CHANGE DESCRIPTION:
+Generalized the self-hosting alternative and removed ADR-012, which selected Docker for local development, because that decision no longer reflects the project.
+
+BEFORE:
+ADR-007 named "Self-hosted (Docker + Kubernetes)"; ADR-012 accepted Docker and Docker Compose for local development and documented their workflow.
+
+AFTER:
+ADR-007 names "Self-hosted infrastructure"; ADR-012 and its Docker-specific rationale, implementation, workflow, and consequences are removed.
+
+CONTEXT:
+- Related files: .agents/ARCHITECTURE.md, .agents/ENVIRONMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/DEPLOYMENT.md:137
+================================================================================
+CHANGE DESCRIPTION:
+Removed Dockerfile and Compose examples from the Yjs deployment instructions while retaining the Railway CLI workflow.
+
+BEFORE:
+The Yjs section supplied a Dockerfile and a three-service Compose configuration before the Railway commands.
+
+AFTER:
+The Yjs section directly documents Railway setup and specifies `npm start` as the service start command.
+
+CONTEXT:
+- Related files: Dockerfile, docker-compose.yml
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/ENVIRONMENT.md:15
+================================================================================
+CHANGE DESCRIPTION:
+Removed Docker from optional prerequisites and deleted the optional Docker setup and service instructions.
+
+BEFORE:
+Optional software listed Docker, and a Docker Setup section documented Compose commands and services.
+
+AFTER:
+Optional software lists only the PostgreSQL client and VS Code; setup proceeds from native environment configuration to IDE configuration.
+
+CONTEXT:
+- Related files: .agents/ARCHITECTURE.md, DOCKER.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove Docker documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:37:45
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/CHANGELOG.md:27
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the removal of the Docker development configuration and related documentation under Unreleased.
+
+BEFORE:
+### Removed
+- N/A
+
+AFTER:
+### Removed
+- Docker development configuration and Docker-specific documentation
+
+CONTEXT:
+- Related files: Dockerfile, docker-compose.yml, .dockerignore, DOCKER.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Document Docker removal
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:38:31
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded a resolved low-severity verification mistake after a zsh loop variable shadowed the executable search path.
+
+BEFORE:
+[]
+
+AFTER:
+Added testing-zsh-path-2026-07-17-001 with root cause, solution, and prevention strategies.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from verification tooling error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:38:31
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated mistake totals and the recent-mistake list for the newly recorded verification issue.
+
+BEFORE:
+total_mistakes: 0; testing: 0; recent_mistakes: []
+
+AFTER:
+total_mistakes: 1; testing: 1; recent_mistakes: ["testing-zsh-path-2026-07-17-001"]
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:40:14
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded a resolved low-severity verification-scope mistake after the active-reference scan included an audit artifact.
+
+BEFORE:
+Contained one resolved verification mistake.
+
+AFTER:
+Also contains testing-residue-scope-2026-07-17-002 with scope-specific prevention guidance.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from residue-scan scope error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:40:14
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated mistake totals and recent-mistake ordering for the residue-scan scope issue.
+
+BEFORE:
+total_mistakes: 1; testing: 1; one recent mistake.
+
+AFTER:
+total_mistakes: 2; testing: 2; two recent mistakes, newest first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:41:28
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded a resolved low-severity logging mistake caused by ambiguous patch context.
+
+BEFORE:
+[]
+
+AFTER:
+Added logic-ambiguous-patch-context-2026-07-17-003 with a unique-anchor prevention strategy.
+
+CONTEXT:
+- Related files: .agents/logs/changes-2026-07-17.txt, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from session-footer placement error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:41:28
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated mistake totals and recent-mistake ordering for the patch-context issue.
+
+BEFORE:
+total_mistakes: 2; logic: 0; two recent mistakes.
+
+AFTER:
+total_mistakes: 3; logic: 1; three recent mistakes, newest first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:41:28
+SESSION: session-remove-docker-20260717-083730
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Moved the prematurely inserted session footer behind the final change entries and corrected the session totals.
+
+BEFORE:
+The SESSION ENDED block appeared at line 314 before two 08:40:14 change entries.
+
+AFTER:
+All chronological change entries precede the SESSION ENDED block at end of file.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Correct change-log ordering
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 08:41:28
+DURATION: 00:03:58
+TOTAL CHANGES: 20
+CHANGE BREAKDOWN:
+- Code changes: 0
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 9
+- Dependency changes: 0
+- Documentation changes: 11
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-clean-env-20260717-085407
+DATE: 2026-07-17
+TIME: 08:54:07
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Remove stale database configuration and standardize the Yjs WebSocket environment variable
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:07
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started a structured change-log session for the environment cleanup.
+
+BEFORE:
+The file ended with the completed Docker-removal session.
+
+AFTER:
+Appended the session-clean-env-20260717-085407 header.
+
+CONTEXT:
+- Related files: .env, .env.example, .agents/ENVIRONMENT.md, .agents/DEPLOYMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Initialize environment-cleanup change log
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .env:6
+================================================================================
+CHANGE DESCRIPTION:
+Removed the unused raw database connection placeholder and normalized the local Yjs WebSocket URL formatting.
+
+BEFORE:
+Contained an unused DATABASE_URL section and a quoted NEXT_PUBLIC_YJS_WS_URL value.
+
+AFTER:
+Contains only the unquoted canonical NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234 value for this section.
+
+CONTEXT:
+- Related files: .env.example
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Clean active environment configuration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .env.example:6
+================================================================================
+CHANGE DESCRIPTION:
+Removed the unused database connection example and aligned the Yjs WebSocket example with the active local port.
+
+BEFORE:
+Contained an unused DATABASE_URL placeholder and NEXT_PUBLIC_YJS_WS_URL=ws://localhost:3001.
+
+AFTER:
+Contains NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234 and no raw database URL.
+
+CONTEXT:
+- Related files: .env, .agents/ENVIRONMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Clean environment template
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/ENVIRONMENT.md:75
+================================================================================
+CHANGE DESCRIPTION:
+Standardized the local Yjs environment-variable name.
+
+BEFORE:
+NEXT_PUBLIC_YJS_WEBSOCKET_URL=ws://localhost:1234
+
+AFTER:
+NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
+
+CONTEXT:
+- Related files: .env.example, .agents/DEPLOYMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Standardize local environment documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/DEPLOYMENT.md:103
+================================================================================
+CHANGE DESCRIPTION:
+Standardized the production Yjs environment-variable name.
+
+BEFORE:
+NEXT_PUBLIC_YJS_WEBSOCKET_URL=wss://yjs-server.myboardprep.com
+
+AFTER:
+NEXT_PUBLIC_YJS_WS_URL=wss://yjs-server.myboardprep.com
+
+CONTEXT:
+- Related files: .env.example, .agents/ENVIRONMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Standardize deployment documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/CHANGELOG.md:22
+================================================================================
+CHANGE DESCRIPTION:
+Documented the canonical Yjs WebSocket environment variable and local port under Unreleased.
+
+BEFORE:
+### Changed
+- N/A
+
+AFTER:
+### Changed
+- Standardized Yjs WebSocket configuration on NEXT_PUBLIC_YJS_WS_URL and port 1234
+
+CONTEXT:
+- Related files: .env.example, .agents/ENVIRONMENT.md, .agents/DEPLOYMENT.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Document environment cleanup
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-deployment.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the resolved configuration-drift issue and prevention guidance required by the mistake-learning policy.
+
+BEFORE:
+[]
+
+AFTER:
+Added deployment-env-drift-2026-07-17-004.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record environment configuration drift
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 08:54:20
+SESSION: session-clean-env-20260717-085407
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated aggregate mistake counts and recent history for the resolved deployment configuration issue.
+
+BEFORE:
+total_mistakes: 3; deployment: 0; three recent mistakes.
+
+AFTER:
+total_mistakes: 4; deployment: 1; four recent mistakes, newest first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-deployment.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 08:55:45
+DURATION: 00:01:38
+TOTAL CHANGES: 10
+CHANGE BREAKDOWN:
+- Code changes: 0
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 4
+- Dependency changes: 0
+- Documentation changes: 6
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-collab-notes-20260717-090000
+DATE: 2026-07-17
+TIME: 09:00:00
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Implement the roadmap-aligned collaborative rich-text notes vertical slice
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:00:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the structured change-log session for the collaborative notes vertical slice.
+
+BEFORE:
+The file ended with the completed environment-cleanup session.
+
+AFTER:
+Appended session-collab-notes-20260717-090000.
+
+CONTEXT:
+- Related files: plan/feature-collaborative-notes-vertical-slice-1.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Next.js, React, Tiptap, Yjs, Tailwind planned
+
+AGENT: Codex
+TASK: Initialize collaborative-notes change log
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:01:30
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: plan/feature-collaborative-notes-vertical-slice-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Created the required deterministic implementation plan for the first executable roadmap vertical slice.
+
+BEFORE:
+File did not exist.
+
+AFTER:
+Three-phase plan covering the Next.js foundation, collaborative editor, verification, and roadmap reconciliation.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, .agents/PRD.md, .agents/DESIGN.md
+- API endpoints affected: Yjs WebSocket base URL only
+- Database changes: None
+- Dependencies: Next.js, React, Tiptap, Yjs, Tailwind
+
+AGENT: Codex
+TASK: Plan collaborative rich-text notes vertical slice
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:01:30
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded two resolved tooling-discovery errors: a stale skill cache path and guessed unpublished package versions.
+
+BEFORE:
+[]
+
+AFTER:
+Added build-stale-skill-path-2026-07-17-005 and build-guessed-package-versions-2026-07-17-006 with prevention guidance.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: @y/websocket-server compatibility discovery
+
+AGENT: Codex
+TASK: Record tooling discovery mistakes
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:01:30
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated aggregate mistake totals and recent entries for the two build-tooling records.
+
+BEFORE:
+total_mistakes: 4; build: 0.
+
+AFTER:
+total_mistakes: 6; build: 2; both build records listed newest first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: package.json; package-lock.json
+================================================================================
+CHANGE DESCRIPTION:
+Replaced the minimal server-only manifest with the pinned BoardPrep web toolchain, runnable development and verification scripts, and a Yjs 13-compatible WebSocket transport.
+
+BEFORE:
+The manifest only exposed @y/websocket-server and no application, build, lint, typecheck, formatting, or integration-test workflow.
+
+AFTER:
+Next.js 16, React 19, TypeScript 5, Tiptap 3, Yjs 13, y-websocket 2.1, Tailwind 4, ESLint 9, Prettier, and verification scripts are installed and locked.
+
+CONTEXT:
+- Related files: scripts/verify-yjs.mjs, src/components/collaboration
+- API endpoints affected: ws://localhost:1234
+- Database changes: None
+- Dependencies: Application toolchain established; incompatible @y/websocket-server removed
+
+AGENT: Codex
+TASK: Establish application dependencies and commands
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: tsconfig.json; next.config.ts; postcss.config.mjs; eslint.config.mjs; next-env.d.ts; .gitignore
+================================================================================
+CHANGE DESCRIPTION:
+Created the strict TypeScript, Next.js, PostCSS/Tailwind, ESLint, generated-type, and repository-ignore configuration.
+
+BEFORE:
+No frontend toolchain configuration existed.
+
+AFTER:
+The App Router compiles with strict TypeScript, Next.js lint rules, Tailwind PostCSS, alias resolution, and generated artifacts excluded from source control.
+
+CONTEXT:
+- Related files: package.json, src/app
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Next.js, TypeScript, ESLint, Tailwind
+
+AGENT: Codex
+TASK: Configure Next.js frontend toolchain
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: src/app/layout.tsx; src/app/page.tsx; src/app/loading.tsx; src/app/error.tsx; src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Created the BoardPrep App Router shell, demo-room redirect, global loading/error boundaries, and responsive editorial design system.
+
+BEFORE:
+No application source or user interface existed.
+
+AFTER:
+The application uses local optimized fonts, BoardPrep brand tokens, accessible focus states, responsive layout rules, rich editor typography, and connection-state styling.
+
+CONTEXT:
+- Related files: src/app/rooms/[roomId], boardprep.jpg
+- API endpoints affected: GET /
+- Database changes: None
+- Dependencies: Next.js, React, Tailwind CSS
+
+AGENT: Codex
+TASK: Build application and visual foundation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: src/app/rooms/[roomId]/page.tsx; src/app/rooms/[roomId]/loading.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Created the validated dynamic study-room route, metadata generation, collaboration boundary, and route loading state.
+
+BEFORE:
+No room route existed.
+
+AFTER:
+Valid lowercase room identifiers render a named collaborative room at /rooms/[roomId], while malformed identifiers return the Next.js not-found boundary.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: GET /rooms/[roomId]
+- Database changes: None
+- Dependencies: Next.js App Router
+
+AGENT: Codex
+TASK: Add collaborative room route
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: src/components/collaboration/collaborative-room.tsx; src/components/collaboration/rich-text-editor.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Implemented the Yjs/WebSocket collaboration lifecycle, awareness presence, cursor identity, connection states, responsive room shell, and accessible Tiptap rich-text toolbar.
+
+BEFORE:
+No browser collaboration or editor components existed.
+
+AFTER:
+Room clients share one Yjs document and can format headings, marks, lists, quotes, and code with undo/redo while seeing participant and synchronization feedback.
+
+CONTEXT:
+- Related files: src/app/globals.css, scripts/verify-yjs.mjs
+- API endpoints affected: NEXT_PUBLIC_YJS_WS_URL room connections
+- Database changes: None; documents remain in memory
+- Dependencies: Tiptap, Yjs, y-websocket, Lucide React
+
+AGENT: Codex
+TASK: Implement collaborative rich-text room
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: scripts/verify-yjs.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Added an isolated two-client protocol test that starts the local WebSocket server, synchronizes two Yjs documents, verifies edit replication, and cleans up its resources.
+
+BEFORE:
+There was no executable collaboration integration test.
+
+AFTER:
+npm run verify:yjs proves document updates traverse the configured Yjs 13 server protocol.
+
+CONTEXT:
+- Related files: package.json, package-lock.json
+- API endpoints affected: temporary ws://127.0.0.1:1234 room
+- Database changes: None
+- Dependencies: y-websocket, yjs, ws
+
+AGENT: Codex
+TASK: Verify Yjs synchronization
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: CREATE
+FILE: README.md; .env.example
+================================================================================
+CHANGE DESCRIPTION:
+Documented installation, local process startup, environment configuration, verification commands, and the current persistence/authentication limitations.
+
+BEFORE:
+No root setup guide or safe environment template existed.
+
+AFTER:
+Developers can start Next.js and Yjs together and understand that NEXT_PUBLIC_YJS_WS_URL points to the local service while DATABASE_URL is not used in this slice.
+
+CONTEXT:
+- Related files: package.json, .agents/API.md
+- API endpoints affected: http://localhost:3000 and ws://localhost:1234
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Document local collaboration workflow
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/API.md; .agents/ROADMAP.md; .agents/CHANGELOG.md; plan/feature-collaborative-notes-vertical-slice-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Reconciled project documentation with verified executable behavior, completed the implementation plan, corrected the Yjs endpoint, and marked the delivered roadmap capabilities.
+
+BEFORE:
+The API guide pointed to ws://localhost:3000/yjs, REST drafts appeared implemented, the roadmap left rich text unchecked, and the plan was in progress.
+
+AFTER:
+The API distinguishes implemented and planned contracts, Phase 2 rich text and Phase 3 collaborative notes/presence are checked, technology upgrades are verified, and the plan records all test evidence and the unavailable visual-browser check.
+
+CONTEXT:
+- Related files: README.md, scripts/verify-yjs.mjs
+- API endpoints affected: NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
+- Database changes: None
+- Dependencies: Documentation aligned to installed versions
+
+AGENT: Codex
+TASK: Reconcile roadmap and technical documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json; .agents/knowledge/mistakes-security.json; .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and indexed dependency-major, ESLint-peer, PostCSS-audit, port-preflight, and formatter-parser lessons discovered during implementation and verification.
+
+BEFORE:
+The knowledge base contained six earlier records and no current security finding.
+
+AFTER:
+Eleven structured records are indexed; four new resolved workflow errors and one unresolved upstream Next.js/PostCSS audit risk include prevention guidance.
+
+CONTEXT:
+- Related files: package.json, package-lock.json, .env.example
+- API endpoints affected: Local port 1234 preflight
+- Database changes: None
+- Dependencies: Next.js, PostCSS, ESLint, Yjs
+
+AGENT: Codex
+TASK: Capture implementation lessons and residual security risk
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:22:00
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Appended the complete implementation audit trail for the collaborative rich-text vertical slice.
+
+BEFORE:
+The active session contained only its initialization, plan, and initial tooling-discovery records.
+
+AFTER:
+All application, configuration, verification, documentation, dependency, and knowledge-base changes are represented in the active session.
+
+CONTEXT:
+- Related files: All files changed by session-collab-notes-20260717-090000
+- API endpoints affected: GET /rooms/[roomId], ws://localhost:1234
+- Database changes: None
+- Dependencies: Full installed frontend and collaboration toolchain
+
+AGENT: Codex
+TASK: Maintain structured change log
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:23:19
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and indexed the final residue scan's missing node_modules exclusion.
+
+BEFORE:
+The active-reference scan treated installed Next.js documentation as project-owned source.
+
+AFTER:
+The twelfth knowledge record documents explicit dependency/build-directory exclusions for non-git workspaces.
+
+CONTEXT:
+- Related files: .gitignore
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Next.js documentation was excluded from active-source inspection
+
+AGENT: Codex
+TASK: Capture verification scope correction
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:26:17
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Ensured each room's first WebSocket status event replaces any prior collaboration resource instead of preserving a stale connection across room-parameter changes.
+
+BEFORE:
+The event callback retained an existing connection object, which could point to a destroyed document after client-side room navigation.
+
+AFTER:
+The current room's provider and Yjs document always become the rendered editor connection from the external status event.
+
+CONTEXT:
+- Related files: src/app/rooms/[roomId]/page.tsx
+- API endpoints affected: WebSocket room changes
+- Database changes: None
+- Dependencies: React, Yjs, y-websocket
+
+AGENT: Codex
+TASK: Harden room connection lifecycle
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:26:17
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt; .agents/knowledge/mistakes-logic.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Relocated the collaboration audit block into the current session, updated the existing ambiguous-patch lesson to occurrence two, and restored chronological physical ordering.
+
+BEFORE:
+An append patch matched an older repeated task label and inserted the collaboration audit block inside a prior session.
+
+AFTER:
+All earlier sessions remain intact, the active collaboration entries follow its session header, and the known lesson now reflects the recurrence and prevention requirement.
+
+CONTEXT:
+- Related files: .agents/logs/changes-2026-07-17.txt
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Repair audit-log ordering and update existing lesson
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:27:05
+SESSION: session-collab-notes-20260717-090000
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and indexed the generated Next.js types race caused by running standalone tsc concurrently with next build.
+
+BEFORE:
+The final validation batch treated two commands that mutate/read .next/types as independent checks.
+
+AFTER:
+The thirteenth lesson requires sequential build and typecheck execution; the sequential typecheck passed.
+
+CONTEXT:
+- Related files: tsconfig.json, .next/types
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Next.js, TypeScript
+
+AGENT: Codex
+TASK: Capture verification concurrency rule
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 09:27:45
+DURATION: 00:27:45
+TOTAL CHANGES: 30
+CHANGE BREAKDOWN:
+- Code changes: 10
+- API changes: 1
+- Database changes: 0
+- Configuration changes: 7
+- Dependency changes: 2
+- Documentation and audit changes: 10
+
+VERIFICATION SUMMARY:
+- npm run format:check: passed
+- npm run lint: passed
+- npm run build: passed
+- npm run typecheck after build: passed
+- npm run verify:yjs: passed with two independent clients
+- GET /rooms/demo: returned 200 OK with expected content
+- Active stale-configuration scan: passed
+- Mistake knowledge JSON validation: passed
+- Browser visual automation: unavailable; human responsive/two-tab QA remains
+- npm audit: two documented moderate findings in Next.js's nested PostCSS remain; no unsafe force-downgrade applied
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-secure-version-history-20260717-094555
+DATE: 2026-07-17
+TIME: 09:45:55
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Implement authenticated durable Yjs documents and restorable version history
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:45:55
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE
+FILE: plan/feature-secure-version-history-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Created the deterministic implementation plan for the next unchecked Phase 2 roadmap capability and its required auth/persistence foundation.
+
+BEFORE:
+The previous vertical-slice plan was complete and no executable plan covered version history.
+
+AFTER:
+Four phases define exact authentication, RLS schema, Yjs persistence, version-history UI, verification, and documentation tasks.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, .agents/ARCHITECTURE.md, .agents/PRD.md
+- API endpoints affected: Planned login, auth confirm, access-token, and version-history mutations
+- Database changes: Planned rooms, room_members, documents, document_versions, private RLS helpers
+- Dependencies: Supabase JS, Supabase SSR, Supabase CLI, existing Yjs stack
+
+AGENT: Codex
+TASK: Plan secure version-history vertical slice
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:45:55
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Initialized the structured audit session for authenticated persistence and version history.
+
+BEFORE:
+The log ended with the completed collaborative-rich-text session.
+
+AFTER:
+Appended session-secure-version-history-20260717-094555 and the first plan change record.
+
+CONTEXT:
+- Related files: plan/feature-secure-version-history-1.md
+- API endpoints affected: None yet
+- Database changes: None yet
+- Dependencies: None yet
+
+AGENT: Codex
+TASK: Initialize secure version-history change log
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:47:37
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json; .agents/knowledge/mistakes-deployment.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded documentation-discovery, connector-query, IPv6 database-route, and Supabase public-key configuration lessons; incremented the existing skill-path occurrence.
+
+BEFORE:
+The knowledge base contained thirteen records and no version-history session discoveries.
+
+AFTER:
+Seventeen indexed records now include two resolved build errors, one resolved database-connectivity error, and one unresolved public-key mismatch with security-safe prevention guidance.
+
+CONTEXT:
+- Related files: .env, supabase/config.toml, plan/feature-secure-version-history-1.md
+- API endpoints affected: Configured Supabase REST and database endpoints
+- Database changes: Read-only connectivity checks only
+- Dependencies: Supabase documentation connector and PostgreSQL session pooler
+
+AGENT: Codex
+TASK: Capture version-history discovery mistakes
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:49:15
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: package.json; package-lock.json
+================================================================================
+CHANGE DESCRIPTION:
+Installed and locked the official Supabase JavaScript, SSR, and project-scoped CLI packages required for authenticated persistence and reproducible migrations.
+
+BEFORE:
+The project had no Supabase runtime client or local migration CLI dependency.
+
+AFTER:
+Pinned @supabase/supabase-js 2.110.7, @supabase/ssr 0.12.3, and supabase CLI 2.109.1 are present in the manifest and lockfile.
+
+CONTEXT:
+- Related files: supabase/config.toml, planned src/lib/supabase files
+- API endpoints affected: Planned Supabase Auth and Data API access
+- Database changes: None
+- Dependencies: Added three exact Supabase package versions
+
+AGENT: Codex
+TASK: Install Supabase auth, data, and migration toolchain
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:49:35
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE
+FILE: supabase/migrations/20260717014935_secure_version_history.sql
+================================================================================
+CHANGE DESCRIPTION:
+Generated the version-history migration file through the pinned Supabase CLI before adding schema statements.
+
+BEFORE:
+The supabase/migrations directory did not exist.
+
+AFTER:
+The CLI-created timestamped migration is ready for reviewed DDL, grants, indexes, helper functions, and RLS policies.
+
+CONTEXT:
+- Related files: supabase/config.toml, plan/feature-secure-version-history-1.md
+- API endpoints affected: Future Data API tables
+- Database changes: Empty migration file created; nothing applied
+- Dependencies: supabase CLI 2.109.1
+
+AGENT: Codex
+TASK: Generate secure version-history migration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:51:00
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: supabase/migrations/20260717014935_secure_version_history.sql
+================================================================================
+CHANGE DESCRIPTION:
+Implemented the secure version-history database schema, constraints, indexes, explicit grants, private authorization helpers, and membership-based RLS policies.
+
+BEFORE:
+The CLI-generated migration was empty.
+
+AFTER:
+The migration defines rooms, memberships, current Yjs documents, immutable version snapshots, four private auth.uid-based helper functions, and least-privilege authenticated access.
+
+CONTEXT:
+- Related files: planned Supabase repositories and Yjs server
+- API endpoints affected: Supabase Data API tables for authenticated users
+- Database changes: Four tables, five indexes, four helper functions, fourteen policies, explicit grants
+- Dependencies: PostgreSQL 17, Supabase Auth, PostgREST/RLS
+
+AGENT: Codex
+TASK: Implement secure version-history schema
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:54:01
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: supabase/migrations/20260717014935_secure_version_history.sql
+================================================================================
+CHANGE DESCRIPTION:
+Made the migration atomic and closed a public-room role-escalation path before deployment.
+
+BEFORE:
+The migration was not explicitly transactional, and a self-joining public-room user could request the owner role.
+
+AFTER:
+The migration runs inside BEGIN/COMMIT; self-joiners can only become editors, while the existing room owner alone can insert an owner membership.
+
+CONTEXT:
+- Related files: plan/feature-secure-version-history-1.md
+- API endpoints affected: Supabase room membership inserts
+- Database changes: Tightened room_members INSERT RLS policy
+- Dependencies: PostgreSQL transaction semantics, Supabase auth.uid()
+
+AGENT: Codex
+TASK: Harden migration before deployment
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:54:39
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: APPLY
+FILE: supabase/migrations/20260717014935_secure_version_history.sql
+================================================================================
+CHANGE DESCRIPTION:
+Applied the atomic secure version-history migration to the configured Supabase project through its verified IPv4 session pooler.
+
+BEFORE:
+The target project had no application tables in the public schema.
+
+AFTER:
+The target database contains the four version-history tables, indexes, private authorization helpers, grants, and fourteen RLS policies; the transaction committed successfully.
+
+CONTEXT:
+- Related files: .env, plan/feature-secure-version-history-1.md
+- API endpoints affected: Configured Supabase Data API project
+- Database changes: Production project schema changed from empty to secure version-history foundation
+- Dependencies: aws-0-ap-northeast-1.pooler.supabase.com, PostgreSQL 17.6
+
+AGENT: Codex
+TASK: Deploy secure version-history schema
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 09:58:45
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE
+FILE: proxy.ts; src/lib/supabase/config.ts; src/lib/supabase/server.ts; src/lib/supabase/proxy.ts; src/app/login/actions.ts; src/app/login/login-form.tsx; src/app/login/page.tsx; src/app/auth/confirm/route.ts; src/app/api/auth/access-token/route.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added the server-only Supabase configuration, cookie-session lifecycle, authenticated RLS client, protected-route proxy, email/password auth UI and actions, confirmation callback, and no-store WebSocket-token endpoint.
+
+BEFORE:
+The application had no authentication boundary and opened every room directly.
+
+AFTER:
+Room routes are claim-validated, login/signup/signout use server actions and HTTP-only cookies, Auth confirmation is supported, and browser collaboration can request only its own validated short-lived access token.
+
+CONTEXT:
+- Related files: supabase/migrations/20260717014935_secure_version_history.sql
+- API endpoints affected: GET /auth/confirm, GET /api/auth/access-token, /login, /rooms/*
+- Database changes: Authenticated Data API calls now carry the user JWT so RLS remains authoritative
+- Dependencies: @supabase/ssr 0.12.3, @supabase/supabase-js 2.110.7, Next.js 16 proxy
+
+AGENT: Codex
+TASK: Add secure authentication foundation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:00:48
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE/MODIFY
+FILE: src/lib/version-history/types.ts; src/lib/version-history/repository.ts; src/app/rooms/[roomId]/actions.ts; src/app/rooms/[roomId]/page.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Implemented the authenticated room/document provisioning repository, bounded snapshot validation, version listing and inserts, safety-snapshot restore preparation, server actions, and protected initial room read.
+
+BEFORE:
+Room pages only validated the URL slug and rendered a public in-memory editor.
+
+AFTER:
+Room pages require a verified identity, establish RLS-controlled membership and a durable document, load version metadata, and expose authenticated create/restore mutations with a pre-restore safety snapshot.
+
+CONTEXT:
+- Related files: Supabase schema and collaboration UI
+- API endpoints affected: /rooms/[roomId] Server Component and actions
+- Database changes: Runtime room, membership, document, and version rows are now supported through authenticated RLS
+- Dependencies: Supabase Data API, Next.js Server Actions
+
+AGENT: Codex
+TASK: Add secure version-history data layer
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:01:20
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the interim Server/Client prop-contract type-check failure and updated the structured mistake index.
+
+BEFORE:
+The knowledge base had 17 mistakes and no record of the partial version-history component integration.
+
+AFTER:
+The knowledge base has 18 mistakes, build count 8, with the new low-severity integration checkpoint marked unresolved until the consumer is wired.
+
+CONTEXT:
+- Related files: src/app/rooms/[roomId]/page.tsx, src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: TypeScript 5.9.3
+
+AGENT: Codex
+TASK: Learn from partial prop integration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:03:57
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE/MODIFY
+FILE: src/components/collaboration/version-history-panel.tsx; src/components/collaboration/rich-text-editor.tsx; src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Connected authenticated collaboration and the complete member-facing version-history workflow to the existing room UI.
+
+BEFORE:
+The editor connected anonymously, exposed no snapshot bridge, and the right rail showed static review checkpoints.
+
+AFTER:
+The room fetches a validated no-store access token, identifies the signed-in participant, creates an authorized WebSocket provider, exposes bounded JSON/Yjs snapshot capture and restore through an editor ref, and provides save/refresh/confirm-restore history controls with status feedback.
+
+CONTEXT:
+- Related files: room Server Actions and version-history repository
+- API endpoints affected: GET /api/auth/access-token; authenticated WebSocket upgrade
+- Database changes: UI can now insert immutable document_versions rows through RLS
+- Dependencies: Tiptap 3.28, Yjs 13.6.31, y-websocket 2.1.0
+
+AGENT: Codex
+TASK: Build version-history collaboration UI
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:04:29
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: src/components/collaboration/version-history-panel.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Changed action-result checks to discriminate the success/error union by its nullable data field.
+
+BEFORE:
+Truthy error checks did not let TypeScript prove that action data was non-null in the success branch.
+
+AFTER:
+Explicit data === null guards provide complete control-flow narrowing before version fields are accessed.
+
+CONTEXT:
+- Related files: src/lib/version-history/types.ts
+- API endpoints affected: Room version-history Server Actions
+- Database changes: None
+- Dependencies: TypeScript discriminated-union analysis
+
+AGENT: Codex
+TASK: Fix action-result type narrowing
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:04:29
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Resolved the partial prop-integration record, added the action-result narrowing lesson, and updated mistake totals.
+
+BEFORE:
+The partial integration entry was unresolved and the index contained 18 total/8 build mistakes.
+
+AFTER:
+Both integration issues are resolved and the index contains 19 total/9 build mistakes with exact-null narrowing guidance.
+
+CONTEXT:
+- Related files: version-history-panel.tsx, types.ts
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: TypeScript 5.9.3
+
+AGENT: Codex
+TASK: Record and resolve TypeScript integration lessons
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:06:45
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE/MODIFY
+FILE: server/yjs-server.mjs; package.json; .env.example
+================================================================================
+CHANGE DESCRIPTION:
+Replaced the unauthenticated package binary with a custom Supabase-authorized, durable Yjs service and documented its environment contract.
+
+BEFORE:
+dev:yjs launched an anonymous in-memory server that lost all notes on restart.
+
+AFTER:
+Every WebSocket upgrade validates the access token and membership, waits for stored state before synchronization, tracks the authenticated editor, debounces full-state database writes, flushes on disconnect/shutdown, exposes a no-store health check, and optionally enforces an exact Origin.
+
+CONTEXT:
+- Related files: collaborative-room.tsx, documents schema
+- API endpoints affected: WS /:roomId?access_token=..., GET /health
+- Database changes: documents.yjs_state and update metadata are loaded and persisted by the server-only service client
+- Dependencies: ws 8.21.1, y-websocket 2.1.0, Yjs 13.6.31, Supabase JS 2.110.7
+
+AGENT: Codex
+TASK: Build authenticated durable Yjs service
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:07:27
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx; src/app/rooms/[roomId]/page.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Moved collaboration reset state changes out of the effect body and keyed the room client boundary by slug.
+
+BEFORE:
+The effect synchronously reset five React state values before starting its external connection, triggering the React 19 set-state-in-effect lint rule.
+
+AFTER:
+Initial and cross-room resets come from component mounting, while explicit retry resets occur in the button event before a fresh tokenized connection attempt.
+
+CONTEXT:
+- Related files: server/yjs-server.mjs
+- API endpoints affected: GET /api/auth/access-token, WebSocket reconnect
+- Database changes: None
+- Dependencies: React 19 hook lint rules
+
+AGENT: Codex
+TASK: Fix connection effect state lifecycle
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:07:27
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the React effect-state lifecycle lint failure.
+
+BEFORE:
+The mistake index contained 19 total/9 build entries.
+
+AFTER:
+The index contains 20 total/10 build entries and documents event-driven reset placement for external-system effects.
+
+CONTEXT:
+- Related files: collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: eslint-config-next 16.2.10
+
+AGENT: Codex
+TASK: Learn from React effect lint failure
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:09:25
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Styled the secure login and version-history workflows and preserved history access across desktop, tablet, and mobile layouts.
+
+BEFORE:
+New auth/history controls used unstyled browser defaults, and the existing tablet breakpoint hid every study rail.
+
+AFTER:
+The login card, inputs, action states, snapshot form, metadata list, restore controls, empty/status states, focus treatment, and responsive history placement match the BoardPrep visual system; history moves below the editor instead of disappearing on narrow screens.
+
+CONTEXT:
+- Related files: login-form.tsx, version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Existing BoardPrep CSS design tokens
+
+AGENT: Codex
+TASK: Style responsive auth and version history
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:13:06
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE/MODIFY
+FILE: scripts/verify-schema.mjs; scripts/verify-version-history.mjs; server/yjs-server.mjs; src/app/login/actions.ts; package.json; .env; .env.example
+================================================================================
+CHANGE DESCRIPTION:
+Added repeatable schema/security and full authenticated version-history verification, plus compatible environment fallbacks and database-pooler configuration.
+
+BEFORE:
+There was no automated proof of RLS policy shape, WebSocket authorization, remote persistence, role-escalation denial, snapshot access, or immutability.
+
+AFTER:
+verify:schema asserts catalog security through psql without DATABASE_URL; verify:version-history creates isolated users/data, exercises member/non-member RLS, rejects tokenless/non-member sockets, proves sync survives server restart, verifies snapshot immutability, and cleans all temporary records.
+
+CONTEXT:
+- Related files: Supabase migration, durable Yjs server
+- API endpoints affected: Auth admin test calls, Supabase Data API, WebSocket upgrade
+- Database changes: Verification creates only temporary cascading test rows and removes them in finally
+- Dependencies: Local psql, Supabase Auth, available ephemeral TCP port
+
+AGENT: Codex
+TASK: Add secure integration verification
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:14:01
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: FORMAT
+FILE: src/app/auth/confirm/route.ts; src/app/globals.css; src/app/login/login-form.tsx; src/app/rooms/[roomId]/page.tsx; src/components/collaboration/collaborative-room.tsx; src/components/collaboration/rich-text-editor.tsx; src/components/collaboration/version-history-panel.tsx; src/lib/supabase/server.ts; src/lib/version-history/repository.ts; src/lib/version-history/types.ts; scripts/verify-version-history.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Applied the project Prettier configuration to the newly implemented auth, collaboration, history, repository, styling, and verification code.
+
+BEFORE:
+New files were structurally correct but had not yet received the repository's canonical mechanical formatting.
+
+AFTER:
+All changed supported source files use the repository's canonical Prettier output.
+
+CONTEXT:
+- Related files: package.json format:check script
+- API endpoints affected: None (format-only)
+- Database changes: None
+- Dependencies: Prettier 3.9.5
+
+AGENT: Codex
+TASK: Format secure version-history implementation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:14:36
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-security.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded a second occurrence of the unresolved upstream Next.js/PostCSS audit advisory and moved it to the front of the deduplicated recent-mistakes index.
+
+BEFORE:
+The advisory had one occurrence from the earlier collaboration session.
+
+AFTER:
+The same advisory has occurrence_count 2 and last_occurrence 10:14:36; total mistake counts remain unchanged because this is a recurrence.
+
+CONTEXT:
+- Related files: package-lock.json, node_modules/next/package.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Next.js 16.2.10 -> PostCSS 8.4.31; patched root PostCSS 8.5.19
+
+AGENT: Codex
+TASK: Track recurring upstream dependency advisory
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:16:36
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: server/yjs-server.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Made the persistence layer use the exact CommonJS Yjs instance loaded by y-websocket server utilities.
+
+BEFORE:
+The custom server loaded Yjs once through ESM and once through y-websocket's CommonJS utilities, producing the duplicate-import runtime warning and risking constructor identity failures.
+
+AFTER:
+Both protocol handling and persistence encode/apply operations share require('yjs') from one module graph.
+
+CONTEXT:
+- Related files: node_modules/y-websocket/bin/utils.cjs
+- API endpoints affected: Authenticated Yjs WebSocket service
+- Database changes: None
+- Dependencies: Yjs 13.6.31 mixed-module identity
+
+AGENT: Codex
+TASK: Unify Yjs runtime instance
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:16:36
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-runtime.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the mixed-module duplicate Yjs runtime issue found during service smoke testing.
+
+BEFORE:
+The runtime knowledge category was empty and the index contained 20 total mistakes.
+
+AFTER:
+The runtime category contains one resolved medium-severity entry and the index contains 21 total mistakes.
+
+CONTEXT:
+- Related files: server/yjs-server.mjs
+- API endpoints affected: WebSocket service startup
+- Database changes: None
+- Dependencies: Yjs 13.6.31, Node ESM/CommonJS interop
+
+AGENT: Codex
+TASK: Learn from duplicate Yjs runtime
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:17:36
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: scripts/verify-version-history.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Promoted the duplicate-Yjs startup warning to an explicit integration-test failure.
+
+BEFORE:
+The verifier captured server output but only waited for the listening message.
+
+AFTER:
+The verifier terminates the server and fails if Yjs reports multiple module instances.
+
+CONTEXT:
+- Related files: server/yjs-server.mjs
+- API endpoints affected: Durable Yjs service startup
+- Database changes: None
+- Dependencies: Yjs runtime diagnostics
+
+AGENT: Codex
+TASK: Guard against duplicate Yjs regression
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:20:02
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MOVE
+FILE: proxy.ts -> src/proxy.ts
+================================================================================
+CHANGE DESCRIPTION:
+Relocated the Next.js 16 request proxy into the source root so the framework registers it alongside src/app.
+
+BEFORE:
+The production middleware manifest was empty; unauthenticated room responses relied on a streamed Server Component redirect instead of the intended early proxy redirect.
+
+AFTER:
+The proxy is placed at src/proxy.ts, the framework-supported location for a src-based application.
+
+CONTEXT:
+- Related files: src/lib/supabase/proxy.ts, src/app/rooms/[roomId]/page.tsx
+- API endpoints affected: /rooms/*, /login, all matched request session refreshes
+- Database changes: None
+- Dependencies: Next.js 16 src directory conventions
+
+AGENT: Codex
+TASK: Register protected-route proxy correctly
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:20:02
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-security.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the high-severity unregistered proxy placement issue.
+
+BEFORE:
+The knowledge index contained 21 total/1 security entry.
+
+AFTER:
+The index contains 22 total/2 security entries with build-manifest and HTTP-redirect regression checks specified.
+
+CONTEXT:
+- Related files: src/proxy.ts, .next/server/middleware-manifest.json
+- API endpoints affected: Protected room routes and login redirect
+- Database changes: None
+- Dependencies: Next.js 16
+
+AGENT: Codex
+TASK: Learn from proxy discovery failure
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:23:01
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: src/lib/supabase/server.ts
+================================================================================
+CHANGE DESCRIPTION:
+Stopped reading the untrusted user object from getSession after claims validation.
+
+BEFORE:
+The authenticated context compared session.user.id with the already verified claims subject, triggering Supabase's insecure-session-user runtime warning.
+
+AFTER:
+Identity comes exclusively from getClaims(); getSession is used only to retrieve the corresponding access token for an RLS Authorization header.
+
+CONTEXT:
+- Related files: access-token route, version-history Server Actions
+- API endpoints affected: All authenticated server requests
+- Database changes: None
+- Dependencies: Supabase Auth getClaims/getSession semantics
+
+AGENT: Codex
+TASK: Remove untrusted session user access
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:23:01
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-security.json; .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the untrusted session-user access, Next dev worktree-lock assumption, and obsolete proxy-manifest assertion.
+
+BEFORE:
+The index contained 22 total mistakes with 2 security and 5 testing entries.
+
+AFTER:
+The index contains 25 total mistakes with 3 security and 7 testing entries, including direct HTTP behavior checks as the preferred proxy proof.
+
+CONTEXT:
+- Related files: src/lib/supabase/server.ts, src/proxy.ts, Next build artifacts
+- API endpoints affected: Authenticated server requests and protected room redirects
+- Database changes: None
+- Dependencies: Supabase Auth, Next.js 16 build/runtime
+
+AGENT: Codex
+TASK: Learn from final auth smoke checks
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:25:08
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: CREATE
+FILE: supabase/migrations/20260717022455_enforce_read_only_viewers.sql
+================================================================================
+CHANGE DESCRIPTION:
+Generated the follow-up migration through the pinned Supabase CLI for read-only viewer enforcement.
+
+BEFORE:
+Only the initial secure version-history migration existed.
+
+AFTER:
+The migration sequence includes a CLI-generated placeholder for role-specific write authorization hardening.
+
+CONTEXT:
+- Related files: initial secure_version_history migration
+- API endpoints affected: Future document/version writes and WebSocket upgrades
+- Database changes: None until migration content is implemented and applied
+- Dependencies: Supabase CLI 2.109.1
+
+AGENT: Codex
+TASK: Generate viewer authorization migration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:25:50
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: supabase/migrations/20260717022455_enforce_read_only_viewers.sql; server/yjs-server.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Implemented role-specific owner/editor write helpers and policies and denied viewer WebSocket editing.
+
+BEFORE:
+Every room membership, including viewer, satisfied document/version write policies and WebSocket membership authorization.
+
+AFTER:
+Viewers retain room/document/version SELECT access but only owners/editors can create/update documents, create versions, or establish an editing WebSocket.
+
+CONTEXT:
+- Related files: room_members role constraint, initial RLS migration
+- API endpoints affected: WebSocket upgrades, Data API document/version mutations
+- Database changes: Two hardened private helpers and three replacement write policies
+- Dependencies: Supabase auth.uid(), room_members.role
+
+AGENT: Codex
+TASK: Enforce read-only viewer role
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:26:23
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: APPLY
+FILE: supabase/migrations/20260717022455_enforce_read_only_viewers.sql
+================================================================================
+CHANGE DESCRIPTION:
+Applied the atomic viewer-role hardening migration to the configured Supabase project.
+
+BEFORE:
+The deployed target authorized writes by membership alone.
+
+AFTER:
+The target database committed owner/editor-only document and version mutations while retaining viewer read access.
+
+CONTEXT:
+- Related files: server/yjs-server.mjs
+- API endpoints affected: Configured Supabase Data API
+- Database changes: Two helper functions and three policy replacements committed
+- Dependencies: Verified IPv4 session pooler, PostgreSQL 17.6
+
+AGENT: Codex
+TASK: Deploy viewer-role hardening
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:27:14
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: scripts/verify-schema.mjs; scripts/verify-version-history.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Extended automated verification to cover all six authorization helpers and the viewer read-only contract.
+
+BEFORE:
+Schema verification covered the original four helpers; integration verification covered non-member denial but not a real viewer membership.
+
+AFTER:
+Tests require all six hardened helpers and prove viewers can read documents/history while document writes, version inserts, owner escalation, and editing WebSockets are denied.
+
+CONTEXT:
+- Related files: viewer hardening migration and Yjs server
+- API endpoints affected: Supabase Data API and WebSocket upgrades
+- Database changes: Temporary viewer test membership is cascade-cleaned
+- Dependencies: RLS policy enforcement
+
+AGENT: Codex
+TASK: Verify read-only viewer authorization
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:28:05
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: scripts/verify-version-history.mjs
+================================================================================
+CHANGE DESCRIPTION:
+Corrected the viewer update assertion to inspect affected rows instead of treating a null PostgREST error as a successful mutation.
+
+BEFORE:
+The verifier falsely reported a viewer write when RLS filtered the UPDATE to zero rows without returning an API error.
+
+AFTER:
+The test requests updated IDs and fails only when at least one document row was actually changed.
+
+CONTEXT:
+- Related files: viewer RLS migration
+- API endpoints affected: Supabase Data API update verification
+- Database changes: None; the rejected update affected zero rows
+- Dependencies: PostgREST RLS update semantics
+
+AGENT: Codex
+TASK: Fix RLS zero-row update assertion
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:28:05
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the PostgREST zero-row RLS mutation assertion mistake.
+
+BEFORE:
+The index contained 25 total/7 testing entries.
+
+AFTER:
+The index contains 26 total/8 testing entries with affected-row verification guidance.
+
+CONTEXT:
+- Related files: scripts/verify-version-history.mjs
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: PostgREST
+
+AGENT: Codex
+TASK: Learn from RLS update test semantics
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:30:38
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: README.md; .agents/API.md; .agents/CHANGELOG.md; .agents/ARCHITECTURE.md; .agents/ENVIRONMENT.md; .agents/DEPLOYMENT.md
+================================================================================
+CHANGE DESCRIPTION:
+Replaced obsolete unauthenticated/in-memory documentation with the verified auth, RLS, durable Yjs, version-history, environment, deployment, and test contracts.
+
+BEFORE:
+Primary docs said no database/auth/version history existed, described an anonymous memory-only Yjs server, and included Docker/local-Supabase assumptions and nonexistent test scripts.
+
+AFTER:
+Docs cover cookie auth, request proxy, access-token endpoint, role-based RLS, persistent WebSockets, immutable restore snapshots, server-only secrets, remote migrations, no-Docker local startup, real verification commands, limitations, and deployment origin hardening.
+
+CONTEXT:
+- Related files: all secure version-history implementation files
+- API endpoints affected: /login, /auth/confirm, /api/auth/access-token, /rooms/*, WS /:roomId
+- Database changes: Documents deployed rooms/members/documents/document_versions schema
+- Dependencies: Supabase, Next.js, Yjs
+
+AGENT: Codex
+TASK: Document authenticated durable version history
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:31:28
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: FORMAT
+FILE: .agents/ARCHITECTURE.md; .agents/ENVIRONMENT.md; .agents/DEPLOYMENT.md
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical Prettier Markdown formatting to the updated architecture, environment, and deployment guides.
+
+BEFORE:
+Those edited guides contained non-canonical Markdown spacing.
+
+AFTER:
+All supported implementation and primary documentation files pass the configured formatter.
+
+CONTEXT:
+- Related files: package.json format:check
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Prettier 3.9.5
+
+AGENT: Codex
+TASK: Format updated operational documentation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:33:29
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the exact-string Cache-Control smoke assertion mistake.
+
+BEFORE:
+The index contained 26 total/8 testing entries.
+
+AFTER:
+The index contains 27 total/9 testing entries and documents semantic directive membership checks.
+
+CONTEXT:
+- Related files: src/lib/supabase/proxy.ts, access-token route
+- API endpoints affected: GET /api/auth/access-token
+- Database changes: None
+- Dependencies: HTTP Cache-Control semantics
+
+AGENT: Codex
+TASK: Learn from HTTP cache assertion
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:33:29
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: VERIFY
+FILE: Secure version-history vertical slice
+================================================================================
+CHANGE DESCRIPTION:
+Completed the final sequential build, database/security integration, and production HTTP smoke suite successfully.
+
+BEFORE:
+The implementation had not yet received its final post-hardening verification pass.
+
+AFTER:
+Formatting, lint, production build with registered Proxy, post-build typecheck, base Yjs sync, six-helper schema inspection, RLS/read-only viewer/auth/restart-persistence/version/immutability integration, knowledge JSON validation, unauthenticated 307/private 401, authenticated cookie room render, and private token issuance all pass.
+
+CONTEXT:
+- Related files: Entire secure version-history implementation
+- API endpoints affected: /rooms/*, /login, /api/auth/access-token, authenticated Yjs WebSocket
+- Database changes: Verification temporary users/rows were cleaned successfully
+- Dependencies: Next.js 16.2.10, Supabase, Yjs/Tiptap
+
+AGENT: Codex
+TASK: Verify completed secure version history
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:35:07
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/ROADMAP.md; plan/feature-secure-version-history-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Marked the verified Version history roadmap item and every secure vertical-slice plan task complete.
+
+BEFORE:
+Version history remained unchecked and the implementation plan was In progress with TASK-002 through TASK-014 open.
+
+AFTER:
+Version history is checked, the plan is Completed, all fourteen tasks have completion dates, actual src/proxy and viewer-hardening files are recorded, viewer tests are explicit, and the known upstream PostCSS risk is documented.
+
+CONTEXT:
+- Related files: README, API, changelog, migrations, verification scripts
+- API endpoints affected: None (status documentation)
+- Database changes: None
+- Dependencies: Final green verification evidence
+
+AGENT: Codex
+TASK: Complete roadmap version history milestone
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:36:19
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: FORMAT
+FILE: plan/feature-secure-version-history-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical Markdown formatting to the completed implementation plan.
+
+BEFORE:
+The completed task tables and metadata updates had not received their final mechanical formatting pass.
+
+AFTER:
+The completed plan uses canonical Prettier Markdown layout.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Prettier 3.9.5
+
+AGENT: Codex
+TASK: Format completed implementation plan
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 10:37:34
+SESSION: session-secure-version-history-20260717-094555
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json; .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved the shell backtick substitution mistake from the final documentation residue scan.
+
+BEFORE:
+The index contained 27 total/9 testing entries.
+
+AFTER:
+The index contains 28 total/10 testing entries with literal single-quoted rg pattern guidance.
+
+CONTEXT:
+- Related files: Final verification command only
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: zsh quoting semantics
+
+AGENT: Codex
+TASK: Learn from unsafe shell pattern quoting
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 10:37:55
+DURATION: 00:52:00
+TOTAL CHANGES: 41
+CHANGE BREAKDOWN:
+- Code changes: 12
+- API changes: 4
+- Database changes: 5
+- Configuration changes: 4
+- Dependency changes: 2
+- Documentation changes: 14
+================================================================================
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-user-profiles-20260717-104729
+DATE: 2026-07-17
+TIME: 10:47:29
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Add secure user profiles and plan offline editing with sync
+================================================================================
+
+2026-07-17 10:47:30 | CREATE | supabase/migrations/20260717024730_create_user_profiles.sql | Generated a timestamped Supabase migration for secure user profiles.
+
+2026-07-17 10:49:54 | DATABASE | supabase/migrations/20260717024730_create_user_profiles.sql | Added constrained profiles, signup/backfill provisioning, timestamps, least-privilege grants, shared-room RLS, and private security helpers.
+
+2026-07-17 10:50:10 | DEPLOY | Supabase project qqkymdhvzfolfzzifmog | Applied the user profiles migration successfully; backfilled one existing auth user.
+
+2026-07-17 10:52:00 | CREATE | src/lib/profiles/repository.ts | Added server-only profile lookup helpers with RLS-scoped collaborator name loading.
+2026-07-17 10:52:00 | CODE | src/app/login/actions.ts | Validated display names and stored them as signup metadata for trigger provisioning.
+2026-07-17 10:52:00 | UI | src/app/login/login-form.tsx | Added the display-name field used when creating an account.
+2026-07-17 10:52:00 | CODE | src/app/rooms/[roomId]/page.tsx | Replaced email-prefix identity with the authenticated user's profile name.
+2026-07-17 10:52:00 | CODE | src/lib/version-history/types.ts | Added creator display names to version summaries.
+2026-07-17 10:52:00 | CODE | src/lib/version-history/repository.ts | Hydrated version authors from RLS-protected profiles.
+2026-07-17 10:52:00 | UI | src/components/collaboration/version-history-panel.tsx | Replaced truncated user identifiers with collaborator display names.
+
+2026-07-17 10:52:25 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the rejected generated-patch pattern and its line-prefix prevention rule.
+2026-07-17 10:52:25 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-generated-patch-prefix-2026-07-17-029 and updated build totals.
+
+2026-07-17 10:53:22 | TEST | scripts/verify-schema.mjs | Extended catalog assertions to profiles, 17 policies, least-privilege grants, seven hardened helpers, and the signup trigger.
+2026-07-17 10:53:22 | TEST | scripts/verify-version-history.mjs | Added disposable-user checks for trigger provisioning, profile privacy, shared-room visibility, and update isolation.
+
+2026-07-17 10:54:34 | FORMAT | src/app/login/actions.ts | Applied the repository formatter after the formatting gate identified multiline wrapping drift.
+2026-07-17 10:54:34 | FORMAT | scripts/verify-version-history.mjs | Applied the repository formatter to the expanded profile integration checks.
+2026-07-17 10:54:34 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the formatting-gate failure and formatter-first prevention rule.
+2026-07-17 10:54:34 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-profile-formatting-2026-07-17-030 and updated build totals.
+
+2026-07-17 10:55:10 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the JSON timestamp parsing assumption and exact-context prevention rule.
+2026-07-17 10:55:10 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-index-timestamp-regex-2026-07-17-031 and updated build totals.
+
+2026-07-17 10:57:34 | DOCS | README.md | Documented automatic profiles, profile-backed identity, privacy scope, and verification coverage.
+2026-07-17 10:57:34 | ROADMAP | .agents/ROADMAP.md | Marked user profiles and collaborator identity complete after live verification.
+2026-07-17 10:57:34 | DOCS | .agents/API.md | Documented signup display-name metadata and profile-backed room/version reads.
+2026-07-17 10:57:34 | DOCS | .agents/DATABASE.md | Added the authoritative deployed profile schema, trigger, grants, and RLS behavior.
+2026-07-17 10:57:34 | DOCS | .agents/ARCHITECTURE.md | Updated the deployed table map and identity data flow.
+2026-07-17 10:57:34 | DOCS | .agents/CHANGELOG.md | Recorded the profile feature, label changes, tests, and fifth-table security posture.
+2026-07-17 10:57:34 | DOCS | .agents/TESTING.md | Added the current seven-command gate and profile integration assertions.
+2026-07-17 10:57:34 | DOCS | .agents/SECURITY.md | Clarified implemented session, five-table RLS, and profile authorization controls.
+
+2026-07-17 10:59:43 | PLAN | plan/feature-offline-editing-sync-1.md | Created the deterministic local-first Yjs/IndexedDB implementation plan with security, lifecycle, UX, and verification criteria.
+2026-07-17 10:59:43 | ROADMAP | .agents/ROADMAP.md | Linked the next unchecked offline editing item to its planned implementation specification.
+
+2026-07-17 11:02:20 | DEPLOY | Supabase migration history | Initialized migration tracking and marked secure version history, viewer enforcement, and user profiles as applied.
+2026-07-17 11:02:20 | KNOWLEDGE | .agents/knowledge/mistakes-deployment.json | Recorded the direct-psql migration metadata gap and mandatory repair workflow.
+2026-07-17 11:02:20 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake deployment-untracked-psql-migrations-2026-07-17-032 and updated deployment totals.
+
+2026-07-17 11:02:45 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Updated the ambiguous-patch occurrence after an incorrect timestamp anchor was rejected safely.
+2026-07-17 11:02:45 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index timestamp for the recurring exact-context patch lesson.
+
+2026-07-17 11:04:15 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Updated the shell-quoting occurrence after an over-escaped plan validator failed before reading the plan.
+2026-07-17 11:04:15 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index timestamp for the recurring shell-quoting lesson.
+
+2026-07-17 11:05:05 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Incremented the quote-escaping occurrence and replaced literal quoted-value matching with a quote-free status regex.
+2026-07-17 11:05:05 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index after the corrected plan validator passed.
+
+2026-07-17 11:06:30 | VERIFY | project-wide gate | Passed formatting, lint, production build, strict typecheck, Yjs sync, live schema/profile integration, plan structure, and knowledge JSON validation.
+2026-07-17 11:06:30 | KNOWLEDGE | .agents/knowledge/mistakes-security.json | Recorded the repeated Next.js nested PostCSS audit finding; retained Next 16 because the proposed force-fix downgrades to Next 9.
+2026-07-17 11:06:30 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index for the repeated unresolved upstream audit finding.
+
+2026-07-17 11:05:44 | TEST | scripts/verify-version-history.mjs | Added positive self-update verification, timestamp trigger coverage, and shared-room visibility of the updated display name.
+
+2026-07-17 11:06:42 | VERIFY | live profile consistency | Confirmed one profile for one retained auth user, no missing or orphan profiles, and all three remote migration-history rows.
+
+================================================================================
+SESSION ENDED
+END TIME: 11:06:42
+DURATION: 00:19:13
+TOTAL CHANGES: 42
+CHANGE BREAKDOWN:
+- Code changes: 12
+- API changes: 0
+- Database changes: 4
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 26
+================================================================================
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-offline-sync-20260717-111330
+DATE: 2026-07-17
+TIME: 11:13:30
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Implement roadmap offline editing with authenticated Yjs synchronization
+================================================================================
+
+2026-07-17 11:14:04 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Recorded the fourth ambiguous append-context occurrence after the new session header matched the first separator.
+2026-07-17 11:14:04 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index for the recurring append-only log placement lesson.
+
+2026-07-17 11:14:25 | PLAN | plan/feature-offline-editing-sync-1.md | Marked the offline editing and sync implementation plan in progress before implementation.
+
+2026-07-17 11:14:45 | DEPENDENCY | package.json | Added exact runtime `y-indexeddb@9.0.12` and development `fake-indexeddb@6.2.5` dependencies for local persistence verification.
+2026-07-17 11:14:45 | DEPENDENCY | package-lock.json | Locked the offline persistence and IndexedDB test packages without changing the Yjs 13 stack.
+
+2026-07-17 11:18:39 | CREATE | src/lib/collaboration/offline-document.ts | Added validated account-room keys, IndexedDB initialization/fallback, a versioned minimal registry, and account-wide cleanup with partial-failure retention.
+
+2026-07-17 11:19:27 | DEPENDENCY | package.json | Added exact development tsx@4.23.1 so Node 20 verification can execute the shared TypeScript offline adapter directly.
+2026-07-17 11:19:27 | DEPENDENCY | package-lock.json | Locked the TypeScript test runner and its platform packages.
+2026-07-17 11:19:27 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Incremented the quote-safety occurrence after Markdown backticks broke a generated JavaScript log patch.
+2026-07-17 11:19:27 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index for the recurring quoting lesson.
+
+2026-07-17 11:21:46 | CREATE | scripts/verify-offline-sync.ts | Added deterministic local recovery, isolation, cleanup, storage fallback, authenticated reconnect, concurrent merge, and Supabase durability verification.
+2026-07-17 11:21:46 | CONFIG | package.json | Added the Node 20-compatible verify:offline-sync command through the tsx loader.
+
+2026-07-17 11:22:02 | FORMAT | scripts/verify-offline-sync.ts | Applied the pinned formatter to the new offline verification script before its first run.
+
+2026-07-17 11:22:51 | FIX | src/lib/collaboration/offline-document.ts | Guarded registry result indexing under strict noUncheckedIndexedAccess semantics.
+2026-07-17 11:22:51 | FIX | scripts/verify-offline-sync.ts | Aligned the verifier with CommonJS execution, strict environment/child-process types, and the Node WebSocket polyfill boundary.
+2026-07-17 11:22:51 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the initial offline verifier module and type-contract mismatch.
+2026-07-17 11:22:51 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-offline-verifier-contracts-2026-07-17-033 and updated build totals.
+
+2026-07-17 11:23:15 | FORMAT | scripts/verify-offline-sync.ts | Formatted the corrected strict TypeScript verifier.
+
+2026-07-17 11:24:58 | FIX | src/lib/collaboration/offline-document.ts | Added a handled IndexedDB availability probe before provider construction so disabled storage degrades to in-memory editing.
+2026-07-17 11:24:58 | KNOWLEDGE | .agents/knowledge/mistakes-runtime.json | Recorded y-indexeddb's unhandled database-open rejection chain and the preflight workaround.
+2026-07-17 11:24:58 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake runtime-y-indexeddb-open-rejection-2026-07-17-034 and updated runtime totals.
+
+2026-07-17 11:29:32 | SECURITY | src/lib/collaboration/offline-document.ts | Disabled local persistence when its account registry cannot be written, preventing untracked caches on sign-out.
+2026-07-17 11:29:32 | CREATE | src/components/auth/sign-out-button.tsx | Added pending/error feedback and account-wide offline cache cleanup before the server sign-out action.
+2026-07-17 11:29:32 | UI | src/components/collaboration/version-history-panel.tsx | Gated remote checkpoint actions while offline and explained that notes continue saving locally.
+2026-07-17 11:29:32 | REFACTOR | src/components/collaboration/collaborative-room.tsx | Rebuilt collaboration around one stable local Yjs document and provider, fresh-token reconnects, online/offline events, local status, and secure sign-out preparation.
+2026-07-17 11:29:32 | UI | src/app/globals.css | Added accessible local/remote sync states, storage warnings, disabled controls, and sign-out error feedback within the existing visual system.
+
+2026-07-17 11:29:55 | FORMAT | src/components/collaboration/collaborative-room.tsx | Applied the pinned formatter to the local-first lifecycle refactor.
+
+2026-07-17 11:30:18 | FIX | src/components/collaboration/collaborative-room.tsx | Moved the mutable WebSocket provider out of React state and kept it exclusively in a ref.
+2026-07-17 11:30:18 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the mutable-provider React state pattern and ref-based prevention.
+2026-07-17 11:30:18 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-mutable-provider-in-react-state-2026-07-17-035 and updated build totals.
+
+2026-07-17 11:33:25 | FIX | src/components/collaboration/collaborative-room.tsx | Exposed the stable provider through immutable connection state for editor rendering while retaining ref-only lifecycle mutations.
+2026-07-17 11:33:25 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the React compiler prohibition on reading provider refs during render and updated the preceding provider-state lesson.
+2026-07-17 11:33:25 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistake build-provider-ref-read-during-render-2026-07-17-036 and updated build totals.
+
+2026-07-17 11:33:37 | FORMAT | .agents/knowledge/mistakes-build.json | Applied the repository formatter after adding the provider render-ref lesson.
+
+2026-07-17 11:34:02 | VERIFY | npm run verify:offline-sync | Passed local recovery, isolation, cleanup, storage fallback, authenticated reconnect, CRDT merge, and durable persistence coverage.
+
+2026-07-17 11:36:55 | TEST | browser verification | Detected a stale Turbopack root-proxy reference before feature testing and stopped the isolated dev server.
+2026-07-17 11:36:55 | CLEANUP | .next | Moved the exact generated cache to /tmp/boardprep-next-cache-stale-20260717-1136 for recoverable invalidation.
+2026-07-17 11:36:55 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded stale proxy-cache detection and the safer recoverable alternative to a rejected permanent-delete command.
+2026-07-17 11:36:55 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistakes testing-stale-next-proxy-cache-2026-07-17-037 and testing-disallowed-rm-generated-cache-2026-07-17-038.
+
+2026-07-17 11:45:21 | FIX | src/components/collaboration/collaborative-room.tsx | Enabled a bounded Yjs resync interval after browser tracing proved an open socket could miss the initial sync response.
+2026-07-17 11:45:21 | FIX | src/app/layout.tsx | Added Next's smooth-scroll route-transition marker to the root document.
+2026-07-17 11:45:21 | KNOWLEDGE | .agents/knowledge/mistakes-runtime.json | Recorded the browser-only initial Yjs handshake loss and the Next smooth-scroll console warning.
+2026-07-17 11:45:21 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded the guessed y-websocket server utility extension and package-file discovery prevention.
+2026-07-17 11:45:21 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Indexed mistakes runtime-browser-yjs-initial-sync-loss-2026-07-17-039, testing-guessed-y-websocket-utils-path-2026-07-17-040, and runtime-next-scroll-behavior-marker-2026-07-17-041.
+
+2026-07-17 11:45:45 | FORMAT | .agents/knowledge/mistakes-runtime.json | Applied the repository formatter after adding browser runtime lessons.
+2026-07-17 11:45:45 | FORMAT | .agents/knowledge/mistakes-testing.json | Applied the repository formatter after adding the dependency-path lesson.
+
+2026-07-17 11:52:57 | VERIFY | browser offline acceptance | Passed authenticated Live-to-Offline editing, IndexedDB account-room persistence, remote-action gating, automatic reconnect, and clean-context remote receipt against the project Yjs server on isolated port 1235.
+2026-07-17 11:52:57 | VERIFY | browser sign-out cleanup | Confirmed both isolated browser contexts removed the account document database and versioned registry before returning to login.
+2026-07-17 11:52:57 | CLEANUP | browser acceptance fixtures | Restored the demo note to an empty visible paragraph, deleted the disposable auth user, confirmed profile/membership cascade cleanup, and stopped both isolated test servers.
+
+2026-07-17 11:54:10 | CONFIG | package.json | Included TypeScript verification scripts in the permanent Prettier check without changing runtime behavior.
+
+2026-07-17 11:54:39 | VERIFY | project-wide gate | Passed formatting, lint, production build, strict typecheck, baseline Yjs sync, live schema/RLS, profile/version integration, offline-sync integration, dependency-tree, and knowledge JSON checks.
+2026-07-17 11:54:39 | KNOWLEDGE | .agents/knowledge/mistakes-security.json | Incremented the known nested Next.js PostCSS audit occurrence; retained Next 16 because the force-fix proposes a breaking downgrade to Next 9.
+2026-07-17 11:54:39 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge index timestamp for the repeated unresolved upstream audit finding.
+
+2026-07-17 11:57:18 | DOCS | README.md | Documented local-first editing, account-scoped storage, reconnect/sign-out behavior, verification, same-origin risk, and cold-start scope.
+2026-07-17 11:57:18 | DOCS | .agents/ARCHITECTURE.md | Replaced planned offline notes with the implemented stable-document IndexedDB/WebSocket lifecycle and data flow.
+2026-07-17 11:57:18 | DOCS | .agents/SECURITY.md | Corrected the offline-storage model to unencrypted same-origin IndexedDB with validated namespaces, credential exclusion, reauthorization, and sign-out cleanup.
+2026-07-17 11:57:18 | DOCS | .agents/TESTING.md | Added the offline verifier and real-browser acceptance evidence to the permanent testing gate.
+2026-07-17 11:57:18 | DOCS | .agents/CHANGELOG.md | Recorded offline persistence, UX, verification, stable reconnect lifecycle, and security boundaries.
+2026-07-17 11:57:18 | ROADMAP | .agents/ROADMAP.md | Marked offline editing with sync complete after deterministic, browser, and regression verification.
+
+2026-07-17 11:58:46 | PLAN | plan/feature-offline-editing-sync-1.md | Reconciled the specification with the implemented stable-provider design and marked tasks 001 through 015 verified.
+
+2026-07-17 11:59:02 | FORMAT | .agents/SECURITY.md | Applied the repository formatter after documenting the implemented offline security boundary.
+2026-07-17 11:59:02 | FORMAT | .agents/TESTING.md | Applied the repository formatter after adding offline verification coverage.
+2026-07-17 11:59:02 | FORMAT | plan/feature-offline-editing-sync-1.md | Aligned the completed task tables and updated implementation details.
+
+2026-07-17 12:00:00 | VERIFY | final consistency | Passed final formatting, lint, strict typecheck, completed task coverage, roadmap ordering, and knowledge JSON validation.
+2026-07-17 12:00:00 | PLAN | plan/feature-offline-editing-sync-1.md | Marked all sixteen tasks and the offline editing with sync implementation plan completed.
+
+================================================================================
+SESSION ENDED
+END TIME: 12:00:00
+DURATION: 00:46:30
+TOTAL CHANGES: 65
+CHANGE BREAKDOWN:
+- Code changes: 17
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 2
+- Dependency changes: 4
+- Documentation changes: 42
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-conflict-review-20260717-121148
+DATE: 2026-07-17
+TIME: 12:11:48
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Implement the conflict resolution UI roadmap item
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 12:11:48
+SESSION: session-conflict-review-20260717-121148
+OPERATION: UPDATE
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the required change log for the conflict resolution UI session.
+
+BEFORE:
+The log ended with the completed offline editing and sync session.
+
+AFTER:
+The log contains a new session header for conflict review implementation.
+
+CONTEXT:
+- Related files: All files changed in session-conflict-review-20260717-121148
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Implement conflict resolution UI
+================================================================================
+
+2026-07-17 12:12:52 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded the unquoted dynamic-route path and guessed knowledge-index filename as resolved testing mistakes with prevention guidance.
+2026-07-17 12:12:52 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Updated mistake totals to 43 overall and 15 testing, with the two new records listed as most recent.
+2026-07-17 12:16:30 | PLAN | plan/feature-conflict-resolution-ui-1.md | Defined current-session overlap detection, accessible review behavior, checkpoint-before-override safety, constraints, risks, and twelve implementation tasks.
+2026-07-17 12:18:15 | CODE | src/lib/collaboration/conflict-review.ts | Added typed transient reconciliation windows, origin counters, fail-closed review finalization, draft excerpts, and safety-checkpoint labels.
+2026-07-17 12:18:15 | TEST | scripts/verify-conflict-review.ts | Added deterministic coverage for non-conflicts, valid overlap, missing-draft safety, excerpt normalization, and checkpoint labels.
+2026-07-17 12:18:15 | CONFIG | package.json | Added the dependency-free verify:conflict-review command.
+2026-07-17 12:18:42 | FORMAT | conflict review helper and verifier | Applied Prettier to the two new TypeScript files after the initial style check reported mechanical differences.
+2026-07-17 12:18:42 | VERIFY | npm run verify:conflict-review | Passed all initial reconciliation classification, safety, excerpt, and checkpoint-label assertions.
+2026-07-17 12:19:54 | CODE | src/components/collaboration/rich-text-editor.tsx | Extended the editor handle with one-shot JSON and plain-text draft capture for pre-reconnect comparison.
+2026-07-17 12:19:54 | UI | src/components/collaboration/conflict-review-panel.tsx | Added the accessible inline comparison, recommended merge action, guarded override confirmation, pending state, and error feedback.
+2026-07-17 12:20:48 | CODE | src/components/collaboration/collaborative-room.tsx | Added ref-backed local/remote Yjs update tracking, pre-remote draft capture, sync finalization, non-conflict announcements, and cleanup across reconnect/sign-out.
+2026-07-17 12:20:48 | SECURITY | src/components/collaboration/collaborative-room.tsx | Added authenticated checkpoint-before-override behavior so a failed checkpoint leaves the merged document unchanged and a successful restore remains recoverable.
+2026-07-17 12:20:48 | UI | src/components/collaboration/collaborative-room.tsx | Integrated conflict review and resolution outcome regions into the editor workspace.
+2026-07-17 12:21:31 | STYLE | src/app/globals.css | Added responsive editorial comparison cards, recommended and guarded action treatments, visible states, and compact reconciliation feedback using existing design tokens.
+2026-07-17 12:21:52 | FORMAT | conflict resolution UI source | Applied Prettier to the integrated room, panel, editor handle, and stylesheet; the editor handle and CSS already matched repository style.
+2026-07-17 12:22:13 | SECURITY | conflict override flow | Added rejected-action handling and a post-checkpoint Yjs state comparison; intervening edits now refresh the merge preview and abort replacement.
+2026-07-17 12:22:21 | VERIFY | conflict resolution integration | Passed Prettier, strict TypeScript, full ESLint, and deterministic conflict-review verification after lifecycle and race-safety integration.
+2026-07-17 12:23:18 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded the unavailable agent-browser companion CLI and the verified Chrome-control fallback.
+2026-07-17 12:23:18 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Updated mistake totals to 44 overall and 16 testing with the browser CLI mismatch as most recent.
+2026-07-17 12:24:18 | KNOWLEDGE | browser acceptance tooling | Recorded a second occurrence after the documented browser runtime exposed no CLI or browser backend; preserved the visual-verification limitation explicitly.
+2026-07-17 12:24:45 | TEST | scripts/verify-conflict-review.ts | Extended verification with real Yjs transaction origins, pre-remote draft capture, merged text assertions, and static accessibility/content rendering of the review panel.
+2026-07-17 12:25:32 | KNOWLEDGE | testing-next-dev-project-lock-2026-07-17-024 | Incremented the known alternate-port Next dev lock mistake to two occurrences; preserved the user-owned PID 19264 and selected production-start verification.
+2026-07-17 12:25:32 | TEST CLEANUP | disposable acceptance services and data | Stopped the Yjs process on 1235, confirmed 3002 is free, and deleted only the temporary conflict-review room and test user.
+2026-07-17 12:26:28 | VERIFY | full repository gate | Passed full Prettier, ESLint, strict TypeScript, Next production build, Yjs authorization, schema/profile, version history, offline sync, and conflict review checks sequentially.
+2026-07-17 12:26:58 | VERIFY | production HTTP smoke | Started the completed build on port 3002, confirmed login HTTP 200 and protected-room HTTP 307 to the encoded login return path, then stopped only the disposable production process.
+2026-07-17 12:28:14 | DOCS | README.md | Documented current-session conflict detection, merged-first behavior, guarded override safety, the verifier command, and scope limitations.
+2026-07-17 12:28:14 | DOCS | .agents/ARCHITECTURE.md | Added the ref-backed update-origin detector and checkpoint-before-restore reconnection review data flow.
+2026-07-17 12:28:14 | DOCS | .agents/SECURITY.md | Documented transient comparison data, authenticated checkpoint enforcement, and fail-closed intervening-update behavior.
+2026-07-17 12:28:14 | DOCS | .agents/TESTING.md | Added conflict verification coverage and explicitly retained the unavailable visual/interactive browser acceptance gate.
+2026-07-17 12:28:14 | DOCS | .agents/CHANGELOG.md | Recorded conflict review detection, UI, performance pattern, race protection, and security boundary.
+2026-07-17 12:28:14 | ROADMAP | .agents/ROADMAP.md | Linked the conflict resolution plan and recorded implementation/automation complete while leaving the item unchecked for browser acceptance.
+2026-07-17 12:28:14 | PLAN | plan/feature-conflict-resolution-ui-1.md | Marked implementation tasks 001 through 010 complete; retained browser acceptance and final closure tasks.
+2026-07-17 12:29:16 | FIX | conflict update classification | Added editor-focus gating for non-provider Yjs updates so initial ProseMirror setup and background persistence cannot masquerade as user offline edits.
+2026-07-17 12:29:16 | DOCS | conflict detector scope | Updated README, architecture, and implementation requirements with focused-user-update classification.
+2026-07-17 12:29:42 | TEST | conflict update relevance | Extracted and covered the focused-local/provider-remote eligibility rule so the false-positive guard is deterministic.
+2026-07-17 12:30:38 | CORRECTION | session audit timestamps | Replaced manually projected future timestamps with monotonic times bounded by the 12:22:40 disposable-fixture and 12:26:12 verifier wall-clock markers.
+2026-07-17 12:30:38 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Recorded inaccurate manually estimated audit timestamps and the requirement to query the clock for every log batch.
+2026-07-17 12:30:38 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Updated mistake totals to 45 overall and 2 logic mistakes.
+
+================================================================================
+SESSION ENDED
+END TIME: 12:33:16
+DURATION: 00:21:28
+TOTAL CHANGES: 38
+CHANGE BREAKDOWN:
+- Code changes: 9
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 1
+- Dependency changes: 0
+- Documentation changes: 18
+- Testing and verification changes: 8
+- Formatting changes: 2
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-conflict-review-acceptance-20260717-123918
+DATE: 2026-07-17
+TIME: 12:39:18
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Run final conflict resolution UI acceptance
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 12:39:18
+SESSION: session-conflict-review-acceptance-20260717-123918
+OPERATION: UPDATE
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the required change log for the requested conflict review acceptance pass.
+
+BEFORE:
+The log ended with the implementation session footer.
+
+AFTER:
+The log contains a new acceptance-verification session header.
+
+CONTEXT:
+- Related files: Conflict resolution UI verification artifacts
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Verify conflict resolution UI and close the roadmap item if acceptance passes
+================================================================================
+
+2026-07-17 12:39:32 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Incremented the unavailable browser-backend record to three occurrences after the requested acceptance retry again returned an empty browser list.
+2026-07-17 12:39:32 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Updated the knowledge timestamp and recent ordering without changing category totals.
+2026-07-17 12:40:16 | KNOWLEDGE | testing-next-types-parallel-race-2026-07-17-013 | Incremented the shared Next generated-type artifact mistake after duplicate ` 2.ts` declarations blocked the first acceptance retry.
+2026-07-17 12:40:16 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Promoted the recurrent generated-type artifact issue in the recent ordering without changing totals.
+2026-07-17 12:40:53 | TEST CLEANUP | .next/types duplicate artifacts | Moved only routes.d 2.ts, cache-life.d 2.ts, and validator 2.ts to recoverable temporary folder /tmp/boardprep-next-types.1pT4Gc while preserving the user-owned dev process.
+2026-07-17 12:41:36 | VERIFY | focused conflict acceptance | Passed strict TypeScript, full ESLint, deterministic conflict-review rendering/origin checks, authenticated offline reconnection and CRDT merge, and active development login HTTP 200.
+2026-07-17 12:41:36 | ROADMAP REVIEW | .agents/ROADMAP.md | Reconfirmed conflict resolution UI remains the first unchecked core-collaboration item because the browser runtime still exposes no interactive backend.
+
+================================================================================
+SESSION ENDED
+END TIME: 12:41:51
+DURATION: 00:02:33
+TOTAL CHANGES: 7
+CHANGE BREAKDOWN:
+- Code changes: 0
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation and knowledge changes: 5
+- Testing and verification changes: 2
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-conflict-review-closure-20260717-124350
+DATE: 2026-07-17
+TIME: 12:43:50
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Close the ready conflict resolution UI implementation
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 12:43:50
+SESSION: session-conflict-review-closure-20260717-124350
+OPERATION: UPDATE
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the required closure log after the user accepted the ready implementation.
+
+BEFORE:
+The conflict resolution UI implementation was complete but its roadmap item remained open for unavailable interactive browser acceptance.
+
+AFTER:
+The closure session will record the explicit acceptance decision without claiming that a browser test ran.
+
+CONTEXT:
+- Related files: plan/feature-conflict-resolution-ui-1.md, .agents/ROADMAP.md, .agents/TESTING.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Close conflict resolution UI implementation
+================================================================================
+
+2026-07-17 12:44:16 | ROADMAP | .agents/ROADMAP.md | Marked conflict resolution UI complete after the user accepted the ready, fully automated implementation evidence.
+2026-07-17 12:44:16 | PLAN | plan/feature-conflict-resolution-ui-1.md | Marked all twelve tasks and the plan completed while explicitly recording that browser acceptance did not run and was replaced by a product-owner verification exception.
+2026-07-17 12:44:16 | DOCS | .agents/TESTING.md | Replaced the pending browser gate with a precise acceptance-exception record and retained recommended real-browser regression scope.
+2026-07-17 12:44:16 | DOCS | .agents/CHANGELOG.md | Recorded the conflict UI roadmap closure, automated evidence, and unavailable-browser exception.
+2026-07-17 12:44:59 | FORMAT | conflict resolution closure documents | Applied repository formatting to roadmap, testing, changelog, and the completed implementation plan; only the plan required mechanical table alignment.
+2026-07-17 12:45:23 | VERIFY | conflict resolution closure | Passed application/document formatting, deterministic conflict review verification, knowledge JSON validation, completed-plan task coverage, and roadmap ordering; PDF annotation is now the first unchecked item.
+
+================================================================================
+SESSION ENDED
+END TIME: 12:45:37
+DURATION: 00:01:47
+TOTAL CHANGES: 6
+CHANGE BREAKDOWN:
+- Code changes: 0
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 4
+- Testing and verification changes: 1
+- Formatting changes: 1
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-room-creation-management-20260717-124944
+DATE: 2026-07-17
+TIME: 12:49:44
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Implement secure Phase 3 room creation and management
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-17 12:49:44
+SESSION: session-room-creation-management-20260717-124944
+OPERATION: UPDATE
+FILE: .agents/logs/changes-2026-07-17.txt
+================================================================================
+CHANGE DESCRIPTION:
+Started the required implementation log for the Phase 3 room creation and management vertical slice.
+
+BEFORE:
+The daily log ended with the completed conflict resolution closure session.
+
+AFTER:
+The daily log contains a new room creation and management implementation session header.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, plan/feature-room-creation-management-1.md
+- API endpoints affected: To be determined by the implementation plan
+- Database changes: Secure room management migration planned
+- Dependencies: None planned
+
+AGENT: Codex
+TASK: Implement secure Phase 3 room creation and management
+================================================================================
+
+2026-07-17 12:49:44 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the stale skill-reference path mistake after required Next.js references were again looked up beside SKILL.md instead of under references/.
+2026-07-17 12:49:44 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the recurrent skill-reference path mistake without changing category totals.
+2026-07-17 12:50:50 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the direct Supabase changelog Markdown rejection after repeating a known browser-safety-incompatible URL form.
+2026-07-17 12:50:50 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the recurrent changelog URL mistake without changing category totals.
+2026-07-17 12:51:07 | KNOWLEDGE CORRECTION | .agents/knowledge/mistakes-build.json | Restored the package-version occurrence count and applied the changelog recurrence to its uniquely identified record after detecting an under-scoped patch.
+2026-07-17 12:51:07 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the ambiguous patch-context mistake and recorded the verified correction strategy.
+2026-07-17 12:51:07 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the audit correction without changing category totals.
+2026-07-17 12:53:20 | KNOWLEDGE | .agents/knowledge/mistakes-deployment.json | Recorded the unlinked-project migration-list failure and the explicit pooler URL prevention pattern.
+2026-07-17 12:53:20 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added deployment mistake 046 and updated category totals and recent ordering.
+2026-07-17 12:54:04 | PLAN | plan/feature-room-creation-management-1.md | Created the required implementation plan with fifteen security, database, application, UI, verification, documentation, and roadmap tasks; completed the audited discovery task.
+2026-07-17 12:55:23 | DATABASE | supabase/migrations/20260717045518_room_creation_management.sql | Scaffolded the room lifecycle migration through `supabase migration new room_creation_management` as required by the repository Supabase workflow.
+2026-07-17 12:56:17 | DATABASE | supabase/migrations/20260717045518_room_creation_management.sql | Implemented invariant backfills, trimmed room-name constraints, immutable owner membership, room timestamps, atomic room creation, owner-authorized exact-email member addition, explicit function privileges, and owner-safe membership policies.
+2026-07-17 12:58:24 | DATABASE DEPLOY | supabase/migrations/20260717045518_room_creation_management.sql | Supabase CLI applied migration 20260717045518 to the configured remote database and updated migration history; the command exited successfully.
+2026-07-17 12:58:24 | KNOWLEDGE | .agents/knowledge/mistakes-deployment.json | Recorded the non-fatal post-apply pg-delta Docker cache warning and required direct remote verification evidence.
+2026-07-17 12:58:24 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added deployment mistake 047 and updated totals and recent ordering.
+2026-07-17 12:59:20 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded the focused SQL assertion dollar-quote collision and its named-delimiter correction.
+2026-07-17 12:59:20 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added testing mistake 048 and updated totals and recent ordering.
+2026-07-17 13:00:26 | VERIFY | remote room lifecycle migration | Confirmed migration history 20260717045518, atomic-only room grants, authenticated-only function execution, hardened search paths, sixteen expected RLS policies, immutable owner membership invariants, and notes-document backfills.
+2026-07-17 13:00:26 | PLAN | plan/feature-room-creation-management-1.md | Marked migration generation and verified remote deployment tasks complete.
+2026-07-17 13:01:18 | CODE | src/lib/rooms/repository.ts | Added typed, server-only room validation, directory/workspace/settings reads, atomic creation RPC access, explicit public joining/leaving, owner settings and membership mutations, and affected-row verification.
+2026-07-17 13:01:18 | SERVER ACTIONS | src/app/rooms/actions.ts | Added authenticated create, join, leave, settings, member add/role/remove, and typed-confirmation delete actions with safe error states, targeted revalidation, and redirects outside mutation catch blocks.
+2026-07-17 13:03:28 | CODE | src/app/rooms/[roomId]/page.tsx | Replaced implicit slug-driven creation with an existing-room authenticated workspace read and passed real role, privacy, name, and joined-room navigation data into the collaboration shell.
+2026-07-17 13:03:28 | CODE | src/lib/version-history/repository.ts | Removed the read-path helper that created rooms, memberships, and documents as side effects; version history now operates only on explicitly created existing rooms.
+2026-07-17 13:04:46 | UI | src/app/rooms/page.tsx | Added the authenticated room-home Server Component with parallel profile and RLS-backed directory reads.
+2026-07-17 13:04:46 | UI | src/components/rooms/rooms-dashboard.tsx | Added responsive create, joined-room, public-discovery, explicit join/leave, owner-management, status, loading, and empty-state interactions using the existing BoardPrep visual language.
+2026-07-17 13:04:46 | UI | src/app/rooms/[roomId]/settings/page.tsx | Added the owner-only room settings Server Component with authenticated access and fail-closed not-found behavior.
+2026-07-17 13:04:46 | UI | src/components/rooms/room-settings.tsx | Added name/visibility settings, exact-email collaborator administration, role changes, removal confirmations, immutable owner presentation, and typed-name room deletion.
+2026-07-17 13:09:23 | STYLE | src/app/globals.css | Added responsive BoardPrep room-home and owner-settings layouts, visible focus/disabled/status states, 44px primary targets, mobile card/member reflow, privacy/role badges, and isolated danger styling; timestamp corrected to the next directly verified clock after the prior value was reused.
+2026-07-17 13:09:23 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the timestamp-discipline mistake after a prior verified time was reused for a later CSS patch and recorded the correction.
+2026-07-17 13:09:23 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the audit chronology correction without changing category totals.
+2026-07-17 13:10:11 | CODE | src/lib/rooms/repository.ts | Added persisted notes snapshot loading only for viewer memberships so read-only room rendering does not open a writable collaboration path.
+2026-07-17 13:10:11 | CODE | src/app/rooms/[roomId]/page.tsx | Passed the viewer-only persisted notes state into the collaboration shell.
+2026-07-17 13:10:11 | UI | src/components/collaboration/rich-text-editor.tsx | Added an explicit read-only editor mode with disabled restoration, hidden formatting controls, viewer feedback, and editable-state synchronization.
+2026-07-17 13:10:11 | UI | src/components/collaboration/collaborative-room.tsx | Replaced placeholder room controls with real room-home, joined-room switcher/sidebar, owner management, privacy/role context, and a viewer mode that avoids writable WebSocket and IndexedDB flows.
+2026-07-17 13:11:30 | STYLE | src/app/globals.css | Styled the native room switcher, real room navigation links, role/privacy header context, truncated sidebar room names, and the read-only editor banner with existing tokens and focus behavior.
+2026-07-17 13:11:52 | ROUTING | src/app/page.tsx, src/app/login/actions.ts, src/lib/supabase/proxy.ts | Changed home, default post-auth, and authenticated login redirects from the implicit demo slug to the explicit `/rooms` room home.
+2026-07-17 13:12:24 | FORMAT | room creation and management application files | Applied repository formatting to the new room domain, Server Actions, pages, components, collaboration integration, redirects, CSS, and implementation plan; CSS and already-formatted supporting files remained unchanged.
+2026-07-17 13:12:53 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the cross-component prop and synchronous effect-state mistakes, and recorded the settings JSX try-block and unused room-wiring contract findings from the focused gate.
+2026-07-17 13:12:53 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added build mistakes 049 and 050, updated build and total counts, and refreshed recent ordering.
+2026-07-17 13:14:01 | FIX | room application focused gate | Added the room-home sign-out preflight, moved settings JSX outside data-fetch error classification, explicitly consumed framework callback arguments, pruned retired icons, rendered the real room name, and deferred viewer initialization state to a microtask.
+2026-07-17 13:14:46 | FORMAT | focused room gate fixes | Reapplied repository formatting after the focused type/lint fixes; only the collaboration room component required mechanical wrapping.
+2026-07-17 13:15:37 | VERIFY | room application focused gate | Passed strict TypeScript and focused ESLint across the room domain, Server Actions, routes, dashboard/settings UI, collaboration integration, editor read-only mode, redirects, and version repository.
+2026-07-17 13:15:37 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the patch-context mistake after a plan update used pre-format table spacing and failed without changing implementation files.
+2026-07-17 13:15:37 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the plan patch-context recurrence without changing category totals.
+2026-07-17 13:15:37 | PLAN | plan/feature-room-creation-management-1.md | Marked the seven server-domain, explicit-room-read, room-home, switcher, owner-settings, and responsive-routing implementation tasks complete using live formatted table context.
+2026-07-17 13:16:36 | TEST | scripts/verify-schema.mjs | Extended schema assertions for sixteen policies, atomic-only room grants, two hardened public lifecycle functions, eight private authorization helpers, exact execution privileges, owner/document invariants, and protection triggers.
+2026-07-17 13:16:36 | TEST | scripts/verify-version-history.mjs | Migrated the existing durable-collaboration fixture from revoked direct room inserts to the atomic room creation RPC and its pre-provisioned owner/document invariants.
+2026-07-17 13:16:36 | TEST | scripts/verify-room-management.mjs | Added disposable three-user integration coverage for partial-insert denial, atomic creation, unique slugs, private/public access, exact-email addition, role enforcement, immutable ownership, settings, join/leave, removal, deletion, and cascades.
+2026-07-17 13:16:36 | CONFIG | package.json | Added the `verify:rooms` command for the authenticated room lifecycle integration verifier.
+2026-07-17 13:18:56 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Recorded the two-file formatting preflight failure for the newly created/adapted verifier scripts and its formatter-first correction.
+2026-07-17 13:18:56 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added build mistake 051 and updated build and total counts and recent ordering.
+2026-07-17 13:19:34 | FORMAT | room verification scripts | Applied repository formatting to the room-management and adapted version-history verifiers; schema verifier and package manifest were already formatted.
+2026-07-17 13:20:11 | VERIFY | schema and room lifecycle | Schema verification passed, then the disposable public-room join step failed after discovery; automatic cleanup completed.
+2026-07-17 13:20:11 | TEST DIAGNOSTIC | scripts/verify-room-management.mjs | Added the sanitized PostgREST error or returned-row detail to public join failures for exact reproduction.
+2026-07-17 13:20:11 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded unresolved testing mistake 052 for the failed explicit public-room join workflow.
+2026-07-17 13:20:11 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added testing mistake 052 and updated testing and total counts and recent ordering.
+2026-07-17 13:21:15 | VERIFY | public room join reproduction | Reproduced the failure with the sanitized PostgREST reason `new row violates row-level security policy for table room_members`; disposable fixtures again cleaned up.
+2026-07-17 13:21:15 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Incremented unresolved public-join mistake 052, recorded the exact RLS rejection, and selected a dedicated join RPC plus revoked direct inserts as the correction.
+2026-07-17 13:21:15 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the reproduced public-join failure without changing category totals.
+2026-07-17 13:21:48 | DATABASE | supabase/migrations/20260717052138_secure_public_room_join.sql | Scaffolded the corrective public room join migration through the required Supabase CLI workflow.
+2026-07-17 13:22:49 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the invalid generated-patch syntax mistake after a stray final hunk marker rejected the corrective multi-file patch before any change applied.
+2026-07-17 13:22:49 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the rejected patch-syntax recurrence without changing category totals.
+2026-07-17 13:23:04 | DATABASE | supabase/migrations/20260717052138_secure_public_room_join.sql | Replaced the rejected direct membership-insert join policy with an authenticated hardened public-room join RPC, revoked direct authenticated membership inserts, and removed the obsolete private join helper.
+2026-07-17 13:23:04 | CODE | src/lib/rooms/repository.ts | Routed explicit public joins through the dedicated RPC and verified its returned room identifier and editor role.
+2026-07-17 13:24:12 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the invalid generated-patch syntax mistake after a second empty trailing hunk marker rejected the split verifier patch before any file changed.
+2026-07-17 13:24:12 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the repeated verifier patch-syntax failure without changing category totals.
+2026-07-17 13:24:51 | TEST | scripts/verify-schema.mjs | Updated policy, room-membership privilege, public/private function hardening, and execute-grant assertions for function-only public joining.
+2026-07-17 13:25:22 | TEST | scripts/verify-room-management.mjs | Switched the disposable explicit public join step to the hardened join RPC while retaining direct role-escalation denial coverage.
+2026-07-17 13:26:52 | DATABASE DEPLOY | supabase/migrations/20260717052138_secure_public_room_join.sql | Dry-run selected only the corrective join migration; Supabase CLI then applied version 20260717052138 and updated remote history successfully.
+2026-07-17 13:26:52 | KNOWLEDGE | .agents/knowledge/mistakes-deployment.json | Incremented the known non-fatal pg-delta Docker cache warning after the successful corrective remote push.
+2026-07-17 13:26:52 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the recurrent optional catalog-cache warning without changing category totals.
+2026-07-17 13:27:22 | VERIFY | schema and room lifecycle | Passed the expanded remote schema gate and disposable three-user room workflow, including atomic creation, unique slugs, private/public authorization, exact-email addition, role writes, immutable ownership, explicit join/leave, settings, deletion, and cascades.
+2026-07-17 13:27:22 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Resolved public-join mistake 052 with the hardened join RPC, revoked direct membership inserts, and passing workflow evidence.
+2026-07-17 13:27:22 | PLAN | plan/feature-room-creation-management-1.md | Marked the expanded schema and disposable room-management integration verifier tasks complete.
+2026-07-17 13:28:16 | UX REVIEW | room creation and management UI | Re-ran the required pre-delivery accessibility/loading/motion/z-index search and confirmed the implementation uses disabled loading buttons, status regions, the existing z-index scale, reduced-motion handling, and 150–180ms interaction transitions.
+2026-07-17 13:28:16 | VERIFY | static application gates | Confirmed no duplicate Next generated type artifacts, preserved user-owned Next/Yjs processes, and passed full repository formatting, ESLint, and strict TypeScript.
+2026-07-17 13:28:49 | VERIFY | production build | Next.js 16.2.10 production build compiled, typed, generated, and finalized successfully with dynamic `/rooms`, `/rooms/[roomId]`, and `/rooms/[roomId]/settings` routes.
+2026-07-17 13:29:29 | VERIFY | collaboration regressions | Yjs protocol and adapted version-history suites passed; offline-sync then failed during its obsolete direct room-insert fixture setup before behavior assertions.
+2026-07-17 13:29:29 | TEST | scripts/verify-offline-sync.ts | Migrated the authenticated offline fixture to atomic room creation and its generated slug/id and pre-provisioned notes document.
+2026-07-17 13:29:29 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded resolved testing mistake 053 for the missed direct-insert dependency in the offline fixture.
+2026-07-17 13:29:29 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added testing mistake 053 and updated testing and total counts and recent ordering.
+2026-07-17 13:32:07 | FIX | scripts/verify-offline-sync.ts | Kept the validated atomic room slug as a non-null local constant so offline storage and provider closures retain strict narrowing.
+2026-07-17 13:32:07 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the offline verifier contract mistake after the nullable generated slug failed strict TypeScript in captured callbacks.
+2026-07-17 13:32:07 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp for the strict-null verifier correction without changing category totals.
+2026-07-17 13:33:28 | VERIFY | collaboration regression closure | Passed strict TypeScript, offline persistence/reconnection/merge/durability, and conflict-review verification after the atomic fixture migration; earlier in the same gate Yjs protocol and version-history verification passed.
+2026-07-17 13:33:28 | VERIFY | active development HTTP smoke | Passed full formatting and ESLint again, received `/login` HTTP 200 and protected `/rooms` HTTP 307 to `/login?next=%2Frooms`, and confirmed the user-owned Next and Yjs processes remained active.
+2026-07-17 13:33:28 | PLAN | plan/feature-room-creation-management-1.md | Marked the full static, build, database, integration, regression, and HTTP verification task complete.
+2026-07-17 13:35:24 | DOCS | README.md | Documented explicit room creation, discovery, switching, owner administration, viewer behavior, the `/rooms` entry point, lifecycle verification, and remaining invitation limitations.
+2026-07-17 13:35:24 | DOCS | .agents/API.md | Documented implemented room routes, internal Server Actions, and the three authenticated lifecycle RPC boundaries while retaining broader REST contracts as planned.
+2026-07-17 13:35:24 | DOCS | .agents/DATABASE.md | Documented deployed room tables, atomic lifecycle functions, revoked inserts, immutable ownership, policy/helper counts, and verified invariants separately from planned example schemas.
+2026-07-17 13:35:24 | DOCS | .agents/SECURITY.md | Documented least-privilege room functions, RLS mutation checks, owner protection, exact-email privacy, and read-only viewer collaboration behavior.
+2026-07-17 13:35:24 | DOCS | .agents/TESTING.md | Added the room-management verification command and evidence, corrected schema policy/function counts, and recorded the interactive-browser verification exception.
+2026-07-17 13:35:24 | CHANGELOG | .agents/CHANGELOG.md | Recorded the explicit room lifecycle, dashboard/settings UI, viewer isolation, hardened database functions, and corrected public-join authorization.
+2026-07-17 13:35:24 | PLAN | plan/feature-room-creation-management-1.md | Marked the room lifecycle documentation task complete after updating every required implementation document.
+2026-07-17 13:36:49 | FORMAT | room lifecycle documentation | Applied Prettier to README, implementation documentation, roadmap, and plan; only database documentation and plan table alignment required mechanical changes.
+2026-07-17 13:38:13 | VERIFY | final room lifecycle gate | Passed full formatting, ESLint, strict TypeScript, production build, remote schema assertions, and the disposable three-user room lifecycle workflow after documentation closure.
+2026-07-17 13:38:13 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Recorded unresolved testing mistake 054 after nested shell, JavaScript, and SQL quotes broke a read-only final consistency diagnostic before query execution.
+2026-07-17 13:38:13 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added testing mistake 054 and updated testing and total counts and recent ordering.
+2026-07-17 13:39:01 | VERIFY | remote migration and fixture audit | Confirmed both room lifecycle migrations are recorded remotely, disposable room verification left zero matching users and rooms, and the user-owned Next and Yjs processes remain active.
+2026-07-17 13:39:01 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json | Resolved mistake 054 by isolating SQL from shell lexical parsing and passing the read-only migration/residue audit.
+2026-07-17 13:39:01 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed the knowledge timestamp after resolving the final consistency diagnostic without changing category totals.
+2026-07-17 13:40:22 | ROADMAP | .agents/ROADMAP.md | Marked Phase 2 completed and closed the Phase 3 study room creation and room management items with their verified implementation plan; Phase 3 remains in progress for PDF annotation and whiteboard.
+2026-07-17 13:40:22 | PLAN | plan/feature-room-creation-management-1.md | Marked all fifteen tasks and the secure room creation and management implementation plan completed after every application, database, regression, documentation, and residue gate passed.
+2026-07-17 13:41:11 | VERIFY | room lifecycle closure metadata | Passed formatting for every changed document, validated all knowledge JSON, confirmed 15/15 completed plan tasks, closed the two room roadmap items, and retained PDF annotation and whiteboard as the remaining Phase 3 scope.
+
+================================================================================
+SESSION ENDED
+END TIME: 13:41:11
+DURATION: 00:51:27
+TOTAL CHANGES: 104
+CHANGE BREAKDOWN:
+- Code changes: 17
+- API changes: 1
+- Database changes: 6
+- Configuration changes: 1
+- Dependency changes: 0
+- Documentation and knowledge changes: 55
+- Testing and verification changes: 20
+- Formatting changes: 4
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-room-create-runtime-diagnosis-20260717-145202
+DATE: 2026-07-17
+TIME: 14:52:02
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Diagnose the room creation interruption
+================================================================================
+
+2026-07-17 14:52:02 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the stale Next.js reference-path mistake after looking beside SKILL.md instead of its references directory, then read the required error-handling guide from the verified package tree.
+2026-07-17 14:52:02 | KNOWLEDGE | .agents/knowledge/mistakes-runtime.json | Recorded unresolved runtime mistake 055 from the user-reported room creation interruption and the exact invalid `use server` object export in the active Next development log.
+2026-07-17 14:52:02 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added runtime mistake 055, updated runtime and total counts, and promoted the recurrent skill-path mistake in recent ordering.
+2026-07-17 14:53:17 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the ambiguous structured-log patch mistake after a bare separator placed this diagnosis session at the file head, then restored chronological tail placement without losing audit entries.
+2026-07-17 14:53:17 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Promoted the recurrent log-placement mistake and refreshed the knowledge timestamp without changing totals.
+2026-07-17 14:54:06 | VERIFY | room creation interruption diagnosis | Matched the user-visible fallback to the root App Router error boundary, confirmed the active Next development error `A "use server" file can only export async functions, found object`, and traced it to the exported initial-state object consumed by both room client components; no application fix was made during this diagnostic request.
+
+================================================================================
+SESSION ENDED
+END TIME: 14:54:06
+DURATION: 00:02:04
+TOTAL CHANGES: 6
+CHANGE BREAKDOWN:
+- Code changes: 0
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation and knowledge changes: 5
+- Testing and verification changes: 1
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-password-reset-20260717-162755
+DATE: 2026-07-17
+TIME: 16:27:55
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Add a temporary password-reset flow before continuing Phase 3
+================================================================================
+
+2026-07-17 16:27:55 | KNOWLEDGE | .agents/knowledge/mistakes-security.json | Recorded resolved security mistake 056 after a broad environment search printed a browser-visible legacy anon key; adopted path-only environment inspection and server-side reset handling as prevention.
+2026-07-17 16:27:55 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Added security mistake 056, updated the security and total counts, and promoted it in recent ordering.
+2026-07-17 16:31:40 | PLAN | plan/feature-password-reset-1.md | Created the required implementation plan for the temporary Supabase password-reset request, recovery callback, authenticated update UI, focused verification, and Phase 3 hand-back boundary.
+2026-07-17 16:32:10 | CODE | src/lib/auth/password-reset.ts | Added account-neutral email normalization, bounded password confirmation validation, shared action state, and HTTP(S)-only recovery callback construction.
+2026-07-17 16:32:10 | AUTH | src/app/reset-password/actions.ts | Added server-only recovery-email and authenticated password-update actions with trusted claim validation, generic account feedback, global session sign-out, and safe completion redirect.
+2026-07-17 16:32:10 | UI | src/app/reset-password/page.tsx, src/app/reset-password/reset-password-form.tsx | Added the public editorial password-reset request page with visible email labeling, helper copy, pending state, account-neutral completion feedback, and sign-in return path.
+2026-07-17 16:32:10 | UI | src/app/reset-password/update/page.tsx, src/app/reset-password/update/update-password-form.tsx | Added the recovery-authenticated new-password page with server-side session gating, matched-password fields, autofill semantics, show/hide control, loading feedback, and invalid-link recovery.
+2026-07-17 16:32:10 | AUTH ROUTING | src/app/auth/confirm/route.ts | Routed failed recovery exchanges back to the reset request page with an actionable invalid-or-expired state while preserving safe confirmation redirects.
+2026-07-17 16:32:10 | UI | src/app/login/page.tsx, src/app/login/login-form.tsx, src/app/globals.css | Linked sign-in to password recovery, added post-reset confirmation, improved auth alert semantics, and styled accessible 44-pixel reset controls with a mobile layout and existing BoardPrep tokens.
+2026-07-17 16:32:10 | CONFIG DOC | .env.example | Clarified that the configured site origin builds both signup and recovery callbacks and that /auth/confirm must be allow-listed in Supabase Auth.
+2026-07-17 16:32:45 | FORMAT | password reset implementation | Applied Prettier to the reset contracts, Server Actions, routes, forms, auth callback/login integration, CSS, implementation plan, and knowledge JSON; only the action module and plan required mechanical formatting.
+2026-07-17 16:32:45 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the correlated nullable action-result narrowing mistake after the focused TypeScript gate rejected a truthy error guard, then corrected the update action with an exact password null check.
+2026-07-17 16:32:45 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the projected audit timestamp mistake after initial implementation log entries were later than the system clock, then corrected them to a measured session time.
+2026-07-17 16:32:45 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Refreshed recent ordering and timestamp for the resolved narrowing and audit chronology recurrences without changing category totals.
+2026-07-17 16:32:45 | FIX | src/app/reset-password/actions.ts | Narrowed the password validation result by its exact nullable payload so strict TypeScript proves the update payload is a string.
+2026-07-17 16:34:15 | TEST | scripts/verify-password-reset.ts | Added focused checks for email/password validation, safe recovery callback construction, trusted-claim update ordering, Server Action exports, accessible form contracts, recovery failure routing, and login entry without sending email.
+2026-07-17 16:34:15 | CONFIG | package.json | Added the `verify:password-reset` command for the focused Auth recovery gate.
+2026-07-17 16:34:15 | UI FIX | src/app/reset-password/update/update-password-form.tsx, src/app/globals.css | Moved the password visibility button outside the label content model, associated it with both password fields, and retained a full 44-pixel accessible target.
+2026-07-17 16:34:15 | DOCS | README.md | Documented the password-recovery route, cookie-backed callback exchange, and focused verification command.
+2026-07-17 16:34:15 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Corrected the recurrent nullable action-result mistake occurrence count after confirming the first patch added its latest timestamp but missed the count field.
+2026-07-17 16:35:26 | FORMAT | focused password reset gate | Applied Prettier to the verifier, package manifest, update form, CSS, README, and build knowledge JSON before running the focused gate.
+2026-07-17 16:35:26 | VERIFY | focused password reset gate | Strict TypeScript and focused ESLint passed, while verifier execution stopped before assertions because tsx rejected top-level await under the repository CommonJS package mode.
+2026-07-17 16:35:26 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the known CommonJS TypeScript verifier bootstrap mistake after the new reset verifier repeated top-level await, then selected synchronous source reads as the minimal correction.
+2026-07-17 16:35:26 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Promoted the recurrent verifier bootstrap mistake and refreshed the knowledge timestamp without changing category totals.
+2026-07-17 16:35:26 | TEST FIX | scripts/verify-password-reset.ts | Replaced asynchronous top-level source reads with synchronous Node reads so the focused verifier runs under the repository CommonJS package mode.
+2026-07-17 16:36:38 | VERIFY | focused password reset verifier | Passed validation, callback safety, trusted update ordering, accessible form contracts, recovery failure routing, and login entry assertions after the CommonJS bootstrap correction.
+2026-07-17 16:36:38 | KNOWLEDGE | .agents/knowledge/mistakes-logic.json | Incremented the ambiguous patch-context mistake after generic occurrence-count hunks changed an unrelated historical record, then switched to mistake-ID-specific JSON patches.
+2026-07-17 16:36:38 | KNOWLEDGE REPAIR | .agents/knowledge/mistakes-build.json | Restored the unrelated guessed-package counter and correctly applied the action-narrowing and CommonJS-verifier recurrence counts to their intended objects.
+2026-07-17 16:36:38 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Promoted the patch-context recurrence and refreshed the knowledge timestamp without changing category totals.
+2026-07-17 16:38:00 | KNOWLEDGE | .agents/knowledge/mistakes-build.json | Incremented the stale listed-skill-path mistake after the in-app browser package path was absent, then located and read the available Vercel agent-browser verification skill.
+2026-07-17 16:38:00 | KNOWLEDGE | .agents/knowledge/mistakes-index.json | Promoted the recurrent skill-path mistake and refreshed the knowledge timestamp without changing category totals.
+2026-07-17 16:44:49 | BROWSER VERIFY | /reset-password, /reset-password/update | Verified the recovery request at desktop and 375-pixel widths, confirmed invalid or expired update links return with an accessible alert, and found no application-origin console warnings or errors.
+2026-07-17 16:44:49 | REGRESSION VERIFY | repository verification suites | Passed Yjs, schema/RLS, room lifecycle, version-history, offline-sync, and conflict-review suites after the password-reset implementation.
+2026-07-17 16:44:49 | DOCS | .agents/CHANGELOG.md, .agents/TESTING.md, .agents/SECURITY.md | Documented the implemented password-recovery surface, focused and browser acceptance coverage, and account-neutral claim-validated security boundary.
+2026-07-17 16:44:49 | PLAN | plan/feature-password-reset-1.md | Marked every implementation task complete and recorded the passing code, collaboration, browser, and no-email verification evidence.
+2026-07-17 16:44:49 | KNOWLEDGE | .agents/knowledge/mistakes-testing.json, .agents/knowledge/mistakes-index.json | Incremented the optional browser CLI recurrence and updated the resolution to use the available in-app Browser plugin successfully.
+2026-07-17 16:44:49 | FORMAT VERIFY | password reset completion records | Formatted the plan and project records, validated structured knowledge JSON, and reconfirmed the repository formatting gate.
+
+================================================================================
+SESSION ENDED
+END TIME: 16:44:49
+DURATION: 00:16:54
+TOTAL CHANGES: 37
+CHANGE BREAKDOWN:
+- Code changes: 8
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 2
+- Dependency changes: 0
+- Documentation and knowledge changes: 18
+- Testing and verification changes: 9
+================================================================================
