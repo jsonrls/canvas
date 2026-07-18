@@ -15,7 +15,7 @@ export default async function LoginPage({
 }: LoginPageProps): Promise<React.ReactElement> {
   const { next, reset } = await searchParams;
   const nextPath =
-    next?.startsWith("/") && !next.startsWith("//") ? next : "/rooms/demo";
+    next?.startsWith("/") && !next.startsWith("//") ? next : "/rooms";
 
   return (
     <main className="login-page">

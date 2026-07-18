@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Next.js 16 App Router foundation with TypeScript, linting, production builds, and responsive loading/error states
-- `/rooms/[roomId]` collaborative study-notes route with a default `/rooms/demo` entry point
+- `/rooms/[roomId]` collaborative study workspace with a `/rooms` dashboard entry point
 - Tiptap rich-text editing with headings, lists, blockquotes, inline formatting, code, undo, and redo
 - Yjs document synchronization, room awareness, participant presence, and collaborative cursor labels
 - BoardPrep room shell with warm editorial styling, brand accents, study navigation, and a responsive mobile layout
@@ -33,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Owner-only room settings for name and visibility updates, existing-account collaborator addition, role changes, removals, and typed-name deletion
 - Atomic room creation, hardened public joining, immutable owner membership, and disposable three-user lifecycle verification through `npm run verify:rooms`
 - Account-neutral password recovery with a public reset request, authenticated new-password update, safe Supabase callback exchange, and focused verification through `npm run verify:password-reset`
+- Private room PDF upload/replacement with React PDF rendering, page navigation, zoom, highlights, underlines, drawings, sticky notes, page comments, replies, bookmarks, and revision isolation
+- Collaborative SVG whiteboard with freehand drawing, rectangles, ellipses, lines, arrows, text, bounded image insertion, multi-user Yjs merging, and awareness-only laser pointers
+- Isolated `notes`, `pdf`, and `whiteboard` Yjs/IndexedDB channels plus private Supabase Storage policies and disposable authorization verification
+- Responsive Notes/PDF/Whiteboard navigation with browser-verified desktop and 375-pixel layouts
+- Room-scoped Phase 4 AI assistant that converts an explicit note snapshot into a discussion summary, interactive quiz, flashcards, focused learning recommendations, and cautious misconception review
+- Strict study-pack JSON Schema and runtime validation, provider refusal handling, bounded server-only generation, and deterministic `npm run verify:phase-4` coverage
+- Responsive Notes/PDF/Whiteboard/AI navigation with keyboard-operable result tabs, accessible feedback, and a persistent medical-study verification notice
+- Live-provider and authenticated browser acceptance for Phase 4, including prompt-injection resistance, all five generated views, clean application-origin logs, and 375-pixel responsive measurements
+- Creator-private saved AI study guides with Supabase persistence, metadata-only listing, validated reopen, inline deletion confirmation, RLS isolation, and cleanup cascades
 
 ### Changed
 
@@ -47,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Closed the conflict resolution UI roadmap item with an explicit product-owner verification exception after three browser-backend checks were unavailable; automated build, CRDT, origin, rendering, type, and lint gates remained green
 - Replaced implicit slug-driven room creation with explicit authenticated lifecycle actions and changed default authenticated navigation to `/rooms`
 - Made viewer workspaces read-only from persisted state without opening writable WebSocket or IndexedDB collaboration paths
+- Replaced the planned Excalidraw bundle with a focused SVG whiteboard after its production dependency tree introduced a high-severity advisory and React 19 peer overrides
+- Changed the default sign-in destination from the obsolete `/rooms/demo` assumption to the authenticated `/rooms` dashboard
 
 ### Deprecated
 
@@ -66,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Next's smooth-scroll document marker and browser-verified recovery from incomplete initial Yjs handshakes
 - Prevented an offline-draft override from replacing newer live edits by rechecking the full Yjs state after checkpoint creation
 - Replaced the public-room direct membership insert with a dedicated RLS-safe join function after integration verification exposed the policy conflict
+- Parsed suffixed Yjs document names before plain room slugs so PDF and whiteboard channels persist to their correct document rows
 
 ### Security
 
@@ -78,6 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Revoked direct authenticated room and membership inserts, restricted lifecycle functions to authenticated callers, and protected owner membership against leave, removal, identity changes, and demotion
 - Kept exact-email account lookup inside an owner-authorized database function and returned no collaborator email data to room reads or browser props
 - Kept recovery requests account-neutral, validated recovery claims before password updates, constrained callback origins to HTTP(S), and closed the recovery session after success
+- Kept `boardprep-pdfs` private, constrained to `application/pdf` and 15 MiB, used versioned room-prefixed object paths, revalidated uploaded metadata and the `%PDF-` header, and limited object reads/writes/deletes through membership-aware RLS
+- Kept the OpenAI key server-only; revalidated cookie claims and room membership per generation; disabled provider storage; bounded source, output, frequency, and duration; separated untrusted notes from instructions; and kept generated packs ephemeral
 - `npm audit` reports two moderate findings through Next.js's bundled PostCSS 8.4.31; npm proposes an unsafe Next.js 9 downgrade, so the upstream issue remains documented rather than force-fixed
 
 ## [0.1.0] - 2024-01-15

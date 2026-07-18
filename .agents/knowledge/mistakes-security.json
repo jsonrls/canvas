@@ -154,5 +154,45 @@
     "session": "session-password-reset-20260717-162755",
     "resolved": true,
     "resolution_time": "2026-07-17 16:27:55"
+  },
+  {
+    "mistake_id": "security-excalidraw-transitive-audit-2026-07-17-058",
+    "timestamp": "2026-07-17 17:01:18",
+    "category": "security",
+    "severity": "high",
+    "title": "Stable Excalidraw release introduced a high-severity production advisory",
+    "description": "The React 19-compatible Excalidraw 0.18.1 install added vulnerable nested nanoid and Mermaid parser packages, including lodash-es advisories rated high, plus React 19 peer overrides in its older Radix UI subtree.",
+    "context": {
+      "file": "package-lock.json",
+      "line": 1,
+      "function": "Phase 3 dependency security gate",
+      "code_snippet": "npm install --save-exact @excalidraw/excalidraw@0.18.1 && npm audit --omit=dev",
+      "environment": "development"
+    },
+    "error_message": "npm audit reported 10 moderate and 1 high production vulnerability after the Excalidraw install.",
+    "root_cause": "Compatibility and current-version checks covered the direct package but did not expose newly published advisories in the full transitive production tree until the post-install audit.",
+    "solution": "Removed Excalidraw and its 223-package tree, restored the baseline two documented Next/PostCSS moderate findings, and selected a focused SVG/Yjs whiteboard with no new production dependency.",
+    "prevention": {
+      "strategies": [
+        "Run a production dependency audit immediately after every candidate install",
+        "Reject high-severity transitive advisories when a smaller in-scope implementation is available",
+        "Check nested peer compatibility rather than relying only on the direct package peer range"
+      ],
+      "code_patterns": [
+        "Avoid: accepting a direct package version before auditing its installed tree",
+        "Use: exact install, npm ls, npm audit --omit=dev, then retain or remove"
+      ],
+      "tests_to_add": ["Keep the production dependency audit in the Phase 3 release gate"],
+      "documentation_links": [
+        "https://github.com/advisories/GHSA-r5fr-rjxr-66jc",
+        "https://docs.npmjs.com/cli/v11/commands/npm-audit"
+      ]
+    },
+    "related_mistakes": ["security-next-postcss-upstream-2026-07-17-009"],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-phase-3-study-tools-20260717-165554",
+    "resolved": true,
+    "resolution_time": "2026-07-17 17:01:18"
   }
 ]

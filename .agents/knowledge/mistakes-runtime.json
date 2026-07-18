@@ -169,7 +169,7 @@
     },
     "error_message": "Error: A \"use server\" file can only export async functions, found object.",
     "root_cause": "Next.js treats every export from a module-level `use server` file as a Server Function export. The shared initial action-state object violates that runtime contract even though the production TypeScript/build gate did not expose it.",
-    "solution": "Pending implementation: move the action-state type and initial object into a neutral shared module, leaving `src/app/rooms/actions.ts` with async function exports only.",
+    "solution": "Moved RoomActionState and INITIAL_ROOM_ACTION_STATE into a neutral action-state module, updated both client form components to import state there, and left src/app/rooms/actions.ts with async function runtime exports only.",
     "prevention": {
       "strategies": [
         "Keep module-level `use server` files limited to async function exports",
@@ -193,7 +193,7 @@
     "occurrence_count": 1,
     "agent": "Codex",
     "session": "session-room-create-runtime-diagnosis-20260717-145202",
-    "resolved": false,
-    "resolution_time": null
+    "resolved": true,
+    "resolution_time": "2026-07-18 13:10:09"
   }
 ]

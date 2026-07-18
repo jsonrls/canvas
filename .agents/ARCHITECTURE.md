@@ -10,7 +10,7 @@ The MyBoardPrep Collaborative Learning Suite follows a modern real-time web appl
 ┌─────────────────────────────────────────────────────────────┐
 │                         Frontend                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   React UI   │  │  Tiptap Editor│  │  Excalidraw  │      │
+│  │   React UI   │  │ Tiptap Editor │  │ SVG Whiteboard│     │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │  React PDF   │  │  Yjs Client   │  │  State Mgmt  │      │
@@ -41,20 +41,20 @@ src/
 ├── components/
 │   ├── common/           # Shared UI components
 │   ├── collaboration/    # Real-time collaboration components
-│   │   ├── notes/        # Collaborative notes editor
-│   │   ├── pdf/          # PDF annotation
-│   │   ├── whiteboard/   # Live whiteboard
-│   │   └── chat/         # Real-time chat
+│   │   ├── collaborative-room.tsx       # Unified tool navigation
+│   │   ├── ai-study-tool.tsx            # Five-part AI pack + private saved-guide shelf
+│   │   ├── pdf-study-tool.tsx           # React PDF + Yjs annotations
+│   │   ├── whiteboard-study-tool.tsx    # SVG + Yjs scene
+│   │   └── rich-text-editor.tsx         # Tiptap notes
 │   ├── study/            # Study-related components
 │   │   ├── flashcards/   # Flashcard system
 │   │   ├── cases/        # Case discussions
 │   │   └── rooms/        # Study rooms
 │   └── ai/               # AI-powered features
 ├── hooks/
-│   ├── useCollaboration.ts
-│   ├── usePresence.ts
-│   ├── useOfflineSync.ts
-│   └── useAIAssistant.ts
+│   └── use-collaborative-tool.ts        # PDF/whiteboard connection lifecycle
+├── lib/ai/
+│   └── study-pack.ts                    # Strict schema, prompt, and validation
 ├── stores/
 │   ├── collaborationStore.ts
 │   ├── userStore.ts
@@ -81,13 +81,19 @@ src/
 - **Supabase Realtime** for presence and notifications
 - **Custom WebSocket handlers** for room-specific events
 
+### Phase 4 AI Request Flow
+
+The room captures plain text through `RichTextEditorHandle.captureDraft()` before switching away from Notes. The lazy-loaded assistant sends that explicit snapshot to `POST /api/rooms/[roomId]/ai-study-pack`. The Route Handler validates the Supabase cookie claim and performs a focused `rooms` plus `room_members` lookup before provider use. `src/lib/ai/study-pack.ts` owns source limits, untrusted-data prompt separation, strict JSON Schema, Responses API parsing, refusal detection, and a second runtime validation pass. The assistant can explicitly save the validated five-view payload through the creator-private saved-guide Route Handler; the source note snapshot, revealed state, and provider metadata are never persisted.
+
+The server uses native `fetch` rather than a client SDK, so provider code and credentials remain isolated from the room bundle. The assistant component is dynamically imported with SSR disabled, keeping the Notes/PDF/Whiteboard initial path unchanged.
+
 ## Backend Architecture
 
 ### Supabase Services
 
 - **Authentication**: User management and role-based access control
-- **Database**: PostgreSQL with Row Level Security (RLS)
-- **Storage**: File storage for PDFs, images, and user uploads
+- **Database**: PostgreSQL with Row Level Security (RLS), including creator-private immutable saved AI guides
+- **Storage**: Private `boardprep-pdfs` bucket for one versioned active PDF per room; whiteboard images remain bounded Yjs data URLs
 - **Realtime**: PostgreSQL changes and presence subscriptions
 - **Edge Functions**: Custom server-side logic when needed
 
@@ -112,22 +118,36 @@ Supabase Auth owns `auth.users`; `public.profiles` exposes only application-safe
 - **Version History**: Stores immutable ProseMirror JSON plus corresponding Yjs state in `public.document_versions`
 - **Offline Sync**: One stable browser `Y.Doc` is shared by IndexedDB and a disconnected/reconnected authenticated `WebsocketProvider`
 - **Conflict Review**: Transient ref-backed counters classify local versus provider-origin document batches; a completed overlap review compares the pre-remote draft with the Yjs merge, and any override uses authenticated immutable version history as its safety boundary
+- **Document Routing**: Notes use `<roomSlug>`; PDF and whiteboard use `<roomSlug>--pdf` and `<roomSlug>--whiteboard`. The service parses the kind, loads the matching `public.documents` row, and applies the same owner/editor socket authorization.
 
 ## Data Flow
 
 ### Real-time Collaboration Flow
 
 1. Supabase Auth establishes an HTTP-only cookie session and `src/proxy.ts` protects room requests
-2. The protected Room Server Component establishes RLS-controlled membership/document rows and reads the current profile plus version metadata
-3. The browser constructs one Yjs document, loads the account-and-room IndexedDB state, and only then mounts the editor
+2. The protected Room Server Component establishes RLS-controlled membership/document rows and reads all three tool snapshots, current PDF metadata, the profile, and version metadata in parallel where independent
+3. The browser constructs one Yjs document per selected tool and loads its account/room/kind IndexedDB state before enabling edits
 4. The browser requests a no-store access token and connects its stable provider; the Yjs service validates token and owner/editor membership
 5. Stored server Yjs state and any local updates merge through the protocol before the UI reports live sync
 6. User changes are broadcast to all participants and presence is updated in real time
-7. Complete state is debounced to Supabase, named versions are inserted through user-JWT RLS calls, and visible author names are resolved from shared-room profiles
+7. Complete state is debounced to the tool's matching Supabase row, named note versions are inserted through user-JWT RLS calls, and visible author names are resolved from shared-room profiles
+
+### Private PDF Flow
+
+1. An owner/editor validates MIME, size, and `%PDF-` bytes in the browser, then requests a signed upload from `POST /api/rooms/[roomId]/pdf`.
+2. The Route Handler validates cookie claims and editor membership, enforces the private bucket configuration, and issues a random versioned room-prefixed path.
+3. The browser uploads directly to Supabase Storage. A final `PUT` revalidates membership, object size/type/header, publishes PDF metadata with a compare-and-swap condition, returns a signed member read URL, and removes the replaced object.
+4. React PDF renders client-only. Annotations, replies, and bookmarks use independent Yjs map keys and are filtered by asset revision.
+
+### Whiteboard Flow
+
+1. The client-only SVG surface maps pointer coordinates into a fixed `1200 × 720` viewBox.
+2. Drawings, shapes, arrows, text, and bounded images are stored as individually validated `whiteboard-elements` map values, so concurrent objects merge independently.
+3. Laser positions use awareness fields and disappear on pointer exit/disconnect; they never enter durable Yjs state.
 
 ### Offline Editing Flow
 
-1. The protected room loads an account-scoped key in the form `boardprep:${userId}:${roomId}:notes` before rendering the editor
+1. The protected room loads an account-scoped key in the form `boardprep:${userId}:${roomId}:${kind}` before enabling the selected editable tool
 2. IndexedDB and the remote provider share one Yjs document; offline events disconnect only the remote transport
 3. Edits remain writable and persist locally while remote-only checkpoint actions are gated
 4. On `online` or manual retry, the browser fetches a fresh token, updates provider parameters, and reconnects without recreating the editor or document

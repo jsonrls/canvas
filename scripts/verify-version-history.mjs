@@ -315,7 +315,8 @@ try {
     await outsider.client
       .from("documents")
       .select("id")
-      .eq("room_id", room.room_id);
+      .eq("room_id", room.room_id)
+      .eq("kind", "notes");
 
   if (viewerReadError || viewerDocuments.length !== 1) {
     throw new Error("A viewer could not read the shared document.");

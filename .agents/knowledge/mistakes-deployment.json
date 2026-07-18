@@ -112,9 +112,7 @@
         "https://supabase.com/docs/guides/getting-started/api-keys"
       ]
     },
-    "related_mistakes": [
-      "deployment-env-drift-2026-07-17-004"
-    ],
+    "related_mistakes": ["deployment-env-drift-2026-07-17-004"],
     "occurrence_count": 1,
     "agent": "Codex",
     "session": "session-secure-version-history-20260717-094555",
@@ -154,9 +152,7 @@
         "https://supabase.com/docs/reference/cli/supabase-migration-repair"
       ]
     },
-    "related_mistakes": [
-      "deployment-supabase-ipv6-route-2026-07-17-016"
-    ],
+    "related_mistakes": ["deployment-supabase-ipv6-route-2026-07-17-016"],
     "occurrence_count": 1,
     "agent": "Codex",
     "session": "session-user-profiles-20260717-104729",
@@ -196,9 +192,7 @@
         "https://supabase.com/docs/reference/cli/supabase-migration-list"
       ]
     },
-    "related_mistakes": [
-      "deployment-untracked-psql-migrations-2026-07-17-032"
-    ],
+    "related_mistakes": ["deployment-untracked-psql-migrations-2026-07-17-032"],
     "occurrence_count": 1,
     "agent": "Codex",
     "session": "session-room-creation-management-20260717-124944",
@@ -241,11 +235,51 @@
     "related_mistakes": [
       "deployment-supabase-cli-project-unlinked-2026-07-17-046"
     ],
-    "occurrence_count": 2,
+    "occurrence_count": 4,
     "agent": "Codex",
     "session": "session-room-creation-management-20260717-124944",
     "resolved": true,
     "resolution_time": "2026-07-17 12:58:24",
-    "last_occurrence": "2026-07-17 13:26:52"
+    "last_occurrence": "2026-07-18 00:08:53"
+  },
+  {
+    "mistake_id": "deployment-global-supabase-cli-assumption-2026-07-18-065",
+    "timestamp": "2026-07-18 14:44:26",
+    "category": "deployment",
+    "severity": "low",
+    "title": "Migration preflight assumed a globally installed Supabase CLI",
+    "description": "The saved-guide migration preflight invoked `supabase` directly even though this repository pins the CLI as a local development dependency.",
+    "context": {
+      "file": "package.json",
+      "line": 50,
+      "function": "Saved-guide migration preflight",
+      "code_snippet": "supabase --version",
+      "environment": "development"
+    },
+    "error_message": "zsh: command not found: supabase",
+    "root_cause": "The command assumed a global executable instead of checking the repository's pinned local binary first.",
+    "solution": "Switched to `npx supabase`, confirmed the pinned 2.109.1 CLI, and read the migration-new help before continuing.",
+    "prevention": {
+      "strategies": [
+        "Inspect package.json before invoking project-scoped CLIs",
+        "Use the pinned local Supabase CLI through npx for reproducible migration commands"
+      ],
+      "code_patterns": [
+        "Avoid: supabase <command> without a global-binary preflight",
+        "Use: npx supabase <command> when Supabase is a local devDependency"
+      ],
+      "tests_to_add": [],
+      "documentation_links": [
+        "https://supabase.com/docs/reference/cli/introduction"
+      ]
+    },
+    "related_mistakes": [
+      "deployment-supabase-cli-project-unlinked-2026-07-17-046"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "saved-ai-study-guides-20260718-144154",
+    "resolved": true,
+    "resolution_time": "2026-07-18 14:44:26"
   }
 ]

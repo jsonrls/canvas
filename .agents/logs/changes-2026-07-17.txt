@@ -2864,3 +2864,49 @@ CHANGE BREAKDOWN:
 - Documentation and knowledge changes: 18
 - Testing and verification changes: 9
 ================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: session-phase-3-study-tools-20260717-165554
+DATE: 2026-07-17
+TIME: 16:55:54
+USER: Jayson Reales
+PROJECT: boardprep-canvas
+TASK: Finish Phase 3 with secure collaborative PDF annotation and a basic whiteboard
+================================================================================
+2026-07-17 16:59:30 | PLAN | plan/feature-phase-3-study-tools-1.md | Created the deterministic eighteen-task plan for private PDF upload/annotation, an isolated collaborative Excalidraw whiteboard, Yjs/offline durability, storage RLS, browser acceptance, and Phase 3 closure.
+2026-07-17 16:59:30 | KNOWLEDGE | .agents/knowledge/mistakes-build.json, .agents/knowledge/mistakes-testing.json, .agents/knowledge/mistakes-logic.json, .agents/knowledge/mistakes-index.json | Recorded installed UI skill option drift, incremented dynamic-route quoting and ambiguous patch-context recurrences, repaired the displaced session header and unrelated counter, and validated the structured knowledge index.
+2026-07-18 00:13:34 | DEPENDENCY | package.json, package-lock.json | Added exact React 19-compatible react-pdf 10.4.1, audited and removed the vulnerable Excalidraw candidate tree, and retained the baseline two moderate Next/PostCSS advisories without an unsafe forced downgrade.
+2026-07-18 00:13:34 | DATABASE | supabase/migrations/20260717090208_complete_phase_3_study_tools.sql | Added PDF/whiteboard document kinds, backfilled and atomically provisioned all three room tools, constrained PDF metadata, hardened private Storage helpers, and installed member/editor object RLS.
+2026-07-18 00:13:34 | DATABASE | supabase/migrations/20260717153235_harden_phase_3_pdf_replacement.sql | Changed active PDFs to random versioned room-prefixed paths, aligned metadata and helper constraints, and allowed editor cleanup of replaced private objects; dry-run and remote push completed.
+2026-07-18 00:13:34 | CONFIG | supabase/config.toml | Declared the private boardprep-pdfs bucket with a 15 MiB limit and application/pdf allowlist, matching verified hosted state.
+2026-07-18 00:13:34 | COLLABORATION | server/document-name.mjs, server/yjs-server.mjs | Routed notes, PDF, and whiteboard names to independent persisted document rows under the existing token and owner/editor upgrade boundary; corrected suffix precedence after direct parser verification.
+2026-07-18 00:13:34 | OFFLINE | src/lib/collaboration/document-name.ts, src/lib/collaboration/offline-document.ts, src/hooks/use-collaborative-tool.ts | Added account/room/tool IndexedDB isolation plus reusable awareness, status, snapshot, token refresh, reconnect, and viewer-safe collaboration lifecycles.
+2026-07-18 00:13:34 | SERVER DATA | src/lib/rooms/repository.ts, src/lib/supabase/server.ts, src/app/rooms/[roomId]/page.tsx | Loaded all three tool rows, issued RLS-authorized signed PDF reads, exposed minimal upload access metadata, and kept the service-role client server-only.
+2026-07-18 00:13:34 | API | src/app/api/rooms/[roomId]/pdf/route.ts, src/lib/pdf-assets/validation.ts | Added two-phase direct signed PDF upload with claims/editor checks, exact bucket enforcement, MIME/size/magic validation, conditional version publication, signed member reads, race cleanup, and replaced-object deletion.
+2026-07-18 00:13:34 | PDF UI | src/lib/pdf-annotations/model.ts, src/components/collaboration/pdf-study-tool.tsx | Added lazy PDF.js rendering, private upload/replace, navigation, zoom, bounded highlights, underlines, drawings, sticky/page comments, replies, bookmarks, revision filtering, and read-only behavior.
+2026-07-18 00:13:34 | WHITEBOARD UI | src/lib/whiteboard/model.ts, src/components/collaboration/whiteboard-study-tool.tsx | Added the dependency-free SVG/Yjs whiteboard with independent drawings, shapes, lines, arrows, text, safe bounded raster images, selection/deletion, awareness-only laser pointers, and viewer mode.
+2026-07-18 00:13:34 | ROOM UI | src/components/collaboration/collaborative-room.tsx, src/app/globals.css, src/app/login/page.tsx | Unified Notes/PDF/Whiteboard navigation, preserved the notes connection/version panel, added responsive mobile tabs and polished tool surfaces, and corrected default sign-in navigation to /rooms.
+2026-07-18 00:13:34 | TEST | scripts/verify-phase-3.ts, scripts/verify-phase-3-storage.mjs, package.json | Added pure Phase 3 boundary/CRDT/static contracts and disposable hosted private-Storage authorization verification commands.
+2026-07-18 00:13:34 | TEST | scripts/verify-schema.mjs, scripts/verify-room-management.mjs, scripts/verify-offline-sync.ts, scripts/verify-version-history.mjs | Extended schema, room, offline, and version regressions for three tool rows, four Storage policies, bucket restrictions, tool-key isolation, durable multi-channel merges, and notes-specific legacy assertions.
+2026-07-18 00:13:34 | VERIFY | hosted Supabase Phase 3 gates | Passed schema assertions, private bucket limits, owner upload/replacement, viewer and outsider denial, member signed reads, old-object cleanup, three-document room creation, and durable PDF/whiteboard Yjs persistence with disposable cleanup.
+2026-07-18 00:13:34 | REGRESSION VERIFY | repository release gate | Passed full Prettier, ESLint, strict TypeScript, production build, Yjs, room lifecycle, version history, offline sync, conflict review, password reset, focused Phase 3, and production dependency audit gates.
+2026-07-18 00:13:34 | BROWSER VERIFY | /rooms/[roomId] Notes/PDF/Whiteboard | Verified private PDF upload/render, comments, replies, bookmarks, zoom, whiteboard shapes/text/raster image insertion, desktop layout, 375-by-812 mobile tabs and overflow, and a clean application console; removed all disposable Auth, room, and Storage records.
+2026-07-18 00:13:34 | DOCS | README.md, .agents/ARCHITECTURE.md, .agents/API.md, .agents/CHANGELOG.md, .agents/DATABASE.md, .agents/DECISIONS.md, .agents/ROADMAP.md, .agents/SECURITY.md, .agents/TESTING.md | Documented the completed study desk, two-phase private PDF boundary, isolated CRDT architecture, deployed schema/policies, SVG whiteboard decision, verification evidence, limitations, and completed Phase 3 roadmap.
+2026-07-18 00:13:34 | KNOWLEDGE | .agents/knowledge/mistakes-deployment.json, .agents/knowledge/mistakes-logic.json, .agents/knowledge/mistakes-index.json | Recorded and resolved the Yjs suffix-routing precedence mistake, incremented ambiguous-patch and optional pg-delta cache recurrences, and validated all 59 indexed knowledge records.
+2026-07-18 00:13:34 | FORMAT VERIFY | Phase 3 completion records | Formatted implementation, tests, documentation, knowledge, and plan records; reconfirmed lint, types, production build, focused Phase 3 verification, and repository formatting after safe raster-image hardening.
+
+================================================================================
+SESSION ENDED
+END TIME: 00:13:34
+DURATION: 07:17:40
+TOTAL CHANGES: 21
+CHANGE BREAKDOWN:
+- Code changes: 6
+- API changes: 1
+- Database changes: 2
+- Configuration and dependency changes: 2
+- Documentation and knowledge changes: 4
+- Testing and verification changes: 5
+- Formatting changes: 1
+================================================================================

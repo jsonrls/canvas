@@ -4,7 +4,7 @@
 
 This document describes the database schema for the MyBoardPrep Collaborative Learning Suite, built on PostgreSQL with Supabase.
 
-> **Implemented baseline (verified 2026-07-17):** The authoritative schema is in `supabase/migrations/`. It currently contains Supabase-managed `auth.users` plus RLS-protected `public.profiles`, `public.rooms`, `public.room_members`, `public.documents`, and `public.document_versions`. The broader product tables later in this document are planned models, not deployed tables.
+> **Implemented baseline (verified 2026-07-18):** The authoritative schema is in `supabase/migrations/`. It currently contains Supabase-managed `auth.users` plus RLS-protected `public.profiles`, `public.rooms`, `public.room_members`, `public.documents`, `public.document_versions`, and creator-private immutable `public.saved_study_guides`. The broader product tables later in this document are planned models, not deployed tables.
 
 ### Implemented profiles
 
@@ -14,14 +14,26 @@ Authenticated users may select their own profile or profiles belonging to users 
 
 ### Implemented room lifecycle
 
-The deployed room model uses `public.rooms`, `public.room_members`, and `public.documents` from the migration baseline rather than the planned illustrative schemas below. Membership roles are `owner`, `editor`, and `viewer`; document type `notes` is provisioned for every room.
+The deployed room model uses `public.rooms`, `public.room_members`, and `public.documents` from the migration baseline rather than the planned illustrative schemas below. Membership roles are `owner`, `editor`, and `viewer`; exactly one `notes`, `pdf`, and `whiteboard` document is provisioned for every room.
 
-- `public.create_study_room(text, boolean)` validates and normalizes the name, generates a collision-resistant slug, and atomically inserts the room, owner membership, and notes document from `auth.uid()`.
+- `public.create_study_room(text, boolean)` validates and normalizes the name, generates a collision-resistant slug, and atomically inserts the room, owner membership, and all three tool documents from `auth.uid()`.
 - `public.join_public_room(uuid)` is the only authenticated public-join path. Direct authenticated inserts into `public.room_members` are revoked.
 - `public.add_room_member_by_email(uuid, text, text)` allows only the owner to add an existing Auth account by exact normalized email as editor or viewer and returns no email data.
 - Owner membership identity and role are protected by triggers and RLS: owners cannot be demoted, removed, or leave. Room reads expose profiles only for shared-room collaborators.
-- Direct authenticated inserts into `public.rooms` are revoked. The three public lifecycle functions and seven private authorization helpers have empty search paths, fully qualified relations, revoked default execution, and explicit grants.
-- All five exposed application tables retain RLS. The deployed schema has 15 public policies; immutable version rows, membership identity, room timestamps, profile provisioning, and room-creation invariants are asserted by `npm run verify:schema`.
+- Direct authenticated inserts into `public.rooms` are revoked. The three public lifecycle functions and ten private authorization helpers have empty search paths, fully qualified relations, revoked default execution, and explicit grants.
+- All six exposed application tables retain RLS. The deployed schema has 18 public-table policies plus four `storage.objects` policies for private PDFs; immutable version rows, saved-guide grants, membership identity, room timestamps, profile provisioning, three-document creation, PDF constraints, and bucket configuration are asserted by `npm run verify:schema`.
+
+### Implemented Phase 3 document and storage model
+
+`public.documents.kind` is constrained to `notes`, `pdf`, or `whiteboard` and remains unique per room/kind. Every row has an independent `yjs_state`, so a tool's complete CRDT snapshot cannot overwrite another tool.
+
+### Implemented saved AI study guides
+
+`public.saved_study_guides` stores explicitly saved, validated five-view AI output per creator and room. It retains the derived title, generated/save timestamps, source character count, and JSON payload, but never the source note snapshot, revealed-card state, or provider metadata. RLS permits creator-only select/insert/delete, no update privilege is granted, and room/account deletion cascades the rows. Lists use metadata-only selects; detail reads are explicit.
+
+Only the `pdf` row may populate `pdf_storage_path`, `pdf_file_name`, `pdf_file_size`, and `pdf_asset_revision`. The check constraint requires all four fields together, a trimmed 1–180 character name, 5–15,728,640 bytes, and the exact versioned path `<room_uuid>/<revision_uuid>.pdf`.
+
+The private `boardprep-pdfs` bucket accepts only `application/pdf` up to 15 MiB. `private.can_read_room_pdf_object(text)` grants object reads to members; `private.can_write_room_pdf_object(text)` grants inserts, replacement, and cleanup only to owners/editors after validating the versioned path and room prefix. Both helpers are `SECURITY DEFINER`, use an empty search path, and are inaccessible to anonymous callers.
 
 The SQL definitions shown later in this document remain product-shape examples unless they match a file in `supabase/migrations/`.
 

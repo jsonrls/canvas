@@ -37,6 +37,8 @@ interface RichTextEditorProps {
   document: Y.Doc;
   editable: boolean;
   provider: WebsocketProvider;
+  syncLabel?: string;
+  syncStatus?: string;
   user: StudyUser;
 }
 
@@ -132,7 +134,15 @@ const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
   ],
 ];
 
-function EditorToolbar({ editor }: { editor: Editor }): React.ReactElement {
+function EditorToolbar({
+  editor,
+  syncLabel,
+  syncStatus,
+}: {
+  editor: Editor;
+  syncLabel?: string;
+  syncStatus?: string;
+}): React.ReactElement {
   const toolbarState = useEditorState({
     editor,
     selector: ({ editor: currentEditor }) => ({
@@ -171,6 +181,15 @@ function EditorToolbar({ editor }: { editor: Editor }): React.ReactElement {
           </div>
         ))}
       </div>
+      {syncLabel ? (
+        <span
+          className={`editor-toolbar__sync connection-badge connection-badge--${syncStatus ?? "synced"}`}
+          role="status"
+        >
+          <span className="connection-dot" aria-hidden="true" />
+          {syncLabel}
+        </span>
+      ) : null}
       <span className="word-count">{toolbarState.wordCount} words</span>
     </div>
   );
@@ -193,7 +212,7 @@ export const RichTextEditor = forwardRef<
   RichTextEditorHandle,
   RichTextEditorProps
 >(function RichTextEditor(
-  { document, editable, provider, user },
+  { document, editable, provider, syncLabel, syncStatus, user },
   ref,
 ): React.ReactElement {
   const editor = useEditor(
@@ -279,7 +298,11 @@ export const RichTextEditor = forwardRef<
   return (
     <div className="editor-card">
       {editable ? (
-        <EditorToolbar editor={editor} />
+        <EditorToolbar
+          editor={editor}
+          syncLabel={syncLabel}
+          syncStatus={syncStatus}
+        />
       ) : (
         <div className="read-only-editor-banner" role="status">
           Viewer access · editing controls are disabled

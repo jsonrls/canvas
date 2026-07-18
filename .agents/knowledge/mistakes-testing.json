@@ -67,7 +67,7 @@
       "documentation_links": []
     },
     "related_mistakes": ["testing-zsh-path-2026-07-17-001"],
-    "occurrence_count": 1,
+    "occurrence_count": 2,
     "agent": "Codex",
     "session": "session-remove-docker-20260717-083730",
     "resolved": true,
@@ -161,7 +161,7 @@
     },
     "error_message": "TS6200 and TS2300: duplicate declarations from .next/types/cache-life.d 2.ts and routes.d 2.ts; original occurrence reported TS6053 missing generated files.",
     "root_cause": "Next development, production build, and standalone typecheck share the generated .next directory; overlapping or duplicated artifacts are not a safe typecheck input.",
-    "solution": "Kept the user-owned dev process running, moved only the three exact duplicate generated files to a recoverable temporary folder, and reran verification sequentially.",
+    "solution": "Kept the user-owned dev process running, moved only the exact duplicate-suffixed generated files to a recoverable temporary folder, and reran verification sequentially.",
     "prevention": {
       "strategies": [
         "Run next build and standalone tsc sequentially",
@@ -176,12 +176,12 @@
       "documentation_links": []
     },
     "related_mistakes": [],
-    "occurrence_count": 2,
+    "occurrence_count": 3,
     "agent": "Codex",
     "session": "session-collab-notes-20260717-090000",
     "resolved": true,
     "resolution_time": "2026-07-17 12:40:16",
-    "last_occurrence": "2026-07-17 12:40:16"
+    "last_occurrence": "2026-07-18 13:10:09"
   },
   {
     "mistake_id": "testing-next-dev-project-lock-2026-07-17-024",
@@ -507,7 +507,8 @@
     "agent": "Codex",
     "session": "session-conflict-review-20260717-121148",
     "resolved": true,
-    "resolution_time": "2026-07-17 12:12:36"
+    "resolution_time": "2026-07-17 16:56:50",
+    "last_occurrence": "2026-07-17 16:56:50"
   },
   {
     "mistake_id": "testing-guessed-knowledge-index-path-2026-07-17-043",
@@ -738,5 +739,155 @@
     "session": "session-room-creation-management-20260717-124944",
     "resolved": true,
     "resolution_time": "2026-07-17 13:39:01"
+  },
+  {
+    "mistake_id": "testing-guessed-mistake-index-shape-2026-07-18-061",
+    "timestamp": "2026-07-18 13:12:42",
+    "category": "testing",
+    "severity": "low",
+    "title": "Knowledge validation assumed a nonexistent index wrapper",
+    "description": "A final metadata assertion tried to read statistics.by_category even though this repository stores total_mistakes and categories at the root of mistakes-index.json.",
+    "context": {
+      "file": ".agents/knowledge/mistakes-index.json",
+      "line": 1,
+      "function": "Final knowledge aggregate validation",
+      "code_snippet": "index.statistics.by_category",
+      "environment": "development"
+    },
+    "error_message": "TypeError: Cannot read properties of undefined (reading 'by_category')",
+    "root_cause": "The verification command assumed a generic metadata schema instead of inspecting the repository's existing index structure before asserting its totals.",
+    "solution": "Read the index first, then validate Object.values(index.categories) against index.total_mistakes.",
+    "prevention": {
+      "strategies": [
+        "Inspect repository-owned JSON schemas before writing ad hoc assertions",
+        "Validate the fields that are present rather than assuming a conventional wrapper"
+      ],
+      "code_patterns": [
+        "Avoid: index.statistics.by_category",
+        "Use: Object.values(index.categories) and index.total_mistakes"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "testing-guessed-knowledge-index-path-2026-07-17-043"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "room-action-export-fix-20260718-130659",
+    "resolved": true,
+    "resolution_time": "2026-07-18 13:12:42"
+  },
+  {
+    "mistake_id": "testing-zsh-readonly-status-variable-2026-07-18-062",
+    "timestamp": "2026-07-18 13:13:44",
+    "category": "testing",
+    "severity": "low",
+    "title": "Dev smoke command assigned zsh's read-only status variable",
+    "description": "The final HTTP smoke command stored curl's response code in `status`, which is a read-only special parameter in zsh, so the shell stopped before checking the response body.",
+    "context": {
+      "file": "final active-development smoke command",
+      "line": 1,
+      "function": "Rooms route runtime-error scan",
+      "code_snippet": "status=$(curl ...)",
+      "environment": "development"
+    },
+    "error_message": "zsh: read-only variable: status",
+    "root_cause": "The verification command used a common shell variable name without accounting for zsh's reserved special parameters.",
+    "solution": "Renamed the variable to the task-specific `rooms_http_code` and reran the HTTP response and error-marker checks.",
+    "prevention": {
+      "strategies": [
+        "Use task-specific variable names in zsh verification commands",
+        "Avoid special parameters such as status, path, and pipestatus"
+      ],
+      "code_patterns": [
+        "Avoid: status=$(curl ...)",
+        "Use: rooms_http_code=$(curl ...)"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "testing-zsh-path-2026-07-17-001"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "room-action-export-fix-20260718-130659",
+    "resolved": true,
+    "resolution_time": "2026-07-18 13:13:44"
+  },
+  {
+    "mistake_id": "testing-browser-wait-state-contract-drift-2026-07-18-063",
+    "timestamp": "2026-07-18 14:15:04",
+    "category": "testing",
+    "severity": "low",
+    "title": "Chrome controller rejected its documented network-idle wait state",
+    "description": "The Phase 4 browser acceptance opened the local login URL successfully, then the connected Chrome controller rejected `networkidle` even though its emitted API reference listed that load state.",
+    "context": {
+      "file": "Phase 4 browser acceptance",
+      "line": 1,
+      "function": "Initial local-app navigation",
+      "code_snippet": "tab.playwright.waitForLoadState({ state: 'networkidle' })",
+      "environment": "development"
+    },
+    "error_message": "playwright_wait_for_load_state does not support networkidle",
+    "root_cause": "The browser controller's runtime capability is narrower than the load-state union exposed in its generated documentation.",
+    "solution": "Kept the successfully opened tab, switched to the supported `domcontentloaded` state, and verified meaningful DOM content directly.",
+    "prevention": {
+      "strategies": [
+        "Use DOM-ready plus targeted element/state assertions with this Chrome controller",
+        "Treat network-idle as optional unless the active browser backend confirms support"
+      ],
+      "code_patterns": [
+        "Avoid: assuming every documented load state is implemented by each browser backend",
+        "Use: domcontentloaded followed by a targeted DOM snapshot or element wait"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [
+      "testing-agent-browser-cli-unavailable-2026-07-17-044"
+    ],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "phase-4-ai-assistant-20260718-133750",
+    "resolved": true,
+    "resolution_time": "2026-07-18 14:15:04"
+  },
+  {
+    "mistake_id": "testing-browser-evaluate-parenthesis-2026-07-18-064",
+    "timestamp": "2026-07-18 14:20:10",
+    "category": "testing",
+    "severity": "low",
+    "title": "Dense inline browser metric expression had one extra parenthesis",
+    "description": "The first mobile target-size measurement packed an awaited browser evaluation, nested object literal, and output call onto one expression and failed to parse before reading the page.",
+    "context": {
+      "file": "Phase 4 browser acceptance",
+      "line": 1,
+      "function": "Mobile target-size measurement",
+      "code_snippet": "nodeRepl.write(await tab.playwright.evaluate(() => ({ ... }))));",
+      "environment": "development"
+    },
+    "error_message": "Unexpected token: ')'",
+    "root_cause": "A dense inline expression made the nested evaluation and output-call delimiters difficult to audit.",
+    "solution": "Separated the evaluation result into a named binding with a block-bodied callback, then emitted the completed metrics object; the corrected check confirmed zero overflow and accessible target sizes.",
+    "prevention": {
+      "strategies": [
+        "Use named intermediate results for nontrivial browser evaluations",
+        "Prefer multiline block-bodied callbacks when returning nested metric objects"
+      ],
+      "code_patterns": [
+        "Avoid: deeply nested await/evaluate/write calls on one line",
+        "Use: const metrics = await evaluate(() => { return {...}; }); write(metrics)"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "phase-4-ai-assistant-20260718-133750",
+    "resolved": true,
+    "resolution_time": "2026-07-18 14:20:10"
   }
 ]

@@ -17,6 +17,10 @@
     "verify:offline-sync": "node --env-file=.env --import tsx scripts/verify-offline-sync.ts",
     "verify:conflict-review": "node --import tsx scripts/verify-conflict-review.ts",
     "verify:password-reset": "node --import tsx scripts/verify-password-reset.ts",
+    "verify:phase-3": "node --import tsx scripts/verify-phase-3.ts",
+    "verify:phase-3-storage": "node --env-file=.env scripts/verify-phase-3-storage.mjs",
+    "verify:phase-4": "node --import tsx scripts/verify-phase-4.ts",
+    "verify:saved-study-guides": "node --env-file=.env scripts/verify-saved-study-guides.mjs",
     "format:check": "prettier --check package.json tsconfig.json next.config.ts postcss.config.mjs eslint.config.mjs \"src/**/*.{ts,tsx,css}\" \"server/**/*.mjs\" \"scripts/**/*.{mjs,ts}\" README.md"
   },
   "dependencies": {
@@ -33,6 +37,7 @@
     "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "react-pdf": "10.4.1",
     "y-indexeddb": "9.0.12",
     "y-websocket": "2.1.0",
     "yjs": "13.6.31"

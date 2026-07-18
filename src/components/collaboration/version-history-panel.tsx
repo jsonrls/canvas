@@ -125,7 +125,11 @@ export function VersionHistoryPanel({
   };
 
   return (
-    <aside className="study-rail history-rail" aria-labelledby="history-title">
+    <aside
+      className="study-rail history-rail"
+      id="version-history-sidebar"
+      aria-labelledby="history-title"
+    >
       <div className="study-rail-heading">
         <div>
           <p className="sidebar-label">Durable checkpoints</p>

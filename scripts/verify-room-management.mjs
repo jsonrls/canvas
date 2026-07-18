@@ -135,19 +135,20 @@ try {
       .select("user_id, role")
       .eq("room_id", first.id)
       .eq("user_id", owner.id),
-    admin
-      .from("documents")
-      .select("id, kind")
-      .eq("room_id", first.id)
-      .eq("kind", "notes"),
+    admin.from("documents").select("id, kind").eq("room_id", first.id),
   ]);
 
   if (
     ownerMemberships?.length !== 1 ||
     ownerMemberships[0].role !== "owner" ||
-    documents?.length !== 1
+    documents?.length !== 3 ||
+    !["notes", "pdf", "whiteboard"].every((kind) =>
+      documents.some((document) => document.kind === kind),
+    )
   ) {
-    throw new Error("Atomic room creation missed an owner or notes invariant.");
+    throw new Error(
+      "Atomic room creation missed its owner or study-tool invariants.",
+    );
   }
 
   const { data: hiddenPrivateRooms, error: hiddenPrivateError } =
@@ -381,7 +382,7 @@ try {
   }
 
   process.stdout.write(
-    "Room management verification passed: atomic creation, unique slugs, private/public access, exact-email membership, roles, immutable ownership, join/leave, owner settings, deletion, and cascades.\n",
+    "Room management verification passed: atomic creation with three study tools, unique slugs, private/public access, exact-email membership, roles, immutable ownership, join/leave, owner settings, deletion, and cascades.\n",
   );
 } finally {
   await cleanup();

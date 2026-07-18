@@ -17,10 +17,10 @@ import { useFormStatus } from "react-dom";
 
 import {
   createRoomAction,
-  INITIAL_ROOM_ACTION_STATE,
   joinRoomAction,
   leaveRoomAction,
 } from "@/app/rooms/actions";
+import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { RoomDirectory, RoomSummary } from "@/lib/rooms/repository";
 

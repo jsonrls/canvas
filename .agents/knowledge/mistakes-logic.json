@@ -26,18 +26,16 @@
         "Avoid: patch anchors made only from repeated labels",
         "Use: anchors that include a unique timestamp or description"
       ],
-      "tests_to_add": [
-        "Assert the final non-empty log block is SESSION ENDED"
-      ],
+      "tests_to_add": ["Assert the final non-empty log block is SESSION ENDED"],
       "documentation_links": []
     },
     "related_mistakes": [],
-    "occurrence_count": 8,
+    "occurrence_count": 16,
     "agent": "Codex",
-    "session": "session-remove-docker-20260717-083730",
+    "session": "full-width-notes-workspace-20260718-121851",
     "resolved": true,
-    "resolution_time": "2026-07-17 11:14:04",
-    "last_occurrence": "2026-07-17 16:36:38"
+    "resolution_time": "2026-07-18 12:20:23",
+    "last_occurrence": "2026-07-18 14:04:12"
   },
   {
     "mistake_id": "logic-inaccurate-session-timestamps-2026-07-17-045",
@@ -72,11 +70,91 @@
       "documentation_links": []
     },
     "related_mistakes": ["logic-ambiguous-patch-context-2026-07-17-003"],
-    "occurrence_count": 3,
+    "occurrence_count": 4,
     "agent": "Codex",
     "session": "session-conflict-review-20260717-121148",
     "resolved": true,
     "resolution_time": "2026-07-17 12:30:38",
-    "last_occurrence": "2026-07-17 16:32:45"
+    "last_occurrence": "2026-07-18 13:44:11"
+  },
+  {
+    "mistake_id": "logic-yjs-document-suffix-shadowed-by-room-pattern-2026-07-18-059",
+    "timestamp": "2026-07-18 00:08:53",
+    "category": "logic",
+    "severity": "high",
+    "title": "Plain room validation shadowed suffixed Yjs document routing",
+    "description": "The first generalized Yjs parser tested the permissive room-slug pattern before inspecting the --pdf or --whiteboard suffix, so valid suffixed names were incorrectly classified as notes because double hyphens also satisfy the slug regex.",
+    "context": {
+      "file": "server/document-name.mjs",
+      "line": 14,
+      "function": "parseDocumentName",
+      "code_snippet": "if (ROOM_SLUG_PATTERN.test(documentName)) return { kind: 'notes' }",
+      "environment": "development"
+    },
+    "error_message": "parseDocumentName('cardio-room--pdf') returned kind 'notes' instead of 'pdf'.",
+    "root_cause": "The generic grammar was evaluated before the more specific suffix grammar, and the room regex intentionally permits consecutive hyphens.",
+    "solution": "Parsed and validated the supported --pdf/--whiteboard suffixes first, then fell back to the plain notes-room form, and added direct parsing plus authenticated multi-channel persistence verification.",
+    "prevention": {
+      "strategies": [
+        "Evaluate specific routing grammars before permissive fallback patterns",
+        "Test every generated document name through both builder and parser",
+        "Verify each routed kind persists to its own database row"
+      ],
+      "code_patterns": [
+        "Avoid: checking a broad room pattern before tool suffixes",
+        "Use: parse supported suffix -> validate base slug -> fall back to plain notes"
+      ],
+      "tests_to_add": [
+        "Assert --pdf and --whiteboard names parse to their matching kinds",
+        "Open authenticated two-client providers for every document kind and assert durable row isolation"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "session-phase-3-study-tools-20260717-165554",
+    "resolved": true,
+    "resolution_time": "2026-07-18 00:08:53"
+  },
+  {
+    "mistake_id": "logic-version-history-trigger-placement-2026-07-18-060",
+    "timestamp": "2026-07-18 12:31:58",
+    "category": "logic",
+    "severity": "low",
+    "title": "Version History trigger was interpreted as a floating panel instead of a toolbar action",
+    "description": "The request to float Version History over the editor was implemented as a prominent floating accordion trigger. The user's Google Docs reference clarified that only the History icon belongs in the editor toolbar, with the panel opening below it.",
+    "context": {
+      "file": "src/components/collaboration/collaborative-room.tsx",
+      "line": 1000,
+      "function": "CollaborativeRoom notes editor layout",
+      "code_snippet": "<VersionHistoryPanel /> rendered as a large absolute trigger above <RichTextEditor />",
+      "environment": "development"
+    },
+    "error_message": "User clarification: Add History icon on the right side of the toolbar, like Google Docs.",
+    "root_cause": "The phrase 'float on top' was interpreted spatially without first mapping the requested interaction to the document-toolbar pattern shown in the reference.",
+    "solution": "Moved the History trigger into the right side of EditorToolbar, controlled panel visibility from CollaborativeRoom, and retained only a right-aligned dropdown panel below the toolbar.",
+    "prevention": {
+      "strategies": [
+        "Treat named product references as interaction-pattern requirements, not only visual inspiration",
+        "Separate the placement of a feature trigger from the placement of its expanded content",
+        "Keep document-level actions such as history in the editor toolbar when a document-editor reference is provided"
+      ],
+      "code_patterns": [
+        "Avoid: a prominent floating trigger when the reference shows a compact toolbar action",
+        "Use: controlled toolbar button -> anchored overlay panel"
+      ],
+      "tests_to_add": [
+        "Assert the editor toolbar exposes a Version History button with aria-expanded and aria-controls",
+        "Assert toggling the toolbar button shows and hides the anchored history panel"
+      ],
+      "documentation_links": []
+    },
+    "related_mistakes": [],
+    "occurrence_count": 1,
+    "agent": "Codex",
+    "session": "toolbar-version-history-20260718-123158",
+    "resolved": true,
+    "resolution_time": "2026-07-18 12:31:58"
   }
 ]

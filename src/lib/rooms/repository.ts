@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getProfileDisplayNames } from "@/lib/profiles/repository";
+import { PDF_BUCKET } from "@/lib/pdf-assets/validation";
 
 const ROOM_SLUG_PATTERN = /^[a-z0-9-]{1,64}$/;
 const USER_ID_PATTERN =
@@ -27,6 +28,25 @@ interface MembershipRow {
   user_id?: string;
 }
 
+export type RoomDocumentKind = "notes" | "pdf" | "whiteboard";
+
+interface RoomDocumentRow {
+  kind: RoomDocumentKind;
+  pdf_asset_revision: string | null;
+  pdf_file_name: string | null;
+  pdf_file_size: number | null;
+  pdf_storage_path: string | null;
+  yjs_state: string | null;
+}
+
+export interface RoomPdfAsset {
+  fileName: string;
+  revision: string;
+  signedUrl: string;
+  size: number;
+  storagePath: string;
+}
+
 export interface RoomSummary {
   id: string;
   isPublic: boolean;
@@ -44,13 +64,24 @@ export interface RoomDirectory {
 export interface RoomWorkspace {
   id: string;
   initialDocumentState: string | null;
+  initialDocumentStates: Record<RoomDocumentKind, string | null>;
   isPublic: boolean;
   joinedRooms: Array<{ name: string; slug: string }>;
   name: string;
   ownerId: string;
+  pdfAsset: RoomPdfAsset | null;
   role: RoomRole;
   slug: string;
 }
+
+export interface RoomToolAccess {
+  id: string;
+  pdfStoragePath: string | null;
+  role: RoomRole;
+  slug: string;
+}
+
+export type RoomMemberAccess = Omit<RoomToolAccess, "pdfStoragePath">;
 
 export interface RoomMember {
   displayName: string;
@@ -223,9 +254,15 @@ export async function getRoomWorkspace(
   userId: string,
 ): Promise<RoomWorkspace> {
   const room = await findRoom(client, roomSlug);
-  const [membership, directory] = await Promise.all([
+  const [membership, directory, documentsResult] = await Promise.all([
     findMembership(client, room.id, userId),
     listRoomDirectory(client, userId),
+    client
+      .from("documents")
+      .select(
+        "kind, yjs_state, pdf_storage_path, pdf_file_name, pdf_file_size, pdf_asset_revision",
+      )
+      .eq("room_id", room.id),
   ]);
 
   if (!membership) {
@@ -234,27 +271,65 @@ export async function getRoomWorkspace(
     );
   }
 
-  let initialDocumentState: string | null = null;
+  if (documentsResult.error) {
+    throw new RoomDomainError("The room study tools could not be loaded.");
+  }
+
+  const documents = new Map<RoomDocumentKind, RoomDocumentRow>(
+    ((documentsResult.data ?? []) as RoomDocumentRow[]).map((document) => [
+      document.kind,
+      document,
+    ]),
+  );
+  const notesDocument = documents.get("notes");
+  const pdfDocument = documents.get("pdf");
+  const whiteboardDocument = documents.get("whiteboard");
+
+  if (!notesDocument || !pdfDocument || !whiteboardDocument) {
+    throw new RoomDomainError("The room study tools are incomplete.");
+  }
+
+  const initialDocumentStates: Record<RoomDocumentKind, string | null> = {
+    notes: null,
+    pdf: null,
+    whiteboard: null,
+  };
 
   if (membership.role === "viewer") {
-    const { data: document, error: documentError } = await client
-      .from("documents")
-      .select("yjs_state")
-      .eq("room_id", room.id)
-      .eq("kind", "notes")
-      .single();
+    initialDocumentStates.notes = notesDocument.yjs_state;
+    initialDocumentStates.pdf = pdfDocument.yjs_state;
+    initialDocumentStates.whiteboard = whiteboardDocument.yjs_state;
+  }
 
-    if (documentError || !document) {
-      throw new RoomDomainError("The shared notes document is unavailable.");
+  let pdfAsset: RoomPdfAsset | null = null;
+
+  if (
+    pdfDocument.pdf_storage_path &&
+    pdfDocument.pdf_file_name &&
+    typeof pdfDocument.pdf_file_size === "number" &&
+    pdfDocument.pdf_asset_revision
+  ) {
+    const { data: signedPdf, error: signedPdfError } = await client.storage
+      .from(PDF_BUCKET)
+      .createSignedUrl(pdfDocument.pdf_storage_path, 10 * 60);
+
+    if (signedPdfError || !signedPdf.signedUrl) {
+      throw new RoomDomainError("The shared PDF could not be opened.");
     }
 
-    initialDocumentState =
-      typeof document.yjs_state === "string" ? document.yjs_state : null;
+    pdfAsset = {
+      fileName: pdfDocument.pdf_file_name,
+      revision: pdfDocument.pdf_asset_revision,
+      signedUrl: signedPdf.signedUrl,
+      size: pdfDocument.pdf_file_size,
+      storagePath: pdfDocument.pdf_storage_path,
+    };
   }
 
   return {
     id: room.id,
-    initialDocumentState,
+    initialDocumentState: initialDocumentStates.notes,
+    initialDocumentStates,
     isPublic: room.is_public,
     joinedRooms: directory.joinedRooms.map(({ name, slug }) => ({
       name,
@@ -262,6 +337,57 @@ export async function getRoomWorkspace(
     })),
     name: room.name,
     ownerId: room.owner_id,
+    pdfAsset,
+    role: membership.role,
+    slug: room.slug,
+  };
+}
+
+export async function getRoomToolAccess(
+  client: SupabaseClient,
+  roomSlug: string,
+  userId: string,
+): Promise<RoomToolAccess> {
+  const room = await findRoom(client, roomSlug);
+  const [membership, pdfResult] = await Promise.all([
+    findMembership(client, room.id, userId),
+    client
+      .from("documents")
+      .select("pdf_storage_path")
+      .eq("room_id", room.id)
+      .eq("kind", "pdf")
+      .single(),
+  ]);
+
+  if (!membership || pdfResult.error || !pdfResult.data) {
+    throw new RoomDomainError("The room PDF is unavailable.");
+  }
+
+  return {
+    id: room.id,
+    pdfStoragePath:
+      typeof pdfResult.data.pdf_storage_path === "string"
+        ? pdfResult.data.pdf_storage_path
+        : null,
+    role: membership.role,
+    slug: room.slug,
+  };
+}
+
+export async function getRoomMemberAccess(
+  client: SupabaseClient,
+  roomSlug: string,
+  userId: string,
+): Promise<RoomMemberAccess> {
+  const room = await findRoom(client, roomSlug);
+  const membership = await findMembership(client, room.id, userId);
+
+  if (!membership) {
+    throw new RoomDomainError("You do not have access to that room.");
+  }
+
+  return {
+    id: room.id,
     role: membership.role,
     slug: room.slug,
   };

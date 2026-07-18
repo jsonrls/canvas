@@ -73,12 +73,12 @@ export default async function RoomPage({
         id: context.userId,
       }}
       currentUserRole={room.role}
-      initialDocumentState={room.initialDocumentState}
+      initialDocumentStates={room.initialDocumentStates}
+      initialPdfAsset={room.pdfAsset}
       initialVersions={versions}
       isPublic={room.isPublic}
       key={room.slug}
       roomId={room.slug}
-      roomName={room.name}
     />
   );
 }

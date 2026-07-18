@@ -4,6 +4,11 @@ import type * as Y from "yjs";
 const USER_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ROOM_ID_PATTERN = /^[a-z0-9-]{1,64}$/;
+const DOCUMENT_KINDS = new Set<CollaborativeDocumentKind>([
+  "notes",
+  "pdf",
+  "whiteboard",
+]);
 const REGISTRY_VERSION = "v1";
 const INITIALIZATION_TIMEOUT_MS = 4_000;
 const HEALTH_CHECK_KEY = "boardprep-health-check";
@@ -14,6 +19,8 @@ export interface OfflineCleanupResult {
   failed: number;
   registryAvailable: boolean;
 }
+
+export type CollaborativeDocumentKind = "notes" | "pdf" | "whiteboard";
 
 export type OfflineDocumentResult =
   | {
@@ -47,11 +54,12 @@ function getLocalStorage(): Storage | null {
 }
 
 function isDocumentKeyForUser(key: string, userId: string): boolean {
-  return (
-    key.startsWith(`boardprep:${userId}:`) &&
-    key.endsWith(":notes") &&
-    key.length <= 160
-  );
+  if (!key.startsWith(`boardprep:${userId}:`) || key.length > 170) {
+    return false;
+  }
+
+  const kind = key.slice(key.lastIndexOf(":") + 1);
+  return DOCUMENT_KINDS.has(kind as CollaborativeDocumentKind);
 }
 
 function readRegisteredDocumentKeys(
@@ -149,6 +157,7 @@ async function waitForPersistence(
 export function buildOfflineDocumentKey(
   userId: string,
   roomId: string,
+  kind: CollaborativeDocumentKind = "notes",
 ): string {
   assertUserId(userId);
 
@@ -156,7 +165,11 @@ export function buildOfflineDocumentKey(
     throw new Error("Invalid offline document room identifier.");
   }
 
-  return `boardprep:${userId}:${roomId}:notes`;
+  if (!DOCUMENT_KINDS.has(kind)) {
+    throw new Error("Invalid offline document kind.");
+  }
+
+  return `boardprep:${userId}:${roomId}:${kind}`;
 }
 
 export function registerOfflineDocument(userId: string, key: string): boolean {
@@ -182,8 +195,9 @@ export async function createOfflineDocument(
   userId: string,
   roomId: string,
   document: Y.Doc,
+  kind: CollaborativeDocumentKind = "notes",
 ): Promise<OfflineDocumentResult> {
-  const key = buildOfflineDocumentKey(userId, roomId);
+  const key = buildOfflineDocumentKey(userId, roomId, kind);
 
   try {
     await verifyIndexedDbAvailability();

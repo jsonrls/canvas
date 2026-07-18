@@ -2,21 +2,24 @@
 
 import {
   BookOpenText,
+  BrainCircuit,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
   Flame,
   Globe2,
   House,
-  LibraryBig,
   LockKeyhole,
-  MessageCircleMore,
   PanelLeft,
+  PanelsTopLeft,
   Radio,
   RefreshCw,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
@@ -48,11 +51,16 @@ import {
   type OfflineDocumentResult,
 } from "@/lib/collaboration/offline-document";
 import type { VersionSummary } from "@/lib/version-history/types";
-import type { RoomRole } from "@/lib/rooms/repository";
+import type {
+  RoomDocumentKind,
+  RoomPdfAsset,
+  RoomRole,
+} from "@/lib/rooms/repository";
 
 type LocalPersistenceStatus = "disabled" | "loading" | "saved" | "unavailable";
 type RemoteSyncStatus =
   "connecting" | "synced" | "offline" | "error" | "viewing";
+type WorkspaceTool = RoomDocumentKind | "assistant";
 
 interface StudyUser {
   clientId: number;
@@ -73,11 +81,42 @@ interface CollaborativeRoomProps {
     id: string;
   };
   currentUserRole: RoomRole;
-  initialDocumentState: string | null;
+  initialDocumentStates: Record<RoomDocumentKind, string | null>;
+  initialPdfAsset: RoomPdfAsset | null;
   initialVersions: VersionSummary[];
   isPublic: boolean;
   roomId: string;
-  roomName: string;
+}
+
+const PdfStudyTool = dynamic(
+  () => import("@/components/collaboration/pdf-study-tool"),
+  {
+    loading: () => <ToolLoading label="Opening the PDF studio…" />,
+    ssr: false,
+  },
+);
+const WhiteboardStudyTool = dynamic(
+  () => import("@/components/collaboration/whiteboard-study-tool"),
+  {
+    loading: () => <ToolLoading label="Opening the whiteboard…" />,
+    ssr: false,
+  },
+);
+const AiStudyTool = dynamic(
+  () => import("@/components/collaboration/ai-study-tool"),
+  {
+    loading: () => <ToolLoading label="Opening the AI study assistant…" />,
+    ssr: false,
+  },
+);
+
+function ToolLoading({ label }: { label: string }): React.ReactElement {
+  return (
+    <div className="editor-initializing" role="status">
+      <RefreshCw className="spin" aria-hidden="true" size={18} />
+      {label}
+    </div>
+  );
 }
 
 const USER_NAMES = [
@@ -133,42 +172,23 @@ function readParticipants(provider: WebsocketProvider): StudyUser[] {
   );
 }
 
-function ConnectionBadge({
-  status,
-}: {
-  status: RemoteSyncStatus;
-}): React.ReactElement {
-  const labels: Record<RemoteSyncStatus, string> = {
-    connecting: "Connecting",
-    error: "Connection issue",
-    offline: "Offline",
-    synced: "Live",
-    viewing: "Read-only",
-  };
-
-  return (
-    <span
-      className={`connection-badge connection-badge--${status}`}
-      role="status"
-    >
-      <span className="connection-dot" aria-hidden="true" />
-      {labels[status]}
-    </span>
-  );
-}
-
 export function CollaborativeRoom({
   availableRooms,
   currentUser,
   currentUserRole,
-  initialDocumentState,
+  initialDocumentStates,
+  initialPdfAsset,
   initialVersions,
   isPublic,
   roomId,
-  roomName,
 }: CollaborativeRoomProps): React.ReactElement {
   const router = useRouter();
   const canEdit = currentUserRole !== "viewer";
+  const [activeTool, setActiveTool] = useState<WorkspaceTool>("notes");
+  const [assistantSourceText, setAssistantSourceText] = useState("");
+  const [isMenuSidebarCollapsed, setIsMenuSidebarCollapsed] = useState(false);
+  const [isVersionHistoryCollapsed, setIsVersionHistoryCollapsed] =
+    useState(false);
   const [connection, setConnection] = useState<CollaborationConnection | null>(
     null,
   );
@@ -207,9 +227,9 @@ export function CollaborativeRoom({
     let snapshotMessage = "";
     const document = new Y.Doc();
 
-    if (initialDocumentState) {
+    if (initialDocumentStates.notes) {
       try {
-        const binary = window.atob(initialDocumentState);
+        const binary = window.atob(initialDocumentStates.notes);
         const update = Uint8Array.from(binary, (character) =>
           character.charCodeAt(0),
         );
@@ -439,7 +459,7 @@ export function CollaborativeRoom({
     canEdit,
     currentUser.displayName,
     currentUser.id,
-    initialDocumentState,
+    initialDocumentStates.notes,
     roomId,
   ]);
 
@@ -697,11 +717,10 @@ export function CollaborativeRoom({
     synced: "Live sync active",
     viewing: "Read-only room access",
   };
-  const localCopy: Record<LocalPersistenceStatus, string> = {
-    disabled: "Saved server snapshot",
-    loading: "Opening local notes",
-    saved: "Saved on this device",
-    unavailable: "Local saving unavailable",
+
+  const openAssistant = (): void => {
+    setAssistantSourceText(editorRef.current?.captureDraft()?.text ?? "");
+    setActiveTool("assistant");
   };
 
   return (
@@ -786,8 +805,75 @@ export function CollaborativeRoom({
         </div>
       </header>
 
-      <div className="room-body">
-        <aside className="room-sidebar" aria-label="Study room navigation">
+      <nav className="mobile-workspace-tabs" aria-label="Room workspace">
+        <button
+          aria-pressed={activeTool === "notes"}
+          onClick={() => setActiveTool("notes")}
+          type="button"
+        >
+          <BookOpenText aria-hidden="true" size={17} />
+          Notes
+        </button>
+        <button
+          aria-pressed={activeTool === "pdf"}
+          onClick={() => setActiveTool("pdf")}
+          type="button"
+        >
+          <FileText aria-hidden="true" size={17} />
+          PDF
+        </button>
+        <button
+          aria-pressed={activeTool === "whiteboard"}
+          onClick={() => setActiveTool("whiteboard")}
+          type="button"
+        >
+          <PanelsTopLeft aria-hidden="true" size={17} />
+          Board
+        </button>
+        <button
+          aria-pressed={activeTool === "assistant"}
+          onClick={openAssistant}
+          type="button"
+        >
+          <BrainCircuit aria-hidden="true" size={17} />
+          AI
+        </button>
+      </nav>
+
+      <div
+        className={`room-body${activeTool === "notes" ? " room-body--notes" : " room-body--study-tool"}${isMenuSidebarCollapsed ? " room-body--menu-collapsed" : ""}${activeTool === "notes" && isVersionHistoryCollapsed ? " room-body--history-collapsed" : ""}`}
+      >
+        <button
+          aria-controls="room-menu-sidebar"
+          aria-expanded={!isMenuSidebarCollapsed}
+          aria-label={
+            isMenuSidebarCollapsed
+              ? "Expand menu sidebar"
+              : "Collapse menu sidebar"
+          }
+          className={`sidebar-edge-toggle menu-sidebar-toggle${isMenuSidebarCollapsed ? " menu-sidebar-toggle--collapsed" : ""}`}
+          onClick={() =>
+            setIsMenuSidebarCollapsed((isCollapsed) => !isCollapsed)
+          }
+          title={
+            isMenuSidebarCollapsed
+              ? "Expand menu sidebar"
+              : "Collapse menu sidebar"
+          }
+          type="button"
+        >
+          {isMenuSidebarCollapsed ? (
+            <ChevronRight aria-hidden="true" size={18} strokeWidth={2} />
+          ) : (
+            <ChevronLeft aria-hidden="true" size={18} strokeWidth={2} />
+          )}
+        </button>
+
+        <aside
+          className="room-sidebar"
+          id="room-menu-sidebar"
+          aria-label="Study room navigation"
+        >
           <div className="sidebar-section">
             <p className="sidebar-label">Study rooms</p>
             <nav className="sidebar-nav">
@@ -807,25 +893,38 @@ export function CollaborativeRoom({
           <div className="sidebar-section">
             <p className="sidebar-label">Workspace</p>
             <nav className="sidebar-nav">
-              <a className="sidebar-link sidebar-link--active" href="#notes">
+              <button
+                className={`sidebar-link${activeTool === "notes" ? " sidebar-link--active" : ""}`}
+                onClick={() => setActiveTool("notes")}
+                type="button"
+              >
                 <BookOpenText aria-hidden="true" size={17} />
                 Shared notes
-                <span>1</span>
-              </a>
-              <a className="sidebar-link" href="#questions">
-                <CircleHelp aria-hidden="true" size={17} />
-                Questions
-                <span>4</span>
-              </a>
-              <a className="sidebar-link" href="#chat">
-                <MessageCircleMore aria-hidden="true" size={17} />
-                Room chat
-                <span>8</span>
-              </a>
-              <a className="sidebar-link" href="#resources">
-                <LibraryBig aria-hidden="true" size={17} />
-                Resources
-              </a>
+              </button>
+              <button
+                className={`sidebar-link${activeTool === "pdf" ? " sidebar-link--active" : ""}`}
+                onClick={() => setActiveTool("pdf")}
+                type="button"
+              >
+                <FileText aria-hidden="true" size={17} />
+                PDF annotation
+              </button>
+              <button
+                className={`sidebar-link${activeTool === "whiteboard" ? " sidebar-link--active" : ""}`}
+                onClick={() => setActiveTool("whiteboard")}
+                type="button"
+              >
+                <PanelsTopLeft aria-hidden="true" size={17} />
+                Whiteboard
+              </button>
+              <button
+                className={`sidebar-link${activeTool === "assistant" ? " sidebar-link--active" : ""}`}
+                onClick={openAssistant}
+                type="button"
+              >
+                <BrainCircuit aria-hidden="true" size={17} />
+                AI study assistant
+              </button>
             </nav>
           </div>
 
@@ -865,108 +964,158 @@ export function CollaborativeRoom({
           </div>
         </aside>
 
-        <section className="editor-workspace" id="notes">
-          <div className="editor-heading-row">
-            <div>
-              <p className="eyebrow">Shared notes · {roomId}</p>
-              <h1>{roomName} notes</h1>
-              <p className="editor-subtitle">
-                Shape one dependable set of high-yield notes together.
+        {activeTool === "notes" ? (
+          <section
+            className="editor-workspace"
+            id="notes"
+            aria-label="Shared notes workspace"
+          >
+            {conflictReview ? (
+              <ConflictReviewPanel
+                canUseOfflineDraft={remoteActionsAvailable}
+                onKeepMerged={keepMergedNote}
+                onResolved={finishConflictReview}
+                onUseOfflineDraft={useOfflineDraft}
+                review={conflictReview}
+              />
+            ) : reconciliationMessage ? (
+              <p className="reconciliation-message" role="status">
+                <CheckCircle2 aria-hidden="true" size={16} />
+                {reconciliationMessage}
               </p>
-            </div>
-            <div className="sync-summary">
-              <ConnectionBadge status={remoteStatus} />
-              <span className="sync-copy">
-                <strong>{remoteCopy[remoteStatus]}</strong>
-                <small>{localCopy[localStatus]}</small>
-              </span>
-            </div>
-          </div>
+            ) : null}
 
-          {conflictReview ? (
-            <ConflictReviewPanel
-              canUseOfflineDraft={remoteActionsAvailable}
-              onKeepMerged={keepMergedNote}
-              onResolved={finishConflictReview}
-              onUseOfflineDraft={useOfflineDraft}
-              review={conflictReview}
+            {connection ? (
+              <RichTextEditor
+                ref={editorRef}
+                document={connection.document}
+                editable={canEdit}
+                provider={connection.provider}
+                syncLabel={
+                  remoteStatus === "synced" ? "Live" : remoteCopy[remoteStatus]
+                }
+                syncStatus={remoteStatus}
+                user={connection.user}
+              />
+            ) : (
+              <div className="editor-initializing" role="status">
+                <RefreshCw className="spin" aria-hidden="true" size={18} />
+                Opening the collaborative document…
+              </div>
+            )}
+
+            {(remoteStatus === "error" || remoteStatus === "offline") && (
+              <div
+                className="connection-callout"
+                role={remoteStatus === "error" ? "alert" : "status"}
+              >
+                <Radio aria-hidden="true" size={18} />
+                <div>
+                  <strong>
+                    {remoteStatus === "offline"
+                      ? "You are editing offline."
+                      : "The live room is temporarily unavailable."}
+                  </strong>
+                  <p>{connectionMessage || remoteCopy[remoteStatus]}</p>
+                </div>
+                <button type="button" onClick={reconnect}>
+                  Retry now
+                </button>
+              </div>
+            )}
+
+            {localStatus === "unavailable" ? (
+              <div
+                className="connection-callout connection-callout--storage"
+                role="status"
+              >
+                <Radio aria-hidden="true" size={18} />
+                <div>
+                  <strong>Local saving is unavailable.</strong>
+                  <p>{localMessage}</p>
+                </div>
+              </div>
+            ) : null}
+
+            {!canEdit && localMessage ? (
+              <div
+                className="connection-callout connection-callout--storage"
+                role="alert"
+              >
+                <Radio aria-hidden="true" size={18} />
+                <div>
+                  <strong>The saved notes snapshot is unavailable.</strong>
+                  <p>{localMessage}</p>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        ) : (
+          <section
+            className={`study-tool-workspace${activeTool === "pdf" || activeTool === "whiteboard" ? " study-tool-workspace--visual" : ""}`}
+          >
+            {activeTool === "pdf" ? (
+              <PdfStudyTool
+                canEdit={canEdit}
+                currentUser={currentUser}
+                initialAsset={initialPdfAsset}
+                initialState={initialDocumentStates.pdf}
+                roomId={roomId}
+              />
+            ) : activeTool === "whiteboard" ? (
+              <WhiteboardStudyTool
+                canEdit={canEdit}
+                currentUser={currentUser}
+                initialState={initialDocumentStates.whiteboard}
+                roomId={roomId}
+              />
+            ) : (
+              <AiStudyTool
+                onReturnToNotes={() => setActiveTool("notes")}
+                roomId={roomId}
+                sourceText={assistantSourceText}
+              />
+            )}
+          </section>
+        )}
+
+        {activeTool === "notes" ? (
+          <>
+            <button
+              aria-controls="version-history-sidebar"
+              aria-expanded={!isVersionHistoryCollapsed}
+              aria-label={
+                isVersionHistoryCollapsed
+                  ? "Expand Version History sidebar"
+                  : "Collapse Version History sidebar"
+              }
+              className={`sidebar-edge-toggle history-sidebar-toggle${isVersionHistoryCollapsed ? " history-sidebar-toggle--collapsed" : ""}`}
+              onClick={() =>
+                setIsVersionHistoryCollapsed((isCollapsed) => !isCollapsed)
+              }
+              title={
+                isVersionHistoryCollapsed
+                  ? "Expand Version History sidebar"
+                  : "Collapse Version History sidebar"
+              }
+              type="button"
+            >
+              {isVersionHistoryCollapsed ? (
+                <ChevronLeft aria-hidden="true" size={18} strokeWidth={2} />
+              ) : (
+                <ChevronRight aria-hidden="true" size={18} strokeWidth={2} />
+              )}
+            </button>
+
+            <VersionHistoryPanel
+              currentUserId={currentUser.id}
+              editorRef={editorRef}
+              initialVersions={initialVersions}
+              remoteActionsAvailable={remoteActionsAvailable}
+              roomId={roomId}
             />
-          ) : reconciliationMessage ? (
-            <p className="reconciliation-message" role="status">
-              <CheckCircle2 aria-hidden="true" size={16} />
-              {reconciliationMessage}
-            </p>
-          ) : null}
-
-          {connection ? (
-            <RichTextEditor
-              ref={editorRef}
-              document={connection.document}
-              editable={canEdit}
-              provider={connection.provider}
-              user={connection.user}
-            />
-          ) : (
-            <div className="editor-initializing" role="status">
-              <RefreshCw className="spin" aria-hidden="true" size={18} />
-              Opening the collaborative document…
-            </div>
-          )}
-
-          {(remoteStatus === "error" || remoteStatus === "offline") && (
-            <div
-              className="connection-callout"
-              role={remoteStatus === "error" ? "alert" : "status"}
-            >
-              <Radio aria-hidden="true" size={18} />
-              <div>
-                <strong>
-                  {remoteStatus === "offline"
-                    ? "You are editing offline."
-                    : "The live room is temporarily unavailable."}
-                </strong>
-                <p>{connectionMessage || remoteCopy[remoteStatus]}</p>
-              </div>
-              <button type="button" onClick={reconnect}>
-                Retry now
-              </button>
-            </div>
-          )}
-
-          {localStatus === "unavailable" ? (
-            <div
-              className="connection-callout connection-callout--storage"
-              role="status"
-            >
-              <Radio aria-hidden="true" size={18} />
-              <div>
-                <strong>Local saving is unavailable.</strong>
-                <p>{localMessage}</p>
-              </div>
-            </div>
-          ) : null}
-
-          {!canEdit && localMessage ? (
-            <div
-              className="connection-callout connection-callout--storage"
-              role="alert"
-            >
-              <Radio aria-hidden="true" size={18} />
-              <div>
-                <strong>The saved notes snapshot is unavailable.</strong>
-                <p>{localMessage}</p>
-              </div>
-            </div>
-          ) : null}
-        </section>
-
-        <VersionHistoryPanel
-          currentUserId={currentUser.id}
-          editorRef={editorRef}
-          initialVersions={initialVersions}
-          remoteActionsAvailable={remoteActionsAvailable}
-          roomId={roomId}
-        />
+          </>
+        ) : null}
       </div>
     </main>
   );

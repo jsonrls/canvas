@@ -4,7 +4,7 @@
 
 This document describes the API endpoints and data structures used in the MyBoardPrep Collaborative Learning Suite.
 
-> **Implementation status (verified 2026-07-17):** Supabase cookie authentication, protected room rendering, automatic user profiles, the access-token Route Handler, authenticated durable Yjs WebSockets, room-lifecycle Server Actions, and version-history Server Actions are implemented. The broader REST contracts later in this document remain planned.
+> **Implementation status (verified 2026-07-18):** Supabase cookie authentication, protected room rendering, automatic user profiles, access-token, private-PDF, room-authorized AI generation, and saved-study-guide Route Handlers, authenticated durable Notes/PDF/Whiteboard Yjs channels, room-lifecycle Server Actions, and note version-history Server Actions are implemented. The broader REST contracts later in this document remain planned.
 
 ## Base URL
 
@@ -40,18 +40,54 @@ NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
 ```javascript
 const wsProvider = new WebsocketProvider(
   process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234",
-  "room-id",
+  "room-slug--pdf",
   ydoc,
   { params: { access_token: validatedAccessToken } },
 );
 ```
 
-The upgrade returns `401` for a missing/invalid token and `403` when the user is not an owner/editor of the requested room. Authorized document state is loaded from `public.documents` before the first sync message and debounced back to Supabase after updates.
+The upgrade returns `401` for a missing/invalid token and `403` when the user is not an owner/editor of the requested room. Plain room slugs address notes; `--pdf` and `--whiteboard` suffixes select the other two document rows. Authorized state is loaded from `public.documents` before the first sync message and debounced back to the same row after updates.
+
+### Private PDF Upload
+
+```http
+POST /api/rooms/{roomSlug}/pdf
+Content-Type: application/json
+
+{"fileName":"review.pdf","mimeType":"application/pdf","size":84210}
+```
+
+An authenticated owner/editor receives a random PDF revision, versioned room-prefixed object path, and two-hour Supabase signed upload URL. The browser uploads directly to Storage, then finalizes with:
+
+```http
+PUT /api/rooms/{roomSlug}/pdf
+Content-Type: application/json
+
+{"fileName":"review.pdf","revision":"uuid","size":84210}
+```
+
+Finalization revalidates the cookie session, role, path, stored content type/size, and `%PDF-` header. It publishes metadata only if the active path has not changed concurrently, returns a ten-minute signed member read URL, and removes the replaced version. Both methods return `Cache-Control: private, no-store`; unauthenticated callers receive `401`, while invalid or unauthorized requests receive bounded `400` JSON errors.
+
+### AI Study Pack
+
+```http
+POST /api/rooms/{roomSlug}/ai-study-pack
+Content-Type: application/json
+
+{"sourceText":"The explicit collaborative-note snapshot..."}
+```
+
+The Route Handler validates the cookie session and room membership before provider use. It accepts exactly one bounded `sourceText` field, applies an instance-local five-per-ten-minute user/room limit, aborts provider work after 30 seconds, and calls the OpenAI Responses API with `store: false`, bounded output tokens, prompt-injection separation, and a strict JSON Schema. A successful `private, no-store` response contains `generatedAt`, `sourceCharacters`, and a validated `studyPack` with `summary`, `quiz`, `flashcards`, `recommendations`, and `misconceptions`.
+
+Unauthenticated callers receive `401`; missing rooms/non-members receive bounded `404`; invalid input returns `400`; rate limiting returns `429` with `Retry-After`; refusals return `422`; missing server configuration returns `503`; timeouts return `504`; and provider or output failures return a generic `502`. Provider response bodies, API credentials, and stack traces are never returned.
 
 ### Implemented routes and mutations
 
 - `GET /auth/confirm` exchanges PKCE codes or verifies email OTP token hashes.
 - `GET /api/auth/access-token` returns the validated cookie session's access token with `private, no-store` caching.
+- `POST` and `PUT /api/rooms/[roomId]/pdf` implement the two-phase private direct-upload flow described above. No service-role credential is serialized to the browser.
+- `POST /api/rooms/[roomId]/ai-study-pack` implements the private Phase 4 generation flow described above. Every member may generate from notes they can already read; generation remains provider-storage-disabled and source notes are not retained.
+- `GET`, `POST`, and `DELETE /api/rooms/[roomId]/saved-study-guides` list creator-private metadata, save a validated guide, load one full guide with `?guideId=...`, and delete creator-owned guides. Lists omit the JSON payload; every operation rechecks room membership and creator ownership through RLS.
 - `/login` invokes sign-in/sign-up Server Actions. Signup validates a 1–60 character display name and sends it as Auth metadata; a database trigger creates the corresponding `public.profiles` row.
 - `/rooms` reads the signed-in user's joined rooms and discoverable public rooms through RLS. `/rooms/[roomId]` opens only an existing authorized room, and `/rooms/[roomId]/settings` is owner-only.
 - Room UI invokes Server Actions for create, public join, leave, room settings, exact-email member addition, member role changes, member removal, and typed-confirmation deletion. These are internal UI mutations, not public REST endpoints.

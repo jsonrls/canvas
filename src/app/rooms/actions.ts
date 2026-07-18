@@ -20,15 +20,7 @@ import {
 } from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
-export interface RoomActionState {
-  message: string;
-  status: "idle" | "error" | "success";
-}
-
-export const INITIAL_ROOM_ACTION_STATE: RoomActionState = {
-  message: "",
-  status: "idle",
-};
+import type { RoomActionState } from "./action-state";
 
 function readVisibility(formData: FormData): boolean {
   const visibility = formData.get("visibility");

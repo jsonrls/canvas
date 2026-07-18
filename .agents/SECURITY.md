@@ -4,7 +4,7 @@
 
 This document outlines the security measures and best practices implemented in the MyBoardPrep Collaborative Learning Suite.
 
-> **Current implementation (verified 2026-07-17):** Supabase Auth cookie sessions protect room routes. Password recovery returns account-neutral request feedback, exchanges recovery links through the cookie-backed confirmation route, validates trusted claims before a password update, and signs out the recovery session after success. Five exposed application tables have RLS, 15 policies, and no anonymous table privileges. Direct authenticated room and membership inserts are revoked in favor of three narrowly scoped lifecycle functions; seven private authorization helpers remain inaccessible to clients. User-editable metadata is used only to seed display names, never for authorization; `public.profiles` is readable only by the owner and shared-room collaborators, and writable only by its owner. Offline Yjs updates use unencrypted same-origin IndexedDB scoped by validated account and room identifiers; explicit sign-out clears every registered document for the active account. Reconnection-review drafts remain in memory, and a local-draft override cannot run until the authorized version action durably checkpoints the merged state. Broader controls described below remain product targets unless called out in the repository's verification scripts.
+> **Current implementation (verified 2026-07-18):** Supabase Auth cookie sessions protect room routes. Password recovery is account-neutral and claim-gated. Six exposed application tables have RLS, 18 public-table policies, and no anonymous table privileges; private PDFs add four membership-aware `storage.objects` policies. Direct authenticated room and membership inserts are revoked in favor of three narrowly scoped lifecycle functions, and ten private authorization helpers remain inaccessible to anonymous clients. The `boardprep-pdfs` bucket is private, PDF-only, limited to 15 MiB, and uses versioned room-prefixed paths. Upload initiation and finalization validate cookie claims, editor role, metadata, stored MIME/size, `%PDF-` bytes, and concurrent replacement state without exposing the service-role credential. Offline Yjs updates use unencrypted same-origin IndexedDB scoped by validated account, room, and tool identifiers; viewers do not open writable sockets or offline stores, and explicit sign-out clears every registered tool document. Phase 4 AI requests independently revalidate room membership, keep provider credentials server-only, disable provider response storage, bound source/output/rate/time, separate untrusted notes from instructions, strictly validate output, and retain generated packs only in browser memory unless the creator explicitly saves one. Saved guides retain only validated output metadata and payload, enforce creator-private immutable RLS, and cascade on room/account deletion. Broader controls described below remain product targets unless called out in verification scripts.
 
 ## Authentication & Authorization
 
@@ -66,6 +66,15 @@ All database tables implement RLS policies:
 - Owner membership is immutable: the owner cannot be demoted, removed, or leave. Owners alone can update room settings and administer non-owner memberships.
 - RLS-filtered mutations must return an affected row before the application reports success. Opening a room is read-only and never provisions resources.
 - Owners and editors can open an authenticated writable Yjs connection. Viewers receive persisted read-only content without opening a writable WebSocket or offline-editing database.
+- Notes, PDF annotations, and whiteboard scenes resolve to separate validated document names and database rows; the same owner/editor upgrade check applies to every writable channel.
+
+#### Implemented private PDF controls
+
+- Only members can select objects from `boardprep-pdfs`; only owners/editors can insert, replace, or delete within their room UUID prefix. Object-name helpers reject malformed and cross-room paths before membership evaluation.
+- Signed upload URLs use random revision UUIDs and are issued only after authenticated editor authorization. They permit direct browser transfer without revealing an API secret.
+- Finalization rechecks authorization and the stored object, then conditionally updates the PDF row against the previously active path. A race removes the uncommitted new object instead of overwriting a newer replacement.
+- Signed read URLs expire after ten minutes. Replacing a PDF changes the revision and prevents stale annotations from rendering against a different source.
+- Whiteboard images accept only PNG, JPEG, WebP, or GIF files up to 1 MiB and render only validated base64 raster data URLs; SVG and arbitrary data URLs are rejected. Laser awareness is transient and excluded from persistence.
 
 ## Data Protection
 
@@ -89,7 +98,7 @@ All database tables implement RLS policies:
 - **User Data**: Retained until account deletion
 - **Collaborative Content**: Retained according to room settings
 - **Audit Logs**: Retained for 1 year
-- **AI Interactions**: Retained for 90 days
+- **AI Interactions**: Provider requests set `store: false`; generated packs are transient unless a creator explicitly saves the validated output, which is retained until creator, room, or account deletion
 - **Backups**: 7-day point-in-time recovery, 1-month full backups
 
 ## API Security
@@ -99,7 +108,7 @@ All database tables implement RLS policies:
 - **Authenticated Users**: 1000 requests/hour
 - **Unauthenticated Users**: 100 requests/hour
 - **WebSocket Connections**: 10 concurrent connections/user
-- **AI API Calls**: 100 calls/hour per user
+- **AI API Calls**: Implemented basic guard is five attempts per user/room in ten minutes per application instance; distributed production enforcement and monitoring remain future hardening
 
 ### Input Validation
 
@@ -136,18 +145,19 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 - **Yjs Documents**: Room-based access control
 - **Presence**: Only share presence with room participants
 - **Live Cursors**: Only show cursors of authorized users
-- **Offline Sync**: Unencrypted same-origin IndexedDB stores only Yjs updates; keys are account/room scoped, tokens and authorization decisions are excluded, explicit sign-out clears the active account's registry, and every reconnect is revalidated by the WebSocket service
+- **Offline Sync**: Unencrypted same-origin IndexedDB stores only Yjs updates; keys are account/room/tool scoped, tokens and authorization decisions are excluded, explicit sign-out clears the active account's registry, and every reconnect is revalidated by the WebSocket service
 - **Conflict Review**: Local/merged excerpts and batch counts are transient client memory; awareness is excluded, the Yjs merge is the default, and an override uses the authenticated version Server Action before emitting replacement content. If checkpoint creation fails or the Yjs state changes while saving, the live merge is not replaced
 
 ## Third-Party Integrations
 
 ### OpenAI API
 
-- API key stored in Supabase Edge Function secrets
-- Rate limiting per user
-- Content filtering enabled
-- PII redaction before sending to API
-- Cost monitoring and limits
+- `OPENAI_API_KEY` is read only by the Next.js Route Handler and is never prefixed with `NEXT_PUBLIC_`, serialized in props, or returned in errors
+- Every request validates the Supabase cookie claim and current room membership before provider invocation
+- Requests accept only one bounded note snapshot, label it untrusted, isolate it from instructions, cap output tokens, and abort after 30 seconds
+- Strict structured output, explicit refusal handling, and runtime validation prevent malformed content from reaching result views
+- Provider response storage is disabled and generated packs remain ephemeral browser state; note snapshots are not persisted by the application
+- The study-aid notice and cautious confidence labels mitigate medical overreliance, but users must still verify every generated claim
 
 ### Supabase
 

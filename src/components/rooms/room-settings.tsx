@@ -19,10 +19,10 @@ import {
   addRoomMemberAction,
   changeRoomMemberRoleAction,
   deleteRoomAction,
-  INITIAL_ROOM_ACTION_STATE,
   removeRoomMemberAction,
   updateRoomAction,
 } from "@/app/rooms/actions";
+import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
 
 function SettingsSubmitButton({

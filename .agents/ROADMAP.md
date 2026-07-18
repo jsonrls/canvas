@@ -31,28 +31,39 @@ This document outlines the development roadmap for the MyBoardPrep Collaborative
 - [x] Offline editing with sync ([implementation plan](../plan/feature-offline-editing-sync-1.md))
 - [x] Conflict resolution UI ([implementation plan](../plan/feature-conflict-resolution-ui-1.md))
 
-### Phase 3: Study Features
+### Phase 3: Study Features ✅
 
 **Timeline**: Q2 2024
-**Status**: In Progress
+**Status**: Completed
 
 - [x] Collaborative notes editor
-- [ ] PDF annotation
-- [ ] Basic whiteboard
+- [x] PDF annotation ([implementation plan](../plan/feature-phase-3-study-tools-1.md))
+- [x] Basic whiteboard ([implementation plan](../plan/feature-phase-3-study-tools-1.md))
 - [x] Study room creation ([implementation plan](../plan/feature-room-creation-management-1.md))
 - [x] Room management ([implementation plan](../plan/feature-room-creation-management-1.md))
 - [x] User presence in rooms
 
-### Phase 4: AI Assistant
+### Phase 4: AI Assistant ✅ ([implementation plan](../plan/feature-phase-4-ai-assistant-1.md))
 
 **Timeline**: Q2 2024
-**Status**: Planned
+**Status**: Completed
 
-- [ ] Discussion summarization
-- [ ] Quiz generation
-- [ ] Flashcard generation
-- [ ] Basic content recommendations
-- [ ] Misconception detection
+- [x] Discussion summarization
+- [x] Quiz generation
+- [x] Flashcard generation
+- [x] Basic content recommendations
+- [x] Misconception detection
+
+### Phase 5: Saved AI Study Guides ✅ ([implementation plan](../plan/feature-saved-ai-study-guides-1.md))
+
+**Timeline**: Q2 2024
+**Status**: Completed
+
+- [x] Explicit creator save
+- [x] Private saved-guide library
+- [x] Reopen without a model call
+- [x] Creator deletion with confirmation
+- [x] Supabase RLS, retention limits, and cleanup cascades
 
 ## Version 1.1 - Enhanced Collaboration
 
@@ -309,6 +320,9 @@ This roadmap is influenced by:
 - **v1.1** (2024-02-01): Updated based on technical constraints
 - **v1.2** (2024-03-01): Refined priorities based on user feedback
 - **v1.3** (2026-07-17): Verified the Next.js collaborative rich-text room, Yjs presence/cursors, two-client synchronization, responsive UI foundation, and local development workflow
+- **v1.4** (2026-07-17): Completed Phase 3 with private collaborative PDF annotation, a dependency-free SVG/Yjs whiteboard, isolated offline/remote document channels, hosted Storage authorization verification, and desktop/mobile browser acceptance
+- **v1.5** (2026-07-18): Completed Phase 4 with room-authorized ephemeral AI study packs, strict structured outputs, grounded safety controls, full Phase 1–3 regression coverage, live-provider verification, and desktop/mobile browser acceptance
+- **v1.6** (2026-07-18): Added completed creator-private saved AI study guides with metadata-only lists, validated detail loads, immutable RLS, deletion, and hosted lifecycle verification
 
 ## Next Review
 

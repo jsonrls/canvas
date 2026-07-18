@@ -172,6 +172,14 @@ function createUserClient(accessToken: string): SupabaseClient {
 async function verifyLocalPersistence(): Promise<void> {
   const expectedKey = `boardprep:${firstUserId}:${localRoomId}:notes`;
   assert.equal(buildOfflineDocumentKey(firstUserId, localRoomId), expectedKey);
+  assert.equal(
+    buildOfflineDocumentKey(firstUserId, localRoomId, "pdf"),
+    `boardprep:${firstUserId}:${localRoomId}:pdf`,
+  );
+  assert.equal(
+    buildOfflineDocumentKey(firstUserId, localRoomId, "whiteboard"),
+    `boardprep:${firstUserId}:${localRoomId}:whiteboard`,
+  );
   assert.throws(() => buildOfflineDocumentKey("invalid", localRoomId));
   assert.throws(() => buildOfflineDocumentKey(firstUserId, "Invalid Room"));
   assert.throws(() => registerOfflineDocument(firstUserId, "wrong-key"));
@@ -218,6 +226,27 @@ async function verifyLocalPersistence(): Promise<void> {
   );
   assert.equal(otherRoomPersistence.status, "saved");
   assert.equal(otherRoomDocument.getText(documentName).toString(), "");
+
+  const pdfDocument = new Y.Doc();
+  const pdfPersistence = await createOfflineDocument(
+    firstUserId,
+    localRoomId,
+    pdfDocument,
+    "pdf",
+  );
+  const whiteboardDocument = new Y.Doc();
+  const whiteboardPersistence = await createOfflineDocument(
+    firstUserId,
+    localRoomId,
+    whiteboardDocument,
+    "whiteboard",
+  );
+  assert.equal(pdfPersistence.status, "saved");
+  assert.equal(whiteboardPersistence.status, "saved");
+  pdfDocument.getMap("annotations").set("pdf-only", true);
+  assert.equal(whiteboardDocument.getMap("annotations").size, 0);
+  whiteboardDocument.getMap("elements").set("board-only", true);
+  assert.equal(pdfDocument.getMap("elements").size, 0);
   await delay(80);
 
   await restoredPersistence.persistence.destroy();
@@ -226,11 +255,15 @@ async function verifyLocalPersistence(): Promise<void> {
   otherAccountDocument.destroy();
   await otherRoomPersistence.persistence.destroy();
   otherRoomDocument.destroy();
+  await pdfPersistence.persistence.destroy();
+  pdfDocument.destroy();
+  await whiteboardPersistence.persistence.destroy();
+  whiteboardDocument.destroy();
 
   const cleanup = await clearOfflineDocumentsForUser(firstUserId);
   assert.equal(cleanup.registryAvailable, true);
   assert.equal(cleanup.failed, 0);
-  assert.equal(cleanup.cleared, 2);
+  assert.equal(cleanup.cleared, 4);
 
   const clearedDocument = new Y.Doc();
   const clearedPersistence = await createOfflineDocument(
@@ -355,17 +388,24 @@ async function verifyAuthenticatedReconnect(): Promise<void> {
 
     roomDatabaseId = room.room_id;
     const roomSlug = room.room_slug;
-    const { data: documentRow, error: documentError } = await userClient
+    const { data: documentRows, error: documentError } = await userClient
       .from("documents")
-      .select("id")
-      .eq("room_id", room.room_id)
-      .eq("kind", "notes")
-      .single();
+      .select("id, kind")
+      .eq("room_id", room.room_id);
 
-    if (documentError || !documentRow) {
+    if (documentError || documentRows?.length !== 3) {
       throw new Error(
-        "Atomic room creation did not initialize the offline verification document.",
+        "Atomic room creation did not initialize all collaborative documents.",
       );
+    }
+
+    const documentIds = new Map(
+      documentRows.map((document) => [document.kind, document.id]),
+    );
+    const notesDocumentId = documentIds.get("notes");
+
+    if (!notesDocumentId) {
+      throw new Error("The notes verification document is missing.");
     }
 
     const port = await findAvailablePort();
@@ -381,8 +421,11 @@ async function verifyAuthenticatedReconnect(): Promise<void> {
     );
     assert.equal(localPersistence.status, "saved");
 
-    const createProvider = (document: Y.Doc): WebsocketProvider =>
-      new WebsocketProvider(serverUrl, roomSlug, document, {
+    const createProvider = (
+      document: Y.Doc,
+      remoteDocumentName = roomSlug,
+    ): WebsocketProvider =>
+      new WebsocketProvider(serverUrl, remoteDocumentName, document, {
         WebSocketPolyfill: WebSocket as unknown as typeof globalThis.WebSocket,
         disableBc: true,
         maxBackoffTime: 1_000,
@@ -430,10 +473,43 @@ async function verifyAuthenticatedReconnect(): Promise<void> {
       const { data } = await admin
         .from("documents")
         .select("yjs_state")
-        .eq("id", documentRow.id)
+        .eq("id", notesDocumentId)
         .single();
       return typeof data?.yjs_state === "string" && data.yjs_state.length > 0;
     }, "persisting the merged offline state in Supabase");
+
+    for (const kind of ["pdf", "whiteboard"] as const) {
+      const left = new Y.Doc();
+      const right = new Y.Doc();
+      documents.push(left, right);
+      const remoteName = `${roomSlug}--${kind}`;
+      const leftProvider = createProvider(left, remoteName);
+      const rightProvider = createProvider(right, remoteName);
+      providers.push(leftProvider, rightProvider);
+      await waitFor(
+        () => leftProvider.synced && rightProvider.synced,
+        `synchronizing the ${kind} verification clients`,
+      );
+
+      left.getMap("objects").set(`${kind}-left`, { source: "left" });
+      right.getMap("objects").set(`${kind}-right`, { source: "right" });
+      await waitFor(
+        () =>
+          left.getMap("objects").size === 2 &&
+          right.getMap("objects").size === 2,
+        `merging independent ${kind} objects`,
+      );
+
+      const documentId = documentIds.get(kind);
+      await waitFor(async () => {
+        const { data } = await admin
+          .from("documents")
+          .select("yjs_state")
+          .eq("id", documentId)
+          .single();
+        return typeof data?.yjs_state === "string" && data.yjs_state.length > 0;
+      }, `persisting the ${kind} state in Supabase`);
+    }
 
     await localPersistence.persistence.destroy();
     await clearOfflineDocumentsForUser(userId);
@@ -456,7 +532,7 @@ async function main(): Promise<void> {
   await verifyLocalPersistence();
   await verifyAuthenticatedReconnect();
   console.log(
-    "Offline-sync verification passed: recovery, account/room isolation, cleanup, storage fallback, authenticated reconnection, CRDT merge, and durable persistence.",
+    "Offline-sync verification passed: account/room/tool isolation, recovery, cleanup, storage fallback, authenticated reconnection, independent notes/PDF/whiteboard CRDT merges, and durable persistence.",
   );
 }
 

@@ -1,0 +1,3804 @@
+================================================================================
+
+SESSION START: Add persistent saved AI study guides
+START TIME: 14:41:54
+TASK: Persist generated study guides for explicit creator reuse and update roadmap
+================================================================================
+
+CHANGE: Added saved_study_guides schema, RLS policies, grants, and room-scoped 50-guide enforcement trigger.
+FILES: supabase/migrations/20260718064528_store_saved_ai_study_guides.sql; supabase/migrations/20260718103000_enforce_saved_ai_study_guide_limit.sql
+CATEGORY: Database changes
+
+CHANGE: Added validated server library and authenticated GET/POST/DELETE Route Handler for creator-private saved guides.
+FILES: src/lib/ai/saved-study-guides.ts; src/app/api/rooms/[roomId]/saved-study-guides/route.ts
+CATEGORY: Code changes / API changes
+
+CHANGE: Added saved-guide shelf, save/reopen/delete confirmation UI, responsive styling, and private retention copy.
+FILES: src/components/collaboration/ai-study-tool.tsx; src/app/globals.css
+CATEGORY: Code changes
+
+CHANGE: Added hosted lifecycle verifier and expanded schema/Phase 4 contract checks.
+FILES: scripts/verify-saved-study-guides.mjs; scripts/verify-schema.mjs; scripts/verify-phase-4.ts; package.json
+CATEGORY: Testing file changes / Configuration changes
+
+CHANGE: Updated API, architecture, database, security, decisions, testing, README, changelog, roadmap, and implementation plan documentation.
+FILES: .agents/API.md; .agents/ARCHITECTURE.md; .agents/DATABASE.md; .agents/SECURITY.md; .agents/DECISIONS.md; .agents/TESTING.md; .agents/CHANGELOG.md; .agents/ROADMAP.md; README.md; plan/feature-saved-ai-study-guides-1.md
+CATEGORY: Documentation and knowledge changes
+
+SESSION ENDED
+END TIME: 15:10:06
+TOTAL CHANGES: 5 grouped operations
+VERIFICATION: format, lint, typecheck, build, schema, Phase 4, saved-guide lifecycle, browser acceptance, and disposable fixture cleanup all passed.
+
+FOLLOW-UP CHANGE: Increased the AI provider abort window from 30 seconds to 55 seconds and set the Route Handler platform max duration to 60 seconds so normal slow structured generations can complete.
+FILE: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+CATEGORY: API changes
+VERIFICATION: format, lint, typecheck, build, and verify:phase-4 passed.
+
+FOLLOW-UP CHANGE: Converted the whiteboard from a zero-origin bounded surface to a signed large-world canvas with negative-coordinate rendering, validation, camera bounds, movement, resizing, and grid coverage.
+FILES: src/lib/whiteboard/model.ts; src/components/collaboration/whiteboard-study-tool.tsx
+CATEGORY: Code changes
+VERIFICATION: format, lint, typecheck, build, and git diff --check passed.
+
+FOLLOW-UP CHANGE: Added whiteboard Auto-fit, 100% default/reset zoom, and collaborative Undo/Redo controls before the tool selector.
+FILES: src/components/collaboration/whiteboard-study-tool.tsx; src/lib/whiteboard/model.ts
+CATEGORY: Code changes
+VERIFICATION: lint, typecheck, build, and git diff --check passed.
+
+FOLLOW-UP CHANGE: Updated whiteboard text interaction to place an inline editor after choosing a board position and added double-click editing for existing text elements.
+FILES: src/components/collaboration/whiteboard-study-tool.tsx; src/app/globals.css
+CATEGORY: Code changes
+VERIFICATION: lint, typecheck, build, and git diff --check passed.
+
+FOLLOW-UP CHANGE: Replaced the native drawing color input with a custom BoardPrep palette grid containing vivid and dark tones, selected-color indication, and compact popover behavior.
+FILES: src/components/collaboration/whiteboard-study-tool.tsx; src/app/globals.css
+CATEGORY: Code changes
+VERIFICATION: lint, typecheck, build, and git diff --check passed.
+
+FOLLOW-UP CHANGE: Corrected Undo/Redo history tracking by using Yjs default local transaction tracking and synchronizing button state immediately after edits and history actions.
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+CATEGORY: Code changes
+VERIFICATION: lint and typecheck passed; production build completed.
+
+FOLLOW-UP CHANGE: Fixed whiteboard Undo/Redo tracking by using a shared local Yjs origin and added a drawing color picker applied to new elements.
+FILES: src/components/collaboration/whiteboard-study-tool.tsx; src/app/globals.css
+CATEGORY: Code changes
+VERIFICATION: lint, typecheck, build, and git diff --check passed.
+
+FOLLOW-UP CHANGE: Anchored the whiteboard initial/reset camera at non-negative board coordinates so wide viewports no longer expose an undrawable negative-world gutter on the left or top.
+FILE: src/lib/whiteboard/model.ts
+CATEGORY: Code changes
+VERIFICATION: format, lint, typecheck, build, and verify:phase-4 passed.
+
+FOLLOW-UP CHANGE: Whiteboard pointer conversion now derives viewport dimensions from the live SVG bounding box instead of a potentially stale ResizeObserver snapshot, preventing edge-coordinate drift after responsive/sidebar layout changes.
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+CATEGORY: Code changes
+VERIFICATION: format, lint, typecheck, build, and verify:phase-4 passed.
+NEW SESSION STARTED
+SESSION ID: whiteboard-resize-clear-20260718
+DATE: 2026-07-18
+TIME: 09:24:45
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Add shape resize and clear-all whiteboard drawings
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 09:24:45
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: src/lib/whiteboard/model.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added resize helpers for whiteboard elements: MIN_ELEMENT_SIZE, ResizeHandle type,
+getElementBounds(), and resizeWhiteboardElement() supporting corner handles for
+shapes/draw/image/text and start/end handles for lines/arrows. Bounds are clamped
+to the board and enforce a minimum size.
+
+BEFORE:
+Only clampBoardPoint and readWhiteboardElement existed.
+
+AFTER:
+Model exports bounds calculation and pure resize transforms for collaborative updates.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx, scripts/verify-phase-3.ts
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Grok
+TASK: Resize shapes on whiteboard
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 09:24:45
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Implemented interactive resize: select a shape to show selection box and drag
+handles; pointer moves update the Yjs element via resizeWhiteboardElement.
+Added Clear all button (with confirm) that deletes every whiteboard-elements
+entry. Refactored point mapping to use SVG ref for accurate handle drags.
+
+BEFORE:
+Select only highlighted elements; delete removed one selected shape; no resize;
+no clear-all.
+
+AFTER:
+Corner/endpoint resize handles for selected shapes; Clear all clears the board;
+Delete still removes the selection.
+
+CONTEXT:
+- Related files: src/lib/whiteboard/model.ts, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: lucide-react Eraser icon
+
+AGENT: Grok
+TASK: Resize shapes + clear all drawings
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 09:24:45
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Styled toolbar action group (delete/clear), selection box, resize handles, and
+resizing cursor state for the whiteboard stage.
+
+CONTEXT:
+- Related files: whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Grok
+TASK: Whiteboard resize/clear UI styles
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 09:24:45
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: scripts/verify-phase-3.ts
+================================================================================
+CHANGE DESCRIPTION:
+Extended phase-3 verification with resizeWhiteboardElement/getElementBounds
+assertions and source-contract checks for Clear all / resize wiring.
+
+CONTEXT:
+- Related files: src/lib/whiteboard/model.ts, whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Grok
+TASK: Verify whiteboard resize and clear-all
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 09:24:45
+DURATION: N/A
+TOTAL CHANGES: 4
+CHANGE BREAKDOWN:
+- Code changes: 3
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+- Test/verification changes: 1
+================================================================================
+================================================================================
+TIMESTAMP: 2026-07-18 09:35:00
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Fixed whiteboard stage layout so the SVG always fills 100% width at a true 5:3
+aspect ratio. Moved max-height from the SVG onto the stage container with
+overflow:auto. Previously max-height on the SVG broke aspect ratio, letterboxed
+the viewBox (blank sides), and made side areas non-drawable.
+
+CONTEXT:
+- Related files: whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Grok
+TASK: Fix whiteboard full-width drawable area
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 09:35:00
+SESSION: whiteboard-resize-clear-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Updated getBoardPoint to map pointer events through SVG getScreenCTM so board
+coordinates match the rendered viewBox under scale/scroll.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Grok
+TASK: Fix whiteboard full-width drawable area
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 09:46:00
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Finish whiteboard zoom and pan functionality
+================================================================================
+TIMESTAMP: 2026-07-18 10:11:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Implemented spacebar keypress listeners (keydown, keyup, and blur) on the window to track isSpacePressed.
+- Prevented default spacebar scrolling behavior, except when typing in inputs, textareas, or contentEditable elements.
+- Updated handlePointerDown to check isSpacePressed instead of event.getModifierState("Space"), enabling Space+click panning.
+- Fixed ESLint ref-access-during-render warning in beginResize by using event.currentTarget.ownerSVGElement instead of svgRef.current.
+- Safely checked isContentEditable in active elements by narrowing Element to HTMLElement.
+- Released pointer captures in finishPointer.
+- Added isSpacePressed state to the whiteboard-stage wrapper class list.
+- Disabled Zoom In and Zoom Out toolbar buttons at MAX_ZOOM and MIN_ZOOM limit values.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Finish whiteboard zoom and pan in whiteboard
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 10:11:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Added cursor styles for .whiteboard-stage--space-pressed svg (cursor: grab !important) to show grab hand cursor.
+- Updated .whiteboard-stage--panning svg style to override other states with cursor: grabbing !important during active pans.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Finish whiteboard zoom and pan in whiteboard
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 10:15:00
+================================================================================
+TIMESTAMP: 2026-07-18 10:15:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Changed default select mode cursors from grab/grabbing to default (arrow pointer) to prevent confusion and ensure shape selection is clearly active when space is not held down.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Finish whiteboard zoom and pan in whiteboard
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 10:20:00
+================================================================================
+TIMESTAMP: 2026-07-18 10:22:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added drag-to-move feature for any selected whiteboard object (shapes, text, drawings, lines, arrows, images).
+- Defined MoveSession interface and state to track starting drag points and initial item coordinates.
+- Updated selectElement pointerdown handler to initiate a MoveSession on target elements and capture pointer capture on the owner SVG.
+- Implemented delta translation inside handlePointerMove to shift target element coordinate positions (and polyline points for drawings) relative to initial positions.
+- Clamped moving shapes/drawings and line endpoints to stay inside the board bounds.
+- Reset the MoveSession on finishPointer pointerup events.
+- Appended whiteboard-stage--moving class name to the container during drag operations.
+- Avoided accessing refs during render by using event.currentTarget.ownerSVGElement instead of svgRef.current inside selectElement.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Add feature to move selected whiteboard shapes/objects
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 10:22:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Added .whiteboard-stage--moving svg cursor style override (cursor: move !important) to show cross-arrows moving hand.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Add feature to move selected whiteboard shapes/objects
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 10:23:00
+DURATION: 00:37:00
+TOTAL CHANGES: 5
+CHANGE BREAKDOWN:
+- Code changes: 5
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 10:25:00
+================================================================================
+TIMESTAMP: 2026-07-18 10:28:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Updated handleWheel to check event.ctrlKey || event.metaKey to trigger zoom (holding Ctrl in Windows, Cmd in macOS, or trackpad pinch).
+- Fallback to calling panCamera inside handleWheel when modifier keys are not held, allowing standard mouse scroll wheel or trackpad swipe to pan the canvas dynamically.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: CMD/CTRL + Wheel zooming and overflow scrollbar removal
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 10:28:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Fixed whiteboard stage height layout to height: calc(100vh - 260px) and overflow: hidden to completely remove browser scrollbars.
+- Changed whiteboard stage SVG height to height: 100% and removed aspect-ratio to make the SVG fill the stage exactly.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: CMD/CTRL + Wheel zooming and overflow scrollbar removal
+================================================================================
+
+================================================================================
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 10:31:00
+================================================================================
+TIMESTAMP: 2026-07-18 10:32:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Fixed a bug where a user's own laser pointer dot was not visible on their screen.
+- Modified the laser participant mapping logic to render the laser pointer's dot (`<circle>`) for the local user (`isSelf`), but hid the name tag (`<text>`) to avoid visual clutter.
+
+CONTEXT:
+- Related files: None
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Enable presenter laser visibility
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 10:33:00
+DURATION: 00:47:00
+TOTAL CHANGES: 8
+CHANGE BREAKDOWN:
+- Code changes: 8
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 10:36:00
+================================================================================
+TIMESTAMP: 2026-07-18 10:41:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Modified the laser pointer behavior so that it tracks and remains visible under the mouse cursor at all times (hovering/moving) without requiring clicking or drag-holding.
+- Removed pointer capture from laser tool inside `handlePointerDown`.
+- Removed pointer capture condition check in `handlePointerMove` for the laser tool.
+- Prevented clearing the laser pointer in `finishPointer` on pointerup events when the laser tool is active.
+- Added a `useEffect` hook to automatically clear the laser awareness state when the user switches away from the laser tool.
+
+CONTEXT:
+- Related files: None
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Make laser pointer visible at all times when active
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:05:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:06:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Changed the laser pointer circle fill from `participant.color` to a static bright red hex color `#ef4444`.
+- Added a visual keyboard shortcuts legend row directly above the whiteboard canvas, rendering descriptive instructions for panning (Space+drag, middle-click, swipe) and zooming (⌘/Ctrl+scroll) with HTML `<kbd>` tag elements.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Red laser and keyboard shortcuts legend layout
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:06:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Added `.whiteboard-shortcuts-legend` styling rules utilizing the warm cream canvas base color `#faf9f5` and borders matching the existing palette.
+- Subtracted the legend row height (34px) from the `.whiteboard-stage` height parameter, setting it to `calc(100vh - 294px)` to preserve the perfect screen boundaries layout budget.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Red laser and keyboard shortcuts legend layout
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:09:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:10:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Repositioned the `.whiteboard-shortcuts-legend` styles: aligned it to the right side above the whiteboard controls/toolbar via `justify-content: flex-end`.
+- Removed borders, backgrounds, and padding from the legend container, and added a small `margin-bottom: 8px` to offset the toolbar.
+- Restored the `.whiteboard-stage` height layout calculation to `height: calc(100vh - 260px)` since the legend container no longer sits between the toolbar and the stage container.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Right-align shortcuts legend above the whiteboard controls
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 11:11:00
+DURATION: 01:25:00
+TOTAL CHANGES: 12
+CHANGE BREAKDOWN:
+- Code changes: 12
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:13:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:16:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Relocated the `.whiteboard-shortcuts-legend` markup into a new `.study-tool__header-right` flex column in the whiteboard header (aligned next to and under the active participants and connection status badge).
+- Removed the old shortcuts container markup from the bottom space.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Move shortcuts legend to the header on the right
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:17:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Defined CSS styles for `.study-tool__header-right` wrapping flex container, aligning elements to the right side of the header.
+- Simplified `.whiteboard-shortcuts-legend` styles for seamless integration as a borderless text row beneath the status badge.
+- Added media queries under `@media (max-width: 760px)` to stack `.study-tool__header-right` vertically and align elements to the left on mobile viewports.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Move shortcuts legend to the header on the right
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:22:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:23:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Imported `HelpCircle` icon from `lucide-react`.
+- Replaced the direct text shortcuts legend with an interactive question mark help button (`.whiteboard-shortcuts-help`) containing a hover/focus popover tooltip (`.whiteboard-shortcuts-tooltip`).
+- The popover tooltip lists all keyboard shortcuts (Pan, Zoom, Move Element, Resize Element) along with their keys and descriptions.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Interactive shortcuts question mark tooltip
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:23:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Replaced `.whiteboard-shortcuts-legend` styles with CSS rules for the help button `.whiteboard-shortcuts-help` and absolute popover `.whiteboard-shortcuts-tooltip`.
+- Added smooth opacity and scale transitions for when the tooltip is hovered/focused.
+- Configured media queries so that on mobile viewports, the popover aligns to the left boundary of the help button, avoiding overflow.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Interactive shortcuts question mark tooltip
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 11:25:00
+DURATION: 01:40:00
+TOTAL CHANGES: 16
+CHANGE BREAKDOWN:
+- Code changes: 16
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:28:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:30:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Increased size of `HelpCircle` icon from 15 to 18 to make the question mark larger.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Large borderless help icon button
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:30:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Updated `.whiteboard-shortcuts-help` styles: removed width, height, circular border, border radius, background color, and set background to transparent to render the button as a plain borderless icon.
+- Hover states transition the color variable smoothly without any background/border change.
+
+CONTEXT:
+- Related files: src/components/collaboration/whiteboard-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Large borderless help icon button
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:33:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:34:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Fixed inheritance specificity issue where generic `.tool-status-row button` styles overrode help button resets.
+- Used the more specific `.tool-status-row button.whiteboard-shortcuts-help` selector to successfully reset min-height, border, padding, border-radius, background, and box-shadow completely.
+
+CONTEXT:
+- Related files: None
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Remove border and background of the help icon
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:37:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:38:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Fixed a bug where panning/zooming past active canvas boundaries revealed blank white space regions.
+- Expanded the background grid rect dimensions to cover coordinate ranges from -30,000 to +30,000, ensuring grid dots render infinitely.
+- Rendered an explicit border rect (`strokeWidth="1.5"`) around the `3000 x 2000` active region to demarcate drawing board boundaries.
+
+CONTEXT:
+- Related files: None
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Infinite grid background and board boundary outlines
+================================================================================
+
+================================================================================
+SESSION CONTINUED
+SESSION ID: whiteboard-zoom-pan-20260718
+DATE: 2026-07-18
+TIME: 11:42:00
+================================================================================
+TIMESTAMP: 2026-07-18 11:43:00
+SESSION: whiteboard-zoom-pan-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Reverted the previous steps relating to the expanded grid background rect size (re-clamped it to the default `WHITEBOARD_WIDTH` and `WHITEBOARD_HEIGHT` range of `3000 x 2000`).
+- Removed the outline border shape around the drawable whiteboard boundaries.
+
+CONTEXT:
+- Related files: None
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Revert last prompt (infinite grid background and outlines)
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 11:44:00
+DURATION: 02:02:00
+TOTAL CHANGES: 21
+CHANGE BREAKDOWN:
+- Code changes: 21
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: change-fonts-inter-20260718
+DATE: 2026-07-18
+TIME: 11:50:00
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Change all fonts to Inter
+================================================================================
+TIMESTAMP: 2026-07-18 11:51:00
+SESSION: change-fonts-inter-20260718
+OPERATION: MODIFY
+FILE: src/app/layout.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Replaced Cormorant Garamond and Manrope fonts with Inter font in next/font/google config.
+- Assigned Inter font instance to both displayFont and bodyFont variables to map to --font-display and --font-body CSS properties.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Change all fonts to Inter
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:52:00
+SESSION: change-fonts-inter-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Changed all fallback display font stacks from serif (or Georgia, serif) to sans-serif.
+- Combined with layout.tsx changes, this removes all serif styling from the application interface in favor of Inter sans-serif.
+
+CONTEXT:
+- Related files: src/app/layout.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Change all fonts to Inter
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 11:53:00
+DURATION: 00:03:00
+TOTAL CHANGES: 2
+CHANGE BREAKDOWN:
+- Code changes: 2
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: collapse-sidebars-20260718
+DATE: 2026-07-18
+TIME: 11:51:00
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Add toggle to collapse sidebars
+================================================================================
+TIMESTAMP: 2026-07-18 11:52:00
+SESSION: collapse-sidebars-20260718
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added areSidebarsCollapsed boolean state to CollaborativeRoom.
+- Rendered an icon-button in the header containing PanelLeft icon next to the room switcher to toggle areSidebarsCollapsed.
+- Added conditional room-body--collapsed class name to room-body container depending on areSidebarsCollapsed state.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Add toggle to collapse sidebars
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 11:53:00
+SESSION: collapse-sidebars-20260718
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Defined .room-body--collapsed rules to hide room-sidebar and study-rail elements, and override grid-template-columns to 1fr.
+- Styled the active state of .sidebar-toggle (.sidebar-toggle--active) with brand accents.
+- Hid the sidebar toggle button on viewport sizes under 760px since sidebars are already collapsed by default in mobile views.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Antigravity
+TASK: Add toggle to collapse sidebars
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 11:54:00
+DURATION: 00:03:00
+TOTAL CHANGES: 2
+CHANGE BREAKDOWN:
+- Code changes: 2
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: collapsed-center-width-20260718-120324
+DATE: 2026-07-18
+TIME: 12:03:24
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Expand the center workspace when sidebars are collapsed
+================================================================================
+TIMESTAMP: 2026-07-18 12:03:24
+SESSION: collapsed-center-width-20260718-120324
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Removed the 840px maximum width from the notes workspace content while the room-body--collapsed state is active.
+- Made the heading, editor card, initialization state, connection callouts, conflict review, and reconciliation message fill the available center workspace width.
+- Kept the existing centered width constraints unchanged while the sidebars are visible.
+
+BEFORE:
+Collapsed layouts used a one-column grid, but notes content remained capped at 840px.
+
+AFTER:
+Collapsed layouts allow all notes center-column states to use 100% of the available workspace width.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Expand the center workspace when sidebars are collapsed
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:04:20
+DURATION: 00:00:56
+TOTAL CHANGES: 1
+CHANGE BREAKDOWN:
+- Code changes: 1
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- git diff --check: Passed
+- npx prettier --check src/app/globals.css: Existing unrelated whiteboard formatting drift remains; the new collapsed-width rule is formatter-compliant.
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: menu-only-sidebar-toggle-20260718-120927
+DATE: 2026-07-18
+TIME: 12:09:27
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Make the collapse control affect only the menu sidebar and move it to the corner
+================================================================================
+TIMESTAMP: 2026-07-18 12:09:27
+SESSION: menu-only-sidebar-toggle-20260718-120927
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Renamed the collapse state to describe the menu sidebar specifically.
+- Removed the collapse control from the room header and placed it at the workspace level.
+- Replaced the static panel icon with left and right chevrons that communicate the available action.
+- Added aria-controls and aria-expanded state for the menu sidebar.
+
+BEFORE:
+The header control used a static panel icon and described both sidebars as one collapsible unit.
+
+AFTER:
+The corner control explicitly expands or collapses only the menu sidebar with directional icons and accessible state.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Make the collapse control affect only the menu sidebar and move it to the corner
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:09:27
+SESSION: menu-only-sidebar-toggle-20260718-120927
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Changed the collapsed grid to remove only the left menu column while retaining the right history rail.
+- Positioned the chevron toggle in the menu's upper-right corner and moved it to the workspace's upper-left corner when collapsed.
+- Added responsive grid handling so the history rail remains in the document flow at narrower desktop widths.
+- Preserved full-width notes content within the newly available center space.
+
+BEFORE:
+The collapsed state hid both the room menu and the study/history rail and placed the toggle in the header.
+
+AFTER:
+Only the room menu hides; the right rail stays available and the control is anchored at the menu edge.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Make the collapse control affect only the menu sidebar and move it to the corner
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:11:02
+DURATION: 00:01:35
+TOTAL CHANGES: 2
+CHANGE BREAKDOWN:
+- Code changes: 2
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- git diff --check: Passed
+- Collaborative room component: Prettier-compliant
+- Global stylesheet: New sidebar rules are Prettier-compliant; existing unrelated whiteboard formatting drift remains
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: version-history-accordion-20260718-121303
+DATE: 2026-07-18
+TIME: 12:13:03
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Move Version History above the notes editor as a downward-opening accordion
+================================================================================
+TIMESTAMP: 2026-07-18 12:13:03
+SESSION: version-history-accordion-20260718-121303
+OPERATION: MODIFY
+FILE: src/components/collaboration/version-history-panel.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Replaced the permanent right-side history rail with a native details/summary disclosure panel.
+- Added a compact toggle header with version count and a rotating downward chevron.
+- Arranged checkpoint creation and recent versions in a responsive accordion drawer.
+- Preserved all save, refresh, restore, offline, pending, and status-message behavior.
+
+BEFORE:
+Version History was always visible in a narrow right sidebar.
+
+AFTER:
+Version History is closed by default and opens downward from an accessible toggle.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move Version History above the notes editor as a downward-opening accordion
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:13:03
+SESSION: version-history-accordion-20260718-121303
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Moved VersionHistoryPanel inside the notes editor workspace directly below the heading and above the editor surface.
+- Removed the fragment that previously positioned Version History as a separate grid rail.
+
+BEFORE:
+Version History rendered as a sibling after the center editor section.
+
+AFTER:
+Version History renders above the center editor container and expands within the notes flow.
+
+CONTEXT:
+- Related files: src/components/collaboration/version-history-panel.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move Version History above the notes editor as a downward-opening accordion
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:13:03
+SESSION: version-history-accordion-20260718-121303
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Removed the reserved right-side history column from the room grid.
+- Added elevated accordion styling, responsive two-column drawer content, version count badge, and chevron rotation.
+- Updated collapsed-menu width rules so the floating history panel expands with the center workspace.
+- Removed obsolete responsive history-rail positioning rules.
+
+BEFORE:
+The room grid reserved 286px for Version History and styled it as a sticky rail.
+
+AFTER:
+The notes workspace receives the former rail width and Version History appears as an accordion above the editor.
+
+CONTEXT:
+- Related files: src/components/collaboration/version-history-panel.tsx, src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move Version History above the notes editor as a downward-opening accordion
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:16:17
+DURATION: 00:03:14
+TOTAL CHANGES: 3
+CHANGE BREAKDOWN:
+- Code changes: 3
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- Component Prettier check: Passed
+- git diff --check: Passed
+- Obsolete right history rail and 286px history column search: No matches
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: full-width-notes-workspace-20260718-121851
+DATE: 2026-07-18
+TIME: 12:18:51
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Expand the notes containers after removing the right sidebar
+================================================================================
+TIMESTAMP: 2026-07-18 12:18:51
+SESSION: full-width-notes-workspace-20260718-121851
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Removed the remaining 840px width caps from every notes center-column surface.
+- Made the heading, Version History accordion, editor, loading state, connection callouts, conflict review, and reconciliation message use 100% of the available center column.
+- Removed the redundant menu-collapsed-only width override because full width is now the default layout.
+
+BEFORE:
+The room grid no longer had a right sidebar, but the center surfaces were still limited to 840px and left a large unused area.
+
+AFTER:
+All notes workspace containers fill the center column whether the menu sidebar is open or collapsed.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/components/collaboration/version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Expand the notes containers after removing the right sidebar
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:20:23
+SESSION: full-width-notes-workspace-20260718-121851
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-18.txt
+================================================================================
+CHANGE DESCRIPTION:
+- Reordered the three Codex UI-session records so each session's change entries precede its footer and the sessions remain chronological.
+- Used unique session identifiers and descriptions as patch anchors after a repeated task label placed an entry in the middle of the prior session.
+
+BEFORE:
+Repeated task-label anchors caused later session headers and footers to be interleaved with earlier change entries.
+
+AFTER:
+Menu toggle, Version History accordion, and full-width workspace sessions are ordered chronologically with contiguous entries.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Repair UI session audit ordering
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:20:23
+SESSION: full-width-notes-workspace-20260718-121851
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded another occurrence of the existing ambiguous append-patch pattern.
+- Updated the session, occurrence count, last occurrence, and resolution time after repairing the log order.
+
+BEFORE:
+The known ambiguous patch-context mistake had 11 recorded occurrences.
+
+AFTER:
+The mistake has 12 occurrences and points to this resolved full-width workspace session.
+
+CONTEXT:
+- Related files: .agents/logs/changes-2026-07-18.txt, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record recurring ambiguous log patch context
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:20:23
+SESSION: full-width-notes-workspace-20260718-121851
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Advanced the mistake knowledge index timestamp after updating the existing logic mistake occurrence.
+
+BEFORE:
+The index was last updated at 2026-07-18 00:08:53.
+
+AFTER:
+The index is current through 2026-07-18 12:20:23.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:22:25
+DURATION: 00:03:34
+TOTAL CHANGES: 4
+CHANGE BREAKDOWN:
+- Code changes: 1
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 3
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- git diff --check: Passed
+- Mistake knowledge JSON validation: Passed
+- Notes width-cap search: No 840px constraints remain
+- New CSS formatting: Passed; unrelated existing whiteboard formatting drift remains
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: floating-version-history-20260718-122438
+DATE: 2026-07-18
+TIME: 12:24:38
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Float Version History over the text editor
+================================================================================
+TIMESTAMP: 2026-07-18 12:24:38
+SESSION: floating-version-history-20260718-122438
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added an editor-stage wrapper around Version History and the rich-text editor.
+- Moved Version History from the notes flow into the editor stage so it can be positioned relative to the editor surface.
+- Kept conflict and reconciliation panels outside the floating stage so important recovery notices remain unobstructed.
+
+BEFORE:
+Version History was a normal flow element above the editor and pushed the editor downward when expanded.
+
+AFTER:
+Version History is anchored to the text editor and can overlay it independently.
+
+CONTEXT:
+- Related files: src/app/globals.css, src/components/collaboration/version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Float Version History over the text editor
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:24:38
+SESSION: floating-version-history-20260718-122438
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Positioned Version History absolutely over the editor's top edge with an inset floating shadow and elevated z-index.
+- Added toolbar clearance beneath the collapsed accordion so formatting controls remain usable.
+- Made the expanded accordion drawer opaque so editor text does not bleed through the overlay.
+- Added loading-state clearance for the same floating presentation before the editor initializes.
+
+BEFORE:
+The accordion occupied normal document flow and expansion moved the text editor lower on the page.
+
+AFTER:
+The accordion overlaps the editor and opens downward over the document without changing editor position.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/components/collaboration/version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Float Version History over the text editor
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:26:17
+DURATION: 00:01:39
+TOTAL CHANGES: 2
+CHANGE BREAKDOWN:
+- Code changes: 2
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- Collaborative room Prettier check: Passed
+- New CSS formatting comparison: Passed; unrelated existing whiteboard formatting drift remains
+- git diff --check: Passed
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: saved-ai-study-guides-20260718-144154
+DATE: 2026-07-18
+TIME: 14:41:54
+USER: jaysonreales
+PROJECT: MyBoardPrep Collaborative Learning Suite
+TASK: Add persistent saved AI study guides and update the roadmap
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:43:26
+SESSION: saved-ai-study-guides-20260718-144154
+OPERATION: CREATE
+FILE: plan/feature-saved-ai-study-guides-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Created the executable implementation contract for durable private saved AI study guides.
+
+BEFORE:
+Phase 4 generated study packs were intentionally ephemeral and had no defined persistence lifecycle.
+
+AFTER:
+The plan defines creator-private room storage, a 50-guide cap, no source-note retention, RLS, authenticated APIs, responsive save/load/delete UX, verification, and documentation closure.
+
+CONTEXT:
+- Related files: plan/feature-phase-4-ai-assistant-1.md, .agents/ROADMAP.md
+- API endpoints affected: Planned GET/POST/DELETE /api/rooms/[roomId]/saved-study-guides
+- Database changes: Planned public.saved_study_guides table with RLS
+- Dependencies: None
+
+AGENT: Codex
+TASK: Plan saved AI study guides
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:44:26
+SESSION: saved-ai-study-guides-20260718-144154
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-deployment.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the resolved assumption that the Supabase CLI was globally installed instead of project-pinned.
+
+BEFORE:
+The deployment knowledge base covered unlinked projects but not missing global CLI executables.
+
+AFTER:
+Future migration work is directed to inspect package.json and use the pinned CLI through npx.
+
+CONTEXT:
+- Related files: package.json, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from Supabase CLI preflight error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:44:26
+SESSION: saved-ai-study-guides-20260718-144154
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated aggregate and deployment mistake counts plus recency for the Supabase CLI lesson.
+
+BEFORE:
+The index reported 64 total mistakes and six deployment entries.
+
+AFTER:
+The index reports 65 total mistakes and seven deployment entries with the new lesson first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-deployment.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Index Supabase CLI lesson
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: toolbar-version-history-20260718-123158
+DATE: 2026-07-18
+TIME: 12:31:58
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Move the Version History trigger into the editor toolbar
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: src/components/collaboration/rich-text-editor.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added a History icon button to the rightmost toolbar cluster beside the word count.
+- Exposed controlled open state and a toggle callback through RichTextEditor and EditorToolbar.
+- Added aria-controls, aria-expanded, aria-pressed, label, and title metadata to the toolbar trigger.
+
+BEFORE:
+The editor toolbar had no Version History action and the history feature used a separate oversized trigger.
+
+AFTER:
+Version History is toggled from a compact Google Docs-style toolbar action.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/components/collaboration/version-history-panel.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move the Version History trigger into the editor toolbar
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: src/components/collaboration/version-history-panel.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Converted VersionHistoryPanel from a self-triggering details element into a controlled panel.
+- Removed the large summary toggle and chevron while retaining the panel title, count, save, refresh, and restore content.
+- Added a stable panel ID for the toolbar button's accessible control relationship.
+
+BEFORE:
+The panel displayed a full-width accordion summary as its trigger.
+
+AFTER:
+The panel is shown only when the toolbar History button is active.
+
+CONTEXT:
+- Related files: src/components/collaboration/rich-text-editor.tsx, src/components/collaboration/collaborative-room.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move the Version History trigger into the editor toolbar
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added controlled Version History visibility state at the room level.
+- Connected the toolbar toggle, history panel visibility, and active button state.
+
+BEFORE:
+Version History visibility was owned by the panel's native details element.
+
+AFTER:
+The editor toolbar controls the history panel through shared room state.
+
+CONTEXT:
+- Related files: src/components/collaboration/rich-text-editor.tsx, src/components/collaboration/version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move the Version History trigger into the editor toolbar
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Removed the oversized floating-trigger clearance and summary/chevron styles.
+- Added a compact right-side toolbar metadata cluster for word count and the History icon.
+- Positioned the controlled history panel directly below the toolbar as a right-aligned editor overlay.
+- Kept the toolbar metadata cluster visible at narrow widths with sticky positioning.
+
+BEFORE:
+The history trigger floated as a large bar over the editor and required a taller toolbar underneath.
+
+AFTER:
+A compact toolbar icon opens a dropdown-style history panel without altering toolbar height.
+
+CONTEXT:
+- Related files: src/components/collaboration/rich-text-editor.tsx, src/components/collaboration/version-history-panel.tsx, src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Move the Version History trigger into the editor toolbar
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded the clarified distinction between a floating history panel and a toolbar-based history trigger.
+- Captured the Google Docs document-toolbar pattern and prevention guidance for future reference-driven UI work.
+
+BEFORE:
+The knowledge base did not record this Version History trigger-placement misunderstanding.
+
+AFTER:
+A resolved low-severity logic entry documents the corrected controlled toolbar-button pattern.
+
+CONTEXT:
+- Related files: src/components/collaboration/rich-text-editor.tsx, src/components/collaboration/version-history-panel.tsx, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record corrected Version History toolbar pattern
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:31:58
+SESSION: toolbar-version-history-20260718-123158
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Increased total mistakes to 60 and logic mistakes to 4.
+- Added the Version History trigger-placement entry to recent mistakes and advanced the index timestamp.
+
+BEFORE:
+The index reported 59 total mistakes and 3 logic mistakes.
+
+AFTER:
+The index reports 60 total mistakes and 4 logic mistakes with the new lesson first in recency order.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update mistake knowledge index
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:34:34
+DURATION: 00:02:36
+TOTAL CHANGES: 6
+CHANGE BREAKDOWN:
+- Code changes: 4
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 2
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- Modified component Prettier checks: Passed
+- Mistake knowledge JSON and aggregate counts: Passed
+- Toolbar button/panel accessibility wiring search: Passed
+- git diff --check: Passed
+- New CSS formatting comparison: Passed; unrelated existing whiteboard formatting drift remains
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: compact-version-history-panel-20260718-124318
+DATE: 2026-07-18
+TIME: 12:43:18
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Make the Version History dropdown compact and vertically stacked
+================================================================================
+TIMESTAMP: 2026-07-18 12:43:18
+SESSION: compact-version-history-panel-20260718-124318
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Reduced the toolbar history dropdown from 760px to a responsive 240–300px width.
+- Converted the drawer from a two-column grid to a flex container with column direction.
+- Moved the recent-versions divider from the left edge to the top of the stacked section.
+- Preserved a viewport-aware maximum width for narrow screens.
+
+BEFORE:
+The Version History dropdown was up to 760px wide and arranged creation and recent versions side by side.
+
+AFTER:
+The dropdown is a compact 240–300px panel with all content stacked vertically.
+
+CONTEXT:
+- Related files: src/components/collaboration/version-history-panel.tsx, src/components/collaboration/rich-text-editor.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Make the Version History dropdown compact and vertically stacked
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 12:44:09
+DURATION: 00:00:51
+TOTAL CHANGES: 1
+CHANGE BREAKDOWN:
+- Code changes: 1
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 0
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run build: Passed
+- Compact width and flex-column rule search: Passed
+- git diff --check: Passed
+- New CSS formatting comparison: Passed; unrelated existing whiteboard formatting drift remains
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: restore-version-history-sidebar-20260718-125427
+DATE: 2026-07-18
+TIME: 12:54:27
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Restore the original Version History sidebar and refresh both sidebar toggle icons
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:57:39
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: .agents/logs/changes-2026-07-18.txt
+================================================================================
+CHANGE DESCRIPTION:
+- Relocated this session header from an earlier repeated footer match to the physical end of the daily log.
+- Preserved all previously recorded sessions and entries while restoring chronological append order.
+
+BEFORE:
+The new session header was inserted before the compact Version History session because the first patch used repeated footer text as its anchor.
+
+AFTER:
+The completed compact Version History session remains intact and the current session starts after its final footer.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Correct current change-log session placement
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:57:39
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded another occurrence of the existing ambiguous patch-context workflow mistake.
+- Advanced its last-occurrence timestamp after correcting the log placement.
+
+BEFORE:
+The ambiguous patch-context entry reported 12 occurrences, last seen at 12:20:23.
+
+AFTER:
+The entry reports 13 occurrences, last seen at 12:55:23.
+
+CONTEXT:
+- Related files: .agents/logs/changes-2026-07-18.txt, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record recurring ambiguous append-anchor mistake
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 12:57:39
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Advanced the knowledge index timestamp.
+- Moved the recurring ambiguous patch-context mistake to the front of the recent-mistakes list without changing aggregate counts.
+
+BEFORE:
+The index last updated at 12:31:58 and listed the recurrence third.
+
+AFTER:
+The index last updates at 12:55:23 and lists the recurrence first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json, .agents/logs/changes-2026-07-18.txt
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake knowledge index after recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:01:08
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/components/collaboration/version-history-panel.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Restored VersionHistoryPanel to the original right-rail structure and content order.
+- Added a stable sidebar ID for the new edge toggle's accessible control relationship.
+
+BEFORE:
+Version History rendered as a compact, controlled dropdown panel inside the editor stage.
+
+AFTER:
+Version History renders as the original study-rail aside with durable checkpoint creation, recent versions, refresh, restore, offline, and status content.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Restore original Version History sidebar structure
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:01:08
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/components/collaboration/rich-text-editor.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Removed Version History visibility props and the toolbar History action.
+- Restored the editor toolbar's original direct word-count layout.
+
+BEFORE:
+The editor toolbar owned the Version History trigger and active state.
+
+AFTER:
+Version History is controlled from the sidebar boundary, leaving the text-formatting toolbar focused on editing actions.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/components/collaboration/version-history-panel.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove obsolete toolbar history trigger
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:01:08
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Added independent collapsed state for the Version History rail.
+- Restored VersionHistoryPanel beside the notes workspace and added its accessible edge toggle.
+- Updated the menu sidebar toggle to use the same larger circular chevron treatment.
+- Removed the dropdown visibility wiring and editor-stage wrapper.
+
+BEFORE:
+Version History was opened from the editor toolbar, while the menu used a smaller inset toggle.
+
+AFTER:
+Both sidebars use matching 44px edge controls; the left chevrons collapse/expand the menu and the right chevrons collapse/expand Version History.
+
+CONTEXT:
+- Related files: src/components/collaboration/version-history-panel.tsx, src/components/collaboration/rich-text-editor.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Wire matching menu and Version History sidebar toggles
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:01:08
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Restored the desktop three-column notes layout and original Version History rail styling.
+- Added explicit grid placement for menu, workspace, tools, and history across expanded/collapsed states.
+- Styled both sidebar edge toggles as matching 44px circular white controls with visible focus, hover feedback, and subtle elevation.
+- Preserved the original responsive history flow below the notes at 1120px and below while hiding desktop edge controls on small screens.
+
+BEFORE:
+The notes layout had no right rail, used dropdown-specific history styles, and the menu toggle was a smaller rounded-square control inside the menu edge.
+
+AFTER:
+The right Version History rail is restored, each desktop sidebar collapses independently, and both edge toggles match the supplied chevron reference.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/components/collaboration/version-history-panel.tsx, src/components/collaboration/rich-text-editor.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Restore responsive history rail and matching edge-toggle styling
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:02:01
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Applied the repository-pinned Prettier formatting to the new sidebar state and toggle markup.
+
+BEFORE:
+The implementation was valid but its manual JSX wrapping did not match repository formatting.
+
+AFTER:
+The component matches the pinned formatter's canonical output with behavior unchanged.
+
+CONTEXT:
+- Related files: src/app/globals.css, src/components/collaboration/rich-text-editor.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Format restored sidebar integration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:02:01
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/components/collaboration/rich-text-editor.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Applied canonical formatting after removing the toolbar History control and its props.
+
+BEFORE:
+The simplified forwardRef signature retained non-canonical manual wrapping.
+
+AFTER:
+The editor component matches the pinned formatter with no behavior change.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Format simplified editor toolbar wiring
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:02:01
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+- Applied canonical formatting to the restored grid and sidebar-edge toggle rules.
+
+BEFORE:
+The valid CSS used manual wrapping that differed from the repository formatter.
+
+AFTER:
+The responsive sidebar CSS matches the pinned formatter with visual behavior unchanged.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Format restored sidebar styles
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:02:01
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+- Incremented the existing repository-formatting mistake recurrence and recorded its latest occurrence.
+
+BEFORE:
+The formatting entry reported one occurrence.
+
+AFTER:
+The entry reports two occurrences, most recently at 13:02:01.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json, src/components/collaboration/collaborative-room.tsx, src/components/collaboration/rich-text-editor.tsx, src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record formatting-gate recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:02:01
+SESSION: restore-version-history-sidebar-20260718-125427
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Advanced the knowledge index timestamp and moved the formatting recurrence to the front of recent mistakes.
+- Preserved all aggregate mistake counts.
+
+BEFORE:
+The index last updated at 12:55:23.
+
+AFTER:
+The index last updates at 13:02:01 and reflects the latest formatting recurrence.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after formatting recurrence
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 13:03:21
+DURATION: 00:08:54
+TOTAL CHANGES: 12
+CHANGE BREAKDOWN:
+- Code changes: 7
+- API changes: 0
+- Database changes: 0
+- Configuration changes: 0
+- Dependency changes: 0
+- Documentation changes: 5
+
+VERIFICATION:
+- npm run lint: Passed
+- npm run typecheck: Passed
+- Focused Prettier check: Passed
+- npm run build: Passed
+- git diff --check: Passed
+- Mistake knowledge JSON and aggregate counts: Passed
+- Sidebar control/panel accessibility wiring search: Passed
+- Obsolete toolbar dropdown history wiring search: Passed
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: room-action-export-fix-20260718-130659
+DATE: 2026-07-18
+TIME: 13:06:59
+USER: jaysonreales
+PROJECT: boardprep-canvas
+TASK: Shrink sidebar chevrons and fix room creation invalid use-server export runtime error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:07:17
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded another occurrence of the existing stale skill-reference path mistake.
+- Resolved the required Next.js references from the installed references subdirectory.
+
+BEFORE:
+The stale skill-path entry reported five occurrences, last seen on 2026-07-17.
+
+AFTER:
+The entry reports six occurrences, most recently at 13:07:17.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record stale Next.js skill-reference recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:07:17
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Advanced the knowledge index timestamp and moved the stale skill-path recurrence to the front of recent mistakes.
+- Preserved aggregate mistake counts.
+
+BEFORE:
+The index last updated at 13:02:01.
+
+AFTER:
+The index last updates at 13:07:17 and reflects the latest recurrence.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after skill-reference recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:08:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: CREATE
+FILE: src/app/rooms/action-state.ts
+================================================================================
+CHANGE DESCRIPTION:
+- Added a neutral shared module for RoomActionState and INITIAL_ROOM_ACTION_STATE.
+- Kept client-safe action state outside the module-level use-server boundary.
+
+BEFORE:
+The shared initial object lived in src/app/rooms/actions.ts and was treated as an invalid Server Function export.
+
+AFTER:
+Room forms can import their initial state without forcing a non-function through the Server Action module.
+
+CONTEXT:
+- Related files: src/app/rooms/actions.ts, src/components/rooms/rooms-dashboard.tsx, src/components/rooms/room-settings.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Isolate shared room action state from use-server exports
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:08:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: src/app/rooms/actions.ts
+================================================================================
+CHANGE DESCRIPTION:
+- Removed the exported RoomActionState runtime object and moved the type to a type-only import from action-state.ts.
+- Left the use-server module with async function runtime exports only.
+
+BEFORE:
+INITIAL_ROOM_ACTION_STATE was exported as an object from a module-level use-server file, causing invalid-use-server-value at runtime.
+
+AFTER:
+The Server Action boundary satisfies Next.js 16's async-function-only runtime export contract.
+
+CONTEXT:
+- Related files: src/app/rooms/action-state.ts
+- API endpoints affected: Room creation and room-management Server Actions
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Remove invalid object export from room Server Actions
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:08:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: src/components/rooms/rooms-dashboard.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Updated dashboard room forms to import INITIAL_ROOM_ACTION_STATE from the neutral action-state module.
+
+BEFORE:
+The client component imported the shared state object through the Server Action module.
+
+AFTER:
+The client imports actions and their initial state from their correct separate boundaries.
+
+CONTEXT:
+- Related files: src/app/rooms/actions.ts, src/app/rooms/action-state.ts
+- API endpoints affected: Room create, join, and leave Server Actions
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Rewire room dashboard action-state import
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:08:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: src/components/rooms/room-settings.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Updated room settings forms to import INITIAL_ROOM_ACTION_STATE from the neutral action-state module.
+
+BEFORE:
+The client component imported the state object from the use-server action file.
+
+AFTER:
+Settings actions remain Server Actions while their initial client state comes from a regular module.
+
+CONTEXT:
+- Related files: src/app/rooms/actions.ts, src/app/rooms/action-state.ts
+- API endpoints affected: Room settings and member-management Server Actions
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Rewire room settings action-state import
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:08:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+- Reduced both menu and Version History chevron glyphs from 22px to 18px and reduced stroke width from 2.2 to 2.
+- Preserved the 44px circular button target, ARIA labels, and focus behavior.
+
+BEFORE:
+The sidebar chevrons appeared visually oversized within their circular controls.
+
+AFTER:
+The glyphs are smaller and lighter while the controls remain accessible and easy to click.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Make sidebar toggle icons smaller
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:10:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: RENAME
+FILE: .next/types/{cache-life.d 2.ts,cache-life.d 3.ts,routes.d 2.ts,validator 2.ts,validator 3.ts}
+================================================================================
+CHANGE DESCRIPTION:
+- Moved five duplicate-suffixed generated Next type files to a recoverable temporary folder before sequential verification.
+- Preserved the active user-owned development server and canonical generated type files.
+
+BEFORE:
+Standalone TypeScript reported duplicate declarations from stale generated files with ` 2.ts` and ` 3.ts` suffixes.
+
+AFTER:
+The duplicates are recoverable at /tmp/boardprep-next-types-duplicates.TEYZBR and sequential build/typecheck completes successfully.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Isolate duplicate generated Next type artifacts
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:10:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded the generated Next type collision recurrence and generalized the recoverable cleanup description.
+
+BEFORE:
+The entry reported two occurrences and referred to three duplicate files.
+
+AFTER:
+The entry reports three occurrences and documents isolating exact duplicate-suffixed artifacts before sequential verification.
+
+CONTEXT:
+- Related files: .next/types, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record generated Next type collision recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:10:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-runtime.json
+================================================================================
+CHANGE DESCRIPTION:
+- Replaced the pending Server Action remediation with the implemented neutral action-state boundary.
+- Marked the high-severity room creation runtime issue resolved.
+
+BEFORE:
+The invalid use-server object-export issue was documented but unresolved.
+
+AFTER:
+The entry records the implemented fix and a 13:10:09 resolution time.
+
+CONTEXT:
+- Related files: src/app/rooms/action-state.ts, src/app/rooms/actions.ts, src/components/rooms/rooms-dashboard.tsx, src/components/rooms/room-settings.tsx
+- API endpoints affected: Room creation and room management Server Actions
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Mark room Server Action export issue resolved
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:10:09
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Advanced the knowledge index timestamp and moved the resolved runtime issue plus generated-type recurrence to the front of recent mistakes.
+- Preserved all aggregate counts.
+
+BEFORE:
+The index last updated at 13:07:17.
+
+AFTER:
+The index last updates at 13:10:09 and reflects the latest runtime resolution and verification recurrence.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-runtime.json, .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after room runtime resolution
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:12:42
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded and resolved the final validation command's incorrect assumption about the mistake-index JSON shape.
+- Added the repository's root-level categories and total_mistakes fields to the prevention guidance.
+
+BEFORE:
+The knowledge base did not capture the failed statistics.by_category assertion.
+
+AFTER:
+The testing knowledge records the failure, root cause, correction, and prevention strategy.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record mistake-index validation schema error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:12:42
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Incremented the testing and total mistake counts for the validation-schema error.
+- Added the resolved error to recent mistakes and advanced the index timestamp.
+
+BEFORE:
+The index reported 60 total mistakes and 20 testing mistakes.
+
+AFTER:
+The index reports 61 total mistakes and 21 testing mistakes with matching category totals.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after validation correction
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:13:44
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+- Recorded and resolved the active-route smoke command's use of zsh's read-only status parameter.
+- Documented task-specific shell variables as the prevention pattern.
+
+BEFORE:
+The HTTP verification stopped before checking the response body.
+
+AFTER:
+The failure and corrected rooms_http_code variable are captured for reuse.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: GET /rooms verification only
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record zsh read-only status variable error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:13:44
+SESSION: room-action-export-fix-20260718-130659
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+- Incremented the testing and total mistake counts for the zsh verification error.
+- Added the resolved shell error to recent mistakes and advanced the index timestamp.
+
+BEFORE:
+The index reported 61 total mistakes and 21 testing mistakes.
+
+AFTER:
+The index reports 62 total mistakes and 22 testing mistakes with matching category totals.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after zsh correction
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 13:14:21
+DURATION: 00:07:22
+TOTAL CHANGES: 15
+CHANGE BREAKDOWN:
+- Code changes: 5
+- API changes: 0
+- Database changes: 0
+- Configuration and generated-artifact changes: 1
+- Dependency changes: 0
+- Documentation and knowledge changes: 9
+- Testing file changes: 0
+VERIFICATION:
+- npm run build: Passed
+- npm run typecheck: Passed after recoverable generated-artifact isolation
+- Focused Prettier check: Passed
+- npm run lint: Passed
+- git diff --check: Passed
+- Server Action runtime export boundary check: Passed
+- Active Next development GET /rooms smoke: Passed with expected 307 auth redirect and no invalid-use-server-value marker
+- Knowledge JSON parsing and aggregate-count validation: Passed
+================================================================================
+
+================================================================================
+NEW SESSION STARTED
+SESSION ID: phase-4-ai-assistant-20260718-133750
+DATE: 2026-07-18
+TIME: 13:37:50
+USER: jaysonreales
+PROJECT: MyBoardPrep Collaborative Learning Suite
+TASK: Implement and verify Phase 4 AI Assistant
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:37:50
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: CREATE
+FILE: plan/feature-phase-4-ai-assistant-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Created the deterministic Phase 4 implementation plan covering the secure AI endpoint, all five study outputs, responsive room integration, verification, documentation, and acceptance gates.
+
+BEFORE:
+No Phase 4 implementation plan existed.
+
+AFTER:
+Phase 4 has an in-progress, machine-readable plan with nine atomic tasks and explicit security, medical-safety, performance, and testing constraints.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: Planned POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: No new dependency planned
+
+AGENT: Codex
+TASK: Define Phase 4 AI Assistant implementation contract
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:37:50
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded recurrences of the stale skill-path lookup and the UI skill's documented-but-unsupported Next.js stack flag, retaining the existing prevention guidance.
+
+BEFORE:
+The stale-path and UI stack-option mistakes had occurrence counts of 6 and 1.
+
+AFTER:
+The occurrence counts are 7 and 2 with the current recurrence timestamp.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record Phase 4 discovery-tool recurrences
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:37:50
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Advanced the knowledge index timestamp and moved both resolved build-tool recurrences to the front of recent mistakes without changing aggregate mistake totals.
+
+BEFORE:
+The index last updated at 13:13:44.
+
+AFTER:
+The index last updates at 13:37:50 and prioritizes the two current prevention patterns.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after Phase 4 discovery
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:39:55
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+Restored an unrelated package-probe occurrence count that an ambiguous patch changed, then updated the intended UI skill stack-option recurrence using identifier-anchored context.
+
+BEFORE:
+The unrelated package-probe entry was incorrectly incremented and the intended UI skill entry remained at one occurrence.
+
+AFTER:
+The package-probe history is restored and the UI skill recurrence is correctly recorded as occurrence two.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Correct ambiguous knowledge-base patch
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:39:55
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the ambiguous repeated-field patch as a recurrence of the existing identifier-context prevention pattern.
+
+BEFORE:
+The pattern had 13 recorded occurrences.
+
+AFTER:
+The pattern has 14 occurrences with the current timestamp.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record knowledge-patch recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:39:55
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Advanced the index timestamp and moved the resolved ambiguous-patch recurrence to the front of recent mistakes without changing aggregate totals.
+
+BEFORE:
+The index last updated at 13:37:50.
+
+AFTER:
+The index last updates at 13:39:55 with the current prevention pattern first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json, .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after patch correction
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:11
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: CREATE
+FILE: src/lib/ai/study-pack.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added Phase 4 study-pack contracts, strict JSON Schema, bounded source normalization, runtime response validation, prompt-injection separation, provider request construction, refusal handling, and Responses API parsing.
+
+BEFORE:
+No AI study-pack domain contract or provider boundary existed.
+
+AFTER:
+The five Phase 4 outputs share a type-safe, provider-isolated schema with defensive validation and medical-study constraints.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts, scripts/verify-phase-4.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Implement Phase 4 study-pack domain model
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:11
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: CREATE
+FILE: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added the authenticated room-member AI generation route with bounded JSON parsing, instance-local rate limiting, abort timeout, server-only provider credentials, private cache headers, strict output parsing, and recoverable public errors.
+
+BEFORE:
+Rooms had no AI generation endpoint.
+
+AFTER:
+Authenticated members can request one complete private study pack without exposing keys, provider bodies, or stack traces.
+
+CONTEXT:
+- Related files: src/lib/ai/study-pack.ts, src/lib/rooms/repository.ts, .env.example
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API through native server fetch
+
+AGENT: Codex
+TASK: Implement secure Phase 4 generation endpoint
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:11
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/lib/rooms/repository.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added a focused room-member authorization lookup for features that do not require PDF metadata.
+
+BEFORE:
+Non-PDF room APIs had to reuse a PDF-specific access query or duplicate membership logic.
+
+AFTER:
+The AI route verifies room membership without an unrelated documents query.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: Read-only rooms and room_members queries only
+- Dependencies: Supabase client
+
+AGENT: Codex
+TASK: Add reusable room-member authorization boundary
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:11
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .env.example
+================================================================================
+CHANGE DESCRIPTION:
+Documented the server-only OpenAI credential and optional model override used by Phase 4.
+
+BEFORE:
+The environment template contained no application AI configuration.
+
+AFTER:
+Operators have safe, non-public variable names and a documented default model.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Document Phase 4 server configuration
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:51
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-build.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the unsupported direct `.env.example` Prettier input as a recurrence of the existing formatter-parser prevention case.
+
+BEFORE:
+The formatter-parser mistake had one occurrence.
+
+AFTER:
+The mistake has two occurrences with the observed preflight timestamp.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Record Phase 4 formatter preflight recurrence
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:51
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the projected Phase 4 audit timestamps as a recurrence and corrected the affected log entries to the observed 13:44:11 preflight time.
+
+BEFORE:
+Four change entries were stamped 13:48:00 while the system clock was still 13:44:11.
+
+AFTER:
+The log is no longer future-dated and the prevention pattern has four occurrences.
+
+CONTEXT:
+- Related files: .agents/logs/changes-2026-07-18.txt, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Correct Phase 4 audit chronology
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:44:51
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Advanced the index timestamp and prioritized the formatter and timestamp recurrences without changing aggregate totals.
+
+BEFORE:
+The index last updated at 13:39:55.
+
+AFTER:
+The index last updates at 13:44:51 with the current prevention patterns first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-build.json, .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after Phase 4 preflight
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:45:25
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/lib/ai/study-pack.ts
+================================================================================
+CHANGE DESCRIPTION:
+Applied the repository Prettier rules to the new study-pack domain model after its first focused format check.
+
+BEFORE:
+The implementation was semantically complete but not canonical under the repository formatter.
+
+AFTER:
+The model passes focused formatting and strict TypeScript validation.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Format Phase 4 study-pack model
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:45:25
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+================================================================================
+CHANGE DESCRIPTION:
+Applied the repository Prettier rules to the new AI route and confirmed strict TypeScript validation.
+
+BEFORE:
+The route required canonical wrapping and spacing.
+
+AFTER:
+The route passes focused formatting and strict TypeScript validation.
+
+CONTEXT:
+- Related files: src/lib/ai/study-pack.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Format Phase 4 API route
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:45:25
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: plan/feature-phase-4-ai-assistant-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical Markdown table spacing to the Phase 4 implementation plan.
+
+BEFORE:
+The plan content was complete but did not pass the repository formatter.
+
+AFTER:
+The plan passes focused Prettier validation.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md
+- API endpoints affected: Planned POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Format Phase 4 implementation plan
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:52:09
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the rejected combined UI patch as a recurrence of the existing ambiguous-context pattern; apply_patch failed atomically and changed no feature file.
+
+BEFORE:
+The room type declaration did not match the patch's multiline context.
+
+AFTER:
+The prevention record directs the UI work to smaller, uniquely anchored edits and reports 15 occurrences.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record rejected Phase 4 UI patch
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:52:09
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Advanced the index timestamp and returned the current ambiguous-patch recurrence to the front of recent mistakes without changing aggregate totals.
+
+BEFORE:
+The index last updated at 13:44:51.
+
+AFTER:
+The index last updates at 13:52:09 with the active prevention pattern first.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after rejected UI patch
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:57:28
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: CREATE
+FILE: src/components/collaboration/ai-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Created the lazy-loadable Phase 4 assistant workspace with source provenance, generation and error states, all five roadmap outputs, interactive quiz and flashcards, cautious misconception confidence, and a persistent medical-study notice.
+
+BEFORE:
+The room had no AI study interface.
+
+AFTER:
+Every room member has a private, accessible browser view for a generated summary, quiz, flashcards, recommendations, and misconception review.
+
+CONTEXT:
+- Related files: src/components/collaboration/collaborative-room.tsx, src/app/globals.css, src/lib/ai/study-pack.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: React and Lucide
+
+AGENT: Codex
+TASK: Build Phase 4 assistant workspace
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:57:28
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/components/collaboration/collaborative-room.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Added a fourth room workspace destination, captured the current collaborative-note text before unmounting the editor, and lazy-loaded the AI assistant for desktop and mobile navigation.
+
+BEFORE:
+Room workspace navigation exposed Notes, PDF, and Whiteboard only.
+
+AFTER:
+The AI assistant receives an explicit note snapshot while preserving the existing editor and Phase 3 tool boundaries.
+
+CONTEXT:
+- Related files: src/components/collaboration/ai-study-tool.tsx
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Next.js dynamic import
+
+AGENT: Codex
+TASK: Integrate Phase 4 into study rooms
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:57:28
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Added the BoardPrep editorial AI workspace visual system, accessible interaction states, four-item mobile room navigation, responsive result layouts, and 375px-safe quiz, card, and review views.
+
+BEFORE:
+No assistant-specific layout or fourth mobile workspace tab existed.
+
+AFTER:
+The assistant uses the established warm canvas and blue/yellow/red tokens with 44px controls, visible states, no required horizontal scrolling, and existing reduced-motion behavior.
+
+CONTEXT:
+- Related files: src/components/collaboration/ai-study-tool.tsx, src/components/collaboration/collaborative-room.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Style responsive Phase 4 workspace
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:58:03
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/components/collaboration/ai-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical JSX formatting to the assistant workspace and confirmed it passes strict TypeScript validation.
+
+BEFORE:
+The new component required repository-standard wrapping.
+
+AFTER:
+The component is formatter- and typecheck-clean.
+
+CONTEXT:
+- Related files: src/app/globals.css
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Format Phase 4 assistant component
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:58:03
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/app/globals.css
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical CSS formatting to the Phase 4 responsive style block.
+
+BEFORE:
+The appended style block required repository-standard wrapping.
+
+AFTER:
+The complete stylesheet passes focused Prettier validation.
+
+CONTEXT:
+- Related files: src/components/collaboration/ai-study-tool.tsx
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Prettier
+
+AGENT: Codex
+TASK: Format Phase 4 assistant styles
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:58:50
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/components/collaboration/ai-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Added standard ArrowLeft, ArrowRight, Home, and End keyboard navigation with roving focus across the five AI result tabs, then reformatted and typechecked the component.
+
+BEFORE:
+Result tabs supported pointer activation and Tab entry but no arrow-key movement.
+
+AFTER:
+The tablist follows expected keyboard interaction while preserving one active tab stop.
+
+CONTEXT:
+- Related files: scripts/verify-phase-4.ts
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: React
+
+AGENT: Codex
+TASK: Complete Phase 4 tab accessibility
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:59:19
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: CREATE
+FILE: scripts/verify-phase-4.ts
+================================================================================
+CHANGE DESCRIPTION:
+Added deterministic Phase 4 verification for source boundaries, exact output validation, strict provider request settings, refusal handling, room authorization wiring, server-only configuration, all five UI outputs, keyboard tabs, medical-study messaging, and mobile CSS contracts.
+
+BEFORE:
+Phase 4 had no automated regression verifier.
+
+AFTER:
+The AI domain, API, integration, accessibility, security, and responsive contracts can be checked without consuming provider tokens.
+
+CONTEXT:
+- Related files: src/lib/ai/study-pack.ts, src/app/api/rooms/[roomId]/ai-study-pack/route.ts, src/components/collaboration/ai-study-tool.tsx
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Node assert and tsx
+
+AGENT: Codex
+TASK: Add Phase 4 automated verification
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 13:59:19
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: package.json
+================================================================================
+CHANGE DESCRIPTION:
+Registered `npm run verify:phase-4` in the project verification suite.
+
+BEFORE:
+Package scripts ended with Phase 3 verification.
+
+AFTER:
+Phase 4 contracts have a first-class repeatable command.
+
+CONTEXT:
+- Related files: scripts/verify-phase-4.ts
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: Existing tsx runtime
+
+AGENT: Codex
+TASK: Register Phase 4 verifier
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:00:31
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: scripts/verify-phase-4.ts
+================================================================================
+CHANGE DESCRIPTION:
+Applied canonical TypeScript formatting to the verifier and confirmed both strict typechecking and the complete Phase 4 contract suite pass.
+
+BEFORE:
+The verifier required repository-standard wrapping.
+
+AFTER:
+The verifier is formatter-clean and reports `Phase 4 AI assistant contracts verified.`
+
+CONTEXT:
+- Related files: package.json, src/lib/ai/study-pack.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Prettier and tsx
+
+AGENT: Codex
+TASK: Format and validate Phase 4 verifier
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:04:12
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-logic.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the atomically rejected documentation batch as another recurrence of mismatched repeated-table patch context.
+
+BEFORE:
+The patch expected compact Markdown task rows instead of the Prettier-aligned plan table.
+
+AFTER:
+The prevention record reports 16 occurrences and the documentation work is split from exact plan-row updates.
+
+CONTEXT:
+- Related files: plan/feature-phase-4-ai-assistant-1.md, .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record rejected Phase 4 documentation patch
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:04:12
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Advanced the knowledge index timestamp for the current patch-context recurrence without changing counts or ordering.
+
+BEFORE:
+The index last updated at 13:52:09.
+
+AFTER:
+The index last updates at 14:04:12.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-logic.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Refresh mistake index after documentation patch rejection
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: README.md
+================================================================================
+CHANGE DESCRIPTION:
+Documented Phase 4 capabilities, server-only environment variables, security and retention behavior, verification command, and current limitations.
+
+BEFORE:
+The README described Phases 1–3 only.
+
+AFTER:
+Local operators and contributors have an accurate Phase 4 setup and behavior guide.
+
+CONTEXT:
+- Related files: .env.example, scripts/verify-phase-4.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Document Phase 4 usage
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/API.md
+================================================================================
+CHANGE DESCRIPTION:
+Documented the implemented AI study-pack request, response, authorization, rate, timeout, cache, refusal, configuration, and error contracts.
+
+BEFORE:
+The API guide covered authentication, Yjs, and private PDF handlers only.
+
+AFTER:
+The Phase 4 handler is separated from the still-planned public REST contracts.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Document Phase 4 API
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/ARCHITECTURE.md
+================================================================================
+CHANGE DESCRIPTION:
+Added the assistant component, study-pack domain boundary, authenticated request flow, ephemeral state decision, and lazy-loading behavior to the architecture map.
+
+BEFORE:
+OpenAI appeared only as a high-level integration.
+
+AFTER:
+The architecture describes the implemented Phase 4 data and bundle boundaries.
+
+CONTEXT:
+- Related files: src/lib/ai/study-pack.ts, src/components/collaboration/ai-study-tool.tsx
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Document Phase 4 architecture
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/SECURITY.md
+================================================================================
+CHANGE DESCRIPTION:
+Replaced planned AI assumptions with the implemented server-only credential, membership, untrusted-input, strict-output, no-store, ephemeral-retention, rate, timeout, and medical-overreliance controls.
+
+BEFORE:
+The guide described an unimplemented Edge Function, generic PII redaction, and 90-day interaction retention.
+
+AFTER:
+Security documentation matches the Phase 4 Route Handler and residual distributed-rate risk.
+
+CONTEXT:
+- Related files: src/app/api/rooms/[roomId]/ai-study-pack/route.ts, src/lib/ai/study-pack.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Document Phase 4 security posture
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/TESTING.md
+================================================================================
+CHANGE DESCRIPTION:
+Added the Phase 4 verifier and its deterministic domain, security, integration, accessibility, and responsive coverage to the implemented gate.
+
+BEFORE:
+The testing gate ended at Phase 3.
+
+AFTER:
+The test guide includes `npm run verify:phase-4` without premature live-provider or browser claims.
+
+CONTEXT:
+- Related files: scripts/verify-phase-4.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: Existing tsx runtime
+
+AGENT: Codex
+TASK: Document Phase 4 verification
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/CHANGELOG.md
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the Phase 4 assistant, five outputs, strict verification, responsive navigation, accessibility, and security controls under Unreleased.
+
+BEFORE:
+The changelog's implemented features ended at Phase 3.
+
+AFTER:
+Unreleased accurately lists the Phase 4 product and security delta.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Record Phase 4 changes
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/DECISIONS.md
+================================================================================
+CHANGE DESCRIPTION:
+Refined ADR-009 with the implemented Responses API adapter, strict schema, server fetch, configurable model, ephemeral state, security constraints, and distributed-rate consequence.
+
+BEFORE:
+ADR-009 selected OpenAI generically without an implementation boundary.
+
+AFTER:
+The decision record explains the concrete Phase 4 integration and tradeoffs.
+
+CONTEXT:
+- Related files: src/lib/ai/study-pack.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: OpenAI Responses API
+
+AGENT: Codex
+TASK: Refine OpenAI architecture decision
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/ROADMAP.md
+================================================================================
+CHANGE DESCRIPTION:
+Linked the planned Phase 4 roadmap section to its active implementation plan without marking unverified work complete.
+
+BEFORE:
+Phase 4 had no executable plan link.
+
+AFTER:
+The roadmap points to the tracked Phase 4 plan while retaining Planned status.
+
+CONTEXT:
+- Related files: plan/feature-phase-4-ai-assistant-1.md
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Link Phase 4 roadmap plan
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:06:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: plan/feature-phase-4-ai-assistant-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Marked implementation and documentation Tasks 001–008 complete with the verified completion date while leaving final acceptance Task 009 open.
+
+BEFORE:
+All Phase 4 tasks were unchecked.
+
+AFTER:
+The in-progress plan accurately distinguishes finished implementation from pending full acceptance.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, scripts/verify-phase-4.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Update Phase 4 task status
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:09:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/components/collaboration/whiteboard-study-tool.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Applied repository-standard Prettier formatting so the full formatting gate remains clean during Phase 4 acceptance.
+
+BEFORE:
+The Phase 3 whiteboard component had mechanical formatting drift.
+
+AFTER:
+The component conforms to the configured Prettier rules with no behavioral change.
+
+CONTEXT:
+- Related files: package.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Normalize repository formatting
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:09:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/components/ui/LoadingScreen.tsx
+================================================================================
+CHANGE DESCRIPTION:
+Applied repository-standard Prettier formatting so the full formatting gate remains clean during Phase 4 acceptance.
+
+BEFORE:
+The loading-screen component had mechanical formatting drift.
+
+AFTER:
+The component conforms to the configured Prettier rules with no behavioral change.
+
+CONTEXT:
+- Related files: package.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Normalize repository formatting
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:09:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: src/lib/whiteboard/model.ts
+================================================================================
+CHANGE DESCRIPTION:
+Applied repository-standard Prettier formatting so the full formatting gate remains clean during Phase 4 acceptance.
+
+BEFORE:
+The whiteboard model had mechanical formatting drift.
+
+AFTER:
+The model conforms to the configured Prettier rules with no behavioral change.
+
+CONTEXT:
+- Related files: package.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Normalize repository formatting
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:09:18
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: plan/feature-phase-4-ai-assistant-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Normalized the Phase 4 implementation plan with the repository Markdown formatter after task-status updates.
+
+BEFORE:
+The updated plan no longer matched the configured Markdown style.
+
+AFTER:
+The plan passes the Prettier formatting check without changing its tracked status.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Format Phase 4 plan
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:15:04
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded the Chrome controller's documented-versus-supported load-state mismatch and the successful DOM-ready fallback.
+
+BEFORE:
+The testing knowledge base did not cover this browser backend's rejection of network-idle waits.
+
+AFTER:
+Future browser acceptance runs are directed to use DOM-ready plus targeted state assertions for this controller.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from browser verification mismatch
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:15:04
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated the mistake totals, testing-category count, timestamp, and recent list for the new browser wait-state lesson.
+
+BEFORE:
+The knowledge index reported 62 total mistakes and 22 testing entries.
+
+AFTER:
+The knowledge index reports 63 total mistakes and 23 testing entries with the new lesson first in recency.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Index browser verification lesson
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:20:10
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-testing.json
+================================================================================
+CHANGE DESCRIPTION:
+Recorded and resolved a browser-metric expression parse error by adopting named, multiline evaluation results.
+
+BEFORE:
+The testing knowledge base did not cover this dense inline browser-evaluation failure mode.
+
+AFTER:
+Future metric checks are guided toward auditable intermediate bindings and block-bodied callbacks.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-index.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Learn from browser evaluation syntax error
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:20:10
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/knowledge/mistakes-index.json
+================================================================================
+CHANGE DESCRIPTION:
+Updated mistake totals, testing-category count, timestamp, and recency for the browser evaluation lesson.
+
+BEFORE:
+The index reported 63 total mistakes and 23 testing entries.
+
+AFTER:
+The index reports 64 total mistakes and 24 testing entries with the new lesson first in recency.
+
+CONTEXT:
+- Related files: .agents/knowledge/mistakes-testing.json
+- API endpoints affected: None
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Index browser evaluation lesson
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:21:38
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: plan/feature-phase-4-ai-assistant-1.md
+================================================================================
+CHANGE DESCRIPTION:
+Marked the Phase 4 plan and final acceptance task complete after all automated, live-provider, and browser gates passed.
+
+BEFORE:
+The plan remained In progress with TASK-009 open.
+
+AFTER:
+The plan is Completed and every implementation and acceptance task is dated 2026-07-18.
+
+CONTEXT:
+- Related files: .agents/ROADMAP.md, .agents/TESTING.md
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Complete Phase 4 plan
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:21:38
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/ROADMAP.md
+================================================================================
+CHANGE DESCRIPTION:
+Closed the Phase 4 roadmap checklist and added the verified v1.5 revision entry.
+
+BEFORE:
+Phase 4 was Planned with five unchecked AI-assistant outcomes.
+
+AFTER:
+Phase 4 is Completed with all five outcomes checked and acceptance scope summarized.
+
+CONTEXT:
+- Related files: plan/feature-phase-4-ai-assistant-1.md
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Complete Phase 4 roadmap
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:21:38
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/TESTING.md
+================================================================================
+CHANGE DESCRIPTION:
+Recorded Phase 4's full regression, live-provider, authenticated desktop/mobile, injection-resistance, responsive, console, and cleanup evidence.
+
+BEFORE:
+Testing documentation described the deterministic Phase 4 verifier but not the completed live acceptance pass.
+
+AFTER:
+The testing record distinguishes all verified provider and browser behaviors and documents disposable-fixture removal.
+
+CONTEXT:
+- Related files: scripts/verify-phase-4.ts
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record Phase 4 acceptance
+================================================================================
+
+================================================================================
+TIMESTAMP: 2026-07-18 14:21:38
+SESSION: phase-4-ai-assistant-20260718-133750
+OPERATION: MODIFY
+FILE: .agents/CHANGELOG.md
+================================================================================
+CHANGE DESCRIPTION:
+Added Phase 4 live-provider and authenticated responsive-browser acceptance to the unreleased feature record.
+
+BEFORE:
+The changelog listed implementation and deterministic coverage only.
+
+AFTER:
+The changelog also records all-view interaction, injection resistance, clean app logs, and mobile measurements.
+
+CONTEXT:
+- Related files: .agents/TESTING.md
+- API endpoints affected: POST /api/rooms/[roomId]/ai-study-pack
+- Database changes: None
+- Dependencies: None
+
+AGENT: Codex
+TASK: Record Phase 4 closure
+================================================================================
+
+================================================================================
+SESSION ENDED
+END TIME: 14:23:25
+DURATION: 00:45:35
+TOTAL CHANGES: 50
+CHANGE BREAKDOWN:
+- Code changes: 12
+- API changes: 2
+- Database changes: 0
+- Configuration and generated-artifact changes: 2
+- Dependency changes: 0
+- Documentation and knowledge changes: 32
+- Testing file changes: 2
+VERIFICATION:
+- npm run format:check: Passed
+- Repository Markdown Prettier check: Passed
+- npm run lint: Passed
+- npm run typecheck: Passed
+- npm run build: Passed with the AI study-pack Route Handler
+- npm run verify:yjs: Passed
+- npm run verify:schema: Passed against the hosted Supabase project
+- npm run verify:rooms: Passed against the hosted Supabase project
+- npm run verify:version-history: Passed against the hosted Supabase project
+- npm run verify:offline-sync: Passed
+- npm run verify:conflict-review: Passed
+- npm run verify:password-reset: Passed
+- npm run verify:phase-3: Passed
+- npm run verify:phase-3-storage: Passed against hosted private Storage
+- npm run verify:phase-4: Passed before and after closure documentation
+- Live OpenAI structured-output request and runtime response validation: Passed
+- Authenticated desktop browser generation, five-view interaction, keyboard behavior, note preservation, and injection-resistance checks: Passed
+- 375 x 812 browser layout: Passed with zero horizontal overflow, 56-pixel study tabs, and 50-pixel workspace controls
+- Browser application-origin warnings/errors and framework overlay: None
+- Disposable Phase 4 room, memberships, documents, and Auth user cleanup: Verified
+- Mistake knowledge JSON, aggregate counts, unique IDs, and recency references: Passed
+- git diff --check: Passed
+================================================================================

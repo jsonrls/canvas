@@ -11,7 +11,9 @@ This document records significant architectural decisions made during the develo
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires real-time collaboration features including:
+
 - Simultaneous document editing
 - Live cursor tracking
 - User presence indicators
@@ -19,9 +21,11 @@ The application requires real-time collaboration features including:
 - Conflict resolution
 
 ### Decision
+
 Use Yjs as the CRDT (Conflict-free Replicated Data Type) library for real-time collaboration.
 
 ### Alternatives Considered
+
 1. **Operational Transformation (OT)**
    - Pros: Mature technology, used in Google Docs
    - Cons: Complex implementation, single server dependency, harder offline support
@@ -39,6 +43,7 @@ Use Yjs as the CRDT (Conflict-free Replicated Data Type) library for real-time c
    - Cons: Steeper learning curve for CRDT concepts
 
 ### Rationale
+
 - Yjs provides excellent performance for collaborative editing
 - Strong offline support is critical for student use cases
 - Large and active community ensures long-term viability
@@ -46,6 +51,7 @@ Use Yjs as the CRDT (Conflict-free Replicated Data Type) library for real-time c
 - Proven in production by many companies
 
 ### Consequences
+
 - Development team needs to learn CRDT concepts
 - WebSocket server required for Yjs synchronization
 - Excellent real-time performance and offline support
@@ -60,7 +66,9 @@ Use Yjs as the CRDT (Conflict-free Replicated Data Type) library for real-time c
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - User authentication
 - PostgreSQL database
 - File storage
@@ -68,9 +76,11 @@ The application requires:
 - Server-side functions
 
 ### Decision
+
 Use Supabase as the primary backend platform.
 
 ### Alternatives Considered
+
 1. **Firebase**
    - Pros: Comprehensive, good real-time
    - Cons: NoSQL database (not ideal for complex queries), vendor lock-in
@@ -88,6 +98,7 @@ Use Supabase as the primary backend platform.
    - Cons: Newer platform, some limitations on Edge Functions
 
 ### Rationale
+
 - PostgreSQL provides superior query capabilities for complex educational data
 - Built-in authentication reduces development time
 - Row Level Security provides excellent data protection
@@ -96,6 +107,7 @@ Use Supabase as the primary backend platform.
 - Good developer experience and documentation
 
 ### Consequences
+
 - Dependence on Supabase platform
 - Some limitations on Edge Functions execution time
 - Excellent developer experience
@@ -111,7 +123,9 @@ Use Supabase as the primary backend platform.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Modern, responsive UI
 - Server-side rendering for SEO
 - Good performance
@@ -119,9 +133,11 @@ The application requires:
 - Easy deployment
 
 ### Decision
+
 Use React with Next.js for the frontend framework.
 
 ### Alternatives Considered
+
 1. **Vue.js + Nuxt.js**
    - Pros: Good performance, easier learning curve
    - Cons: Smaller ecosystem, fewer job candidates
@@ -139,6 +155,7 @@ Use React with Next.js for the frontend framework.
    - Cons: More complex than some alternatives
 
 ### Rationale
+
 - Largest ecosystem and community support
 - Excellent performance with Next.js optimization
 - Server-side rendering for SEO and initial load
@@ -148,6 +165,7 @@ Use React with Next.js for the frontend framework.
 - Extensive library support for collaboration features
 
 ### Consequences
+
 - Bundle size management required
 - Need to optimize re-renders
 - Excellent community support
@@ -163,7 +181,9 @@ Use React with Next.js for the frontend framework.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Rich text editing for collaborative notes
 - Real-time collaboration support
 - Extensibility for custom features
@@ -171,9 +191,11 @@ The application requires:
 - Strong TypeScript support
 
 ### Decision
+
 Use Tiptap as the rich text editor framework.
 
 ### Alternatives Considered
+
 1. **Quill**
    - Pros: Mature, good API
    - Cons: No built-in collaboration, limited extensibility
@@ -191,6 +213,7 @@ Use Tiptap as the rich text editor framework.
    - Cons: Newer than some alternatives
 
 ### Rationale
+
 - Built on ProseMirror (proven, reliable)
 - Excellent Yjs integration for collaboration
 - Highly extensible architecture
@@ -200,6 +223,7 @@ Use Tiptap as the rich text editor framework.
 - Good performance
 
 ### Consequences
+
 - Need to learn ProseMirror concepts for advanced customization
 - Excellent collaboration features out of the box
 - Strong foundation for custom editing features
@@ -207,14 +231,16 @@ Use Tiptap as the rich text editor framework.
 
 ---
 
-## ADR-005: Choose Excalidraw for Whiteboard
+## ADR-005: Use a Focused SVG/Yjs Whiteboard
 
-**Status**: Accepted
-**Date**: 2024-01-19
+**Status**: Superseded and accepted in revised form
+**Date**: 2024-01-19; revised 2026-07-17
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Collaborative whiteboard
 - Drawing capabilities
 - Shape support
@@ -222,9 +248,11 @@ The application requires:
 - Real-time collaboration
 
 ### Decision
-Use Excalidraw for the whiteboard component.
+
+Use a focused client-only SVG surface backed by per-element Yjs maps. The original Excalidraw choice was superseded after the currently compatible package tree introduced a high-severity production advisory, vulnerable nested generators, and React 19 peer overrides. The custom surface covers the Phase 3 requirements without that dependency tree.
 
 ### Alternatives Considered
+
 1. **Fabric.js**
    - Pros: Powerful, feature-rich
    - Cons: No built-in collaboration, higher learning curve
@@ -234,25 +262,26 @@ Use Excalidraw for the whiteboard component.
    - Cons: No built-in collaboration, different paradigm
 
 3. **Custom SVG-based solution**
-   - Pros: Full control
-   - Cons: High development effort, reinventing the wheel
+   - Pros: Full control, small trusted surface, native responsive scaling, independent Yjs objects
+   - Cons: Advanced transforms/templates must be built separately
 
 4. **Excalidraw**
    - Pros: Built-in collaboration, hand-drawn style, good UX, active development
    - Cons: Limited to hand-drawn style
 
 ### Rationale
-- Built-in real-time collaboration
-- Excellent user experience
-- Hand-drawn style fits educational use case
-- Active development and community
-- Easy integration with React
-- Good performance
-- Regular updates and improvements
+
+- Meets drawing, shapes, arrows, text, image insertion, laser, and multi-user requirements
+- Keeps collaboration in the already authenticated and durable Yjs service
+- Avoids a production dependency tree that failed the security gate
+- Uses stable per-element CRDT keys instead of serializing an entire scene
+- Lazy-loads only when the room's Whiteboard tool is selected
 
 ### Consequences
-- Limited to hand-drawn aesthetic
-- Excellent collaboration features
+
+- Phase 3 provides a deliberately basic board without object transforms or templates
+- Images are embedded with a 1 MiB limit and contribute to Yjs document size
+- Advanced whiteboard work remains a later roadmap item
 - Good user acceptance
 - Reduced development effort
 - Regular updates from maintainers
@@ -266,7 +295,9 @@ Use Excalidraw for the whiteboard component.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Global state management
 - Simple API
 - Good performance
@@ -274,9 +305,11 @@ The application requires:
 - Minimal boilerplate
 
 ### Decision
+
 Use Zustand for global state management.
 
 ### Alternatives Considered
+
 1. **Redux Toolkit**
    - Pros: Mature, comprehensive, good tooling
    - Cons: More boilerplate, steeper learning curve
@@ -294,6 +327,7 @@ Use Zustand for global state management.
    - Cons: Smaller ecosystem than Redux
 
 ### Rationale
+
 - Extremely simple API reduces development time
 - Minimal boilerplate improves code readability
 - Excellent performance with minimal re-renders
@@ -303,6 +337,7 @@ Use Zustand for global state management.
 - Good documentation and examples
 
 ### Consequences
+
 - Smaller ecosystem than Redux
 - Simpler codebase
 - Better developer experience
@@ -318,7 +353,9 @@ Use Zustand for global state management.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Easy deployment
 - Good performance
 - SSL certificates
@@ -327,9 +364,11 @@ The application requires:
 - Reasonable cost
 
 ### Decision
+
 Use Vercel for frontend deployment.
 
 ### Alternatives Considered
+
 1. **Netlify**
    - Pros: Good features, easy deployment
    - Cons: Less optimized for Next.js
@@ -347,6 +386,7 @@ Use Vercel for frontend deployment.
    - Cons: Vendor lock-in, cost at scale
 
 ### Rationale
+
 - Best integration with Next.js (same creators)
 - Excellent performance with global CDN
 - Preview deployments for pull requests
@@ -356,6 +396,7 @@ Use Vercel for frontend deployment.
 - Reasonable free tier
 
 ### Consequences
+
 - Vendor lock-in to Vercel
 - Excellent performance and DX
 - Easy deployment workflow
@@ -371,7 +412,9 @@ Use Vercel for frontend deployment.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Relational data model
 - Complex queries
 - ACID compliance
@@ -380,9 +423,11 @@ The application requires:
 - Good performance
 
 ### Decision
+
 Use PostgreSQL as the primary database.
 
 ### Alternatives Considered
+
 1. **MySQL**
    - Pros: Popular, good performance
    - Cons: Less advanced features, weaker JSON support
@@ -400,6 +445,7 @@ Use PostgreSQL as the primary database.
    - Cons: More complex than some alternatives
 
 ### Rationale
+
 - Superior query capabilities for complex educational data
 - Excellent JSON support for flexible document storage
 - Full-text search capabilities
@@ -409,6 +455,7 @@ Use PostgreSQL as the primary database.
 - Good performance characteristics
 
 ### Consequences
+
 - More complex than simpler databases
 - Excellent data integrity and query capabilities
 - Strong foundation for complex features
@@ -423,7 +470,9 @@ Use PostgreSQL as the primary database.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Text generation
 - Summarization
 - Question generation
@@ -432,9 +481,11 @@ The application requires:
 - Reasonable cost
 
 ### Decision
-Use OpenAI API for AI-powered features.
+
+Use the OpenAI Responses API behind a server-only, room-authorized adapter for AI-powered features. Phase 4 uses native server `fetch`, strict JSON Schema, a configurable `OPENAI_MODEL` with a cost-sensitive default, provider `store: false`, and a second runtime validation pass. Generated packs remain ephemeral by default; an explicit creator save writes only the validated five-view payload and metadata to creator-private immutable storage, never the source note snapshot.
 
 ### Alternatives Considered
+
 1. **Anthropic Claude**
    - Pros: Good performance, safety-focused
    - Cons: Less mature API, smaller ecosystem
@@ -452,6 +503,7 @@ Use OpenAI API for AI-powered features.
    - Cons: API costs, dependency on OpenAI
 
 ### Rationale
+
 - Best-in-class performance for text tasks
 - Mature, well-documented API
 - Good cost-performance ratio
@@ -461,11 +513,16 @@ Use OpenAI API for AI-powered features.
 - Good support for educational use cases
 
 ### Consequences
+
 - Ongoing API costs
 - Dependence on OpenAI
 - Excellent AI performance
 - Regular model improvements
 - Good documentation and support
+- Provider-specific request construction is isolated in `src/lib/ai/study-pack.ts` and the Route Handler rather than the client workspace
+- Every generation has room authorization, bounded source/output/time/frequency, prompt-injection separation, and generic public errors
+- Basic instance-local rate limiting must become distributed before horizontal production scaling
+- AI study content requires visible verification guidance and must not be treated as medical advice
 
 ---
 
@@ -476,7 +533,9 @@ Use OpenAI API for AI-powered features.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - WebSocket server deployment
 - PostgreSQL integration
 - Easy scaling
@@ -484,9 +543,11 @@ The application requires:
 - Good developer experience
 
 ### Decision
+
 Use Railway for Yjs WebSocket server deployment.
 
 ### Alternatives Considered
+
 1. **Heroku**
    - Pros: Mature, good DX
    - Cons: Expensive, removed free tier
@@ -504,6 +565,7 @@ Use Railway for Yjs WebSocket server deployment.
    - Cons: Newer platform, some limitations
 
 ### Rationale
+
 - Extremely simple deployment process
 - Good integration with PostgreSQL
 - Reasonable pricing
@@ -513,6 +575,7 @@ Use Railway for Yjs WebSocket server deployment.
 - Good for WebSocket servers
 
 ### Consequences
+
 - Dependence on Railway platform
 - Simple deployment workflow
 - Good performance for WebSocket
@@ -528,7 +591,9 @@ Use Railway for Yjs WebSocket server deployment.
 **Decision Makers**: Development Team
 
 ### Context
+
 The application requires:
+
 - Cohesive brand identity
 - Modern, vibrant color palette
 - Educational platform appropriate colors
@@ -536,11 +601,13 @@ The application requires:
 - Distinctive visual identity
 
 ### Decision
+
 Adopt the exact color palette from the BoardPrep logo, featuring brand blue as the primary color with golden yellow, red-orange, and supporting blue tones for accents.
 
 ### Color Palette
 
 **Primary Colors (from BoardPrep logo):**
+
 - **Brand Blue**: #3871C2 (RGB 56, 113, 194) - Main brand color
 - **Golden Yellow**: #FEBD59 (RGB 254, 189, 89) - Warm accent
 - **Red-Orange**: #F04623 (RGB 240, 70, 35) - Energetic accent
@@ -548,6 +615,7 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 - **Medium Blue**: #69ABDF (RGB 105, 171, 223) - Supporting blue
 
 **Supporting Colors:**
+
 - **Soft Pink**: #EFC2BC (RGB 239, 194, 188) - Warm background accent
 - **Tan**: #CC9E8F (RGB 204, 158, 143) - Earth tone accent
 - **Brown**: #9C614F (RGB 156, 97, 79) - Deep accent
@@ -555,12 +623,14 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 - **White**: #FFFFFF (RGB 255, 255, 255) - Light background
 
 **Semantic Colors:**
+
 - **Success**: #10B981 (emerald-500)
 - **Warning**: #F59E0B (amber-500)
 - **Error**: #EF4444 (red-500)
 - **Info**: #3871C2 (brand blue)
 
 ### Alternatives Considered
+
 1. **Monochromatic Blue Theme**
    - Pros: Professional, safe choice
    - Cons: Generic, lacks distinctive character
@@ -578,6 +648,7 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
    - Cons: Requires careful implementation for accessibility
 
 ### Rationale
+
 - Colors directly derived from official logo for brand consistency
 - Vibrant, modern palette appeals to students and educators
 - Gradient system provides visual interest and energy
@@ -587,6 +658,7 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 - Distinctive in the edtech market
 
 ### Implementation Guidelines
+
 - Use primary colors for CTAs, highlights, and key interactive elements
 - Implement gradients for hero sections, cards, and emphasis areas
 - Ensure sufficient contrast ratios for accessibility (WCAG AA compliant)
@@ -596,6 +668,7 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 - Test color combinations in both light and dark modes
 
 ### Tailwind CSS Integration
+
 ```javascript
 // tailwind.config.js
 module.exports = {
@@ -603,31 +676,34 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          blue: '#3871C2',
-          golden: '#FEBD59',
-          'red-orange': '#F04623',
-          'light-blue': '#86CEE7',
-          'medium-blue': '#69ABDF',
-          'soft-pink': '#EFC2BC',
-          tan: '#CC9E8F',
-          brown: '#9C614F',
-          charcoal: '#393536',
-          white: '#FFFFFF',
+          blue: "#3871C2",
+          golden: "#FEBD59",
+          "red-orange": "#F04623",
+          "light-blue": "#86CEE7",
+          "medium-blue": "#69ABDF",
+          "soft-pink": "#EFC2BC",
+          tan: "#CC9E8F",
+          brown: "#9C614F",
+          charcoal: "#393536",
+          white: "#FFFFFF",
         },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
       },
       backgroundImage: {
-        'brand-gradient': 'linear-gradient(135deg, #3871C2, #69ABDF, #86CEE7, #FEBD59, #F04623)',
-        'brand-gradient-subtle': 'linear-gradient(135deg, rgba(56,113,194,0.1), rgba(105,171,223,0.1), rgba(134,206,231,0.1))',
+        "brand-gradient":
+          "linear-gradient(135deg, #3871C2, #69ABDF, #86CEE7, #FEBD59, #F04623)",
+        "brand-gradient-subtle":
+          "linear-gradient(135deg, rgba(56,113,194,0.1), rgba(105,171,223,0.1), rgba(134,206,231,0.1))",
       },
     },
   },
-}
+};
 ```
 
 ### Consequences
+
 - Strong brand consistency across all touchpoints
 - Modern, energetic visual identity
 - Requires careful implementation for accessibility

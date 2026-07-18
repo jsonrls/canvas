@@ -29,12 +29,12 @@
       "documentation_links": []
     },
     "related_mistakes": [],
-    "occurrence_count": 5,
+    "occurrence_count": 7,
     "agent": "Codex",
     "session": "session-collab-notes-20260717-090000",
     "resolved": true,
     "resolution_time": "2026-07-17 09:47:37",
-    "last_occurrence": "2026-07-17 16:38:00"
+    "last_occurrence": "2026-07-18 13:37:50"
   },
   {
     "mistake_id": "build-guessed-package-versions-2026-07-17-006",
@@ -182,11 +182,12 @@
       "documentation_links": []
     },
     "related_mistakes": [],
-    "occurrence_count": 1,
+    "occurrence_count": 2,
     "agent": "Codex",
     "session": "session-collab-notes-20260717-090000",
     "resolved": true,
-    "resolution_time": "2026-07-17 09:21:17"
+    "resolution_time": "2026-07-17 09:21:17",
+    "last_occurrence": "2026-07-18 13:44:11"
   },
   {
     "mistake_id": "build-supabase-changelog-url-2026-07-17-014",
@@ -447,11 +448,12 @@
       "documentation_links": []
     },
     "related_mistakes": ["build-prettier-env-parser-2026-07-17-011"],
-    "occurrence_count": 1,
+    "occurrence_count": 2,
     "agent": "Codex",
     "session": "session-user-profiles-20260717-104729",
     "resolved": true,
-    "resolution_time": "2026-07-17 10:54:02"
+    "resolution_time": "2026-07-17 10:54:02",
+    "last_occurrence": "2026-07-18 13:02:01"
   },
   {
     "mistake_id": "build-index-timestamp-regex-2026-07-17-031",
@@ -716,5 +718,42 @@
     "session": "session-room-creation-management-20260717-124944",
     "resolved": true,
     "resolution_time": "2026-07-17 13:18:56"
+  },
+  {
+    "mistake_id": "build-ui-skill-stack-option-drift-2026-07-17-057",
+    "timestamp": "2026-07-17 16:56:50",
+    "category": "build",
+    "severity": "low",
+    "title": "UI skill documented an unsupported React stack option",
+    "description": "The UI/UX skill described React as a supported stack query, but the installed search script accepted only react-native for --stack and rejected --stack react during Phase 3 discovery.",
+    "context": {
+      "file": "/Users/jaysonreales/.agents/skills/ui-ux-pro-max/scripts/search.py",
+      "line": 1,
+      "function": "Phase 3 React performance guidance search",
+      "code_snippet": "search.py query --stack react -n 12",
+      "environment": "development"
+    },
+    "error_message": "argument --stack/-s: invalid choice: 'react' (choose from react-native)",
+    "root_cause": "The skill prose and installed CLI choices have drifted; the command was formed from the documented stack list without checking --help output first.",
+    "solution": "Reran the same search with --domain react --max-results 12 and received the required dynamic-import and bundle guidance.",
+    "prevention": {
+      "strategies": [
+        "Inspect a skill script's current --help choices before using optional flags",
+        "Use the React domain when the installed UI search tool lacks a React stack choice"
+      ],
+      "code_patterns": [
+        "Avoid: search.py query --stack react",
+        "Use: search.py query --domain react --max-results 12"
+      ],
+      "tests_to_add": [],
+      "documentation_links": []
+    },
+    "related_mistakes": ["build-stale-skill-path-2026-07-17-005"],
+    "occurrence_count": 2,
+    "agent": "Codex",
+    "session": "session-phase-3-study-tools-20260717-165554",
+    "resolved": true,
+    "resolution_time": "2026-07-17 16:56:50",
+    "last_occurrence": "2026-07-18 13:37:50"
   }
 ]

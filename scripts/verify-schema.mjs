@@ -23,7 +23,7 @@ const connection = [
 const assertionSql = String.raw`
 do $$
 declare
-  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles'];
+  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles', 'saved_study_guides'];
   table_name text;
 begin
   foreach table_name in array expected_tables loop
@@ -53,8 +53,8 @@ begin
     from pg_policies
     where schemaname = 'public'
       and tablename = any(expected_tables)
-  ) <> 15 then
-    raise exception 'Expected exactly 15 public-table RLS policies';
+  ) <> 18 then
+    raise exception 'Expected exactly 18 public-table RLS policies';
   end if;
 
   if has_table_privilege('authenticated', 'public.rooms', 'INSERT')
@@ -79,6 +79,42 @@ begin
     raise exception 'Authenticated users can mutate existing version rows';
   end if;
 
+  if not has_table_privilege('authenticated', 'public.saved_study_guides', 'SELECT')
+    or not has_table_privilege('authenticated', 'public.saved_study_guides', 'INSERT')
+    or not has_table_privilege('authenticated', 'public.saved_study_guides', 'DELETE')
+    or has_table_privilege('authenticated', 'public.saved_study_guides', 'UPDATE')
+    or has_table_privilege('anon', 'public.saved_study_guides', 'SELECT')
+  then
+    raise exception 'Saved study-guide grants do not match creator-private immutability';
+  end if;
+
+  if (
+    select count(*)
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'saved_study_guides'
+      and policyname in (
+        'Creators can view their saved study guides',
+        'Members can save their own study guides',
+        'Creators can delete their saved study guides'
+      )
+  ) <> 3 then
+    raise exception 'Saved study-guide RLS policies are incomplete';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'saved_study_guides'
+      and c.conname = 'saved_study_guides_payload_shape'
+      and pg_get_constraintdef(c.oid) like '%65536%'
+  ) then
+    raise exception 'Saved study-guide payload constraint is missing';
+  end if;
+
   if not has_table_privilege('authenticated', 'public.profiles', 'SELECT')
     or not has_table_privilege('authenticated', 'public.profiles', 'INSERT')
     or not has_table_privilege('authenticated', 'public.profiles', 'UPDATE')
@@ -99,11 +135,14 @@ begin
         'can_edit_room',
         'can_edit_document',
         'can_view_profile',
-        'is_room_owner_user'
+        'is_room_owner_user',
+        'can_read_room_pdf_object',
+        'can_write_room_pdf_object',
+        'enforce_saved_study_guide_limit'
       )
       and p.prosecdef
       and p.proconfig = array['search_path=""']
-  ) <> 7 then
+  ) <> 10 then
     raise exception 'Private authorization helpers are not fully hardened';
   end if;
 
@@ -172,12 +211,53 @@ begin
   if exists (
     select 1
     from public.rooms r
+    cross join (values ('notes'), ('pdf'), ('whiteboard')) as tool(kind)
     left join public.documents d
       on d.room_id = r.id
-      and d.kind = 'notes'
+      and d.kind = tool.kind
     where d.id is null
   ) then
-    raise exception 'A room lacks its notes document';
+    raise exception 'A room lacks a Phase 3 study-tool document';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'documents'
+      and c.conname = 'documents_pdf_metadata'
+      and pg_get_constraintdef(c.oid) like '%pdf_asset_revision%'
+      and pg_get_constraintdef(c.oid) like '%15728640%'
+  ) then
+    raise exception 'The PDF metadata constraint is missing or incomplete';
+  end if;
+
+  if (
+    select count(*)
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname in (
+        'Room members can read private PDFs',
+        'Room editors can upload private PDFs',
+        'Room editors can replace private PDFs',
+        'Room editors can delete replaced private PDFs'
+      )
+  ) <> 4 then
+    raise exception 'Private PDF Storage policies are incomplete';
+  end if;
+
+  if not exists (
+    select 1
+    from storage.buckets
+    where id = 'boardprep-pdfs'
+      and public = false
+      and file_size_limit = 15728640
+      and allowed_mime_types = array['application/pdf']::text[]
+  ) then
+    raise exception 'The private PDF bucket restrictions are incorrect';
   end if;
 
   if not exists (
@@ -213,7 +293,7 @@ begin
 end
 $$;
 
-select 'Schema verification passed: 5 RLS tables, 15 policies, atomic room lifecycle functions, 10 hardened helpers, owner invariants, immutable versions, and profile provisioning.';
+select 'Schema verification passed: 6 RLS tables, 18 public policies, 4 private-PDF policies, 13 hardened helpers, three room documents, immutable saved study guides, constrained private storage, owner invariants, immutable versions, and profile provisioning.';
 `;
 const result = spawnSync(
   "psql",

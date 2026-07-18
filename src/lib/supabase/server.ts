@@ -53,6 +53,18 @@ export function createAuthenticatedDataClient(
   });
 }
 
+export function createServiceRoleClient(): SupabaseClient {
+  const { serviceRoleKey, url } = getSupabaseServerConfig();
+
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  });
+}
+
 export async function getAuthenticatedContext(): Promise<AuthenticatedContext | null> {
   const authClient = await createServerAuthClient();
   const { data: claimsData, error: claimsError } =
