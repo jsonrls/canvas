@@ -8,6 +8,7 @@ import {
   buildBreakoutCollaborativeDocumentName,
   buildCollaborativeDocumentName,
 } from "@/lib/collaboration/document-name";
+import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import {
   createOfflineDocument,
   type CollaborativeDocumentKind,
@@ -155,6 +156,7 @@ export function useCollaborativeTool({
     let persistence: OfflineDocumentResult["persistence"] = null;
     const abortController = new AbortController();
     const document = new Y.Doc();
+    const endpoint = getCollaborationWebSocketEndpoint();
     const offlineRoomId = breakoutCode
       ? `breakout-${breakoutCode.toLowerCase()}`
       : roomId;
@@ -165,7 +167,7 @@ export function useCollaborativeTool({
       name: currentUser.displayName || "Study partner",
     };
     const provider = new WebsocketProvider(
-      process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234",
+      endpoint.url,
       breakoutCode
         ? buildBreakoutCollaborativeDocumentName(roomId, breakoutCode, kind)
         : buildCollaborativeDocumentName(roomId, kind),
@@ -253,24 +255,27 @@ export function useCollaborativeTool({
         return;
       }
 
-      const response = await fetch("/api/auth/access-token", {
-        cache: "no-store",
-        credentials: "same-origin",
-        signal: abortController.signal,
-      });
+      if (endpoint.authentication === "access-token") {
+        const response = await fetch("/api/auth/access-token", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: abortController.signal,
+        });
 
-      if (!response.ok) {
-        throw new Error("The secure collaboration session could not open.");
-      }
+        if (!response.ok) {
+          throw new Error("The secure collaboration session could not open.");
+        }
 
-      const payload = (await response.json()) as { accessToken?: unknown };
+        const payload = (await response.json()) as { accessToken?: unknown };
 
-      if (typeof payload.accessToken !== "string") {
-        throw new Error("The collaboration token response was invalid.");
+        if (typeof payload.accessToken !== "string") {
+          throw new Error("The collaboration token response was invalid.");
+        }
+
+        provider.params = { access_token: payload.accessToken };
       }
 
       if (active) {
-        provider.params = { access_token: payload.accessToken };
         provider.connect();
       }
     };

@@ -220,7 +220,10 @@ async function verifyWorkspaceContract(): Promise<void> {
     readFile("src/app/api/rooms/[roomId]/pdf/route.ts", "utf8"),
     readFile("src/hooks/use-room-presentation.ts", "utf8"),
     readFile("src/hooks/use-collaborative-tool.ts", "utf8"),
-    readFile("server/yjs-server.mjs", "utf8"),
+    Promise.all([
+      readFile("server/yjs-server.mjs", "utf8"),
+      readFile("server/yjs-runtime.mjs", "utf8"),
+    ]).then((sources) => sources.join("\n")),
   ]);
 
   assert.match(roomSource, /dynamic\(/);
@@ -276,9 +279,9 @@ async function verifyWorkspaceContract(): Promise<void> {
   );
   assert.match(yjsServerSource, /isReadOnlyMessageAllowed/);
   assert.match(yjsServerSource, /SYNC_STEP_ONE/);
-  assert.match(yjsServerSource, /handlePresenceConnection/);
-  assert.match(yjsServerSource, /payload\.workspace === "notes"/);
-  assert.match(yjsServerSource, /authorization\.channel !== "presence"/);
+  assert.match(yjsServerSource, /attachPresenceConnection/);
+  assert.match(yjsServerSource, /value\.workspace === "notes"/);
+  assert.match(yjsServerSource, /authorization\.channel === "presence"/);
   assert.match(toolHookSource, /provider\.connect\(\)/);
   assert.doesNotMatch(toolHookSource, /if \(canEdit\) \{\s*const initialize/);
   assert.match(routeSource, /getAuthenticatedContext/);

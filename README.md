@@ -1,6 +1,6 @@
 # Qollab
 
-Qollab is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the OpenAI Responses API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB, while the separate Yjs service persists each shared document in Supabase and reloads it after a restart.
+Qollab is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the OpenAI Responses API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB. The collaboration runtime runs as a standalone Node service locally and as a same-origin Vercel WebSocket Function in deployment, with durable state and cross-instance fan-out provided by Supabase.
 
 Each Supabase Auth account has a constrained `public.profiles` row. Signup creates it automatically from the supplied display name, existing accounts are backfilled, and the application uses that name for presence and version authorship. Profile RLS limits reads to the current user and collaborators who share a room.
 
@@ -49,9 +49,35 @@ OPENAI_API_KEY=your-server-only-openai-api-key
 # OPENAI_WHITEBOARD_MODEL=gpt-4o-mini
 ```
 
-`NEXT_PUBLIC_YJS_WS_URL` is the browser-visible address of the service started by `npm run dev:yjs`; it is not a generated credential. Production must use a separately hosted `wss://` endpoint. `YJS_ALLOWED_ORIGIN` can require an exact browser Origin in production.
+`NEXT_PUBLIC_YJS_WS_URL` is the browser-visible address of the service started by `npm run dev:yjs`; it is not a generated credential. Omit it on Vercel so production uses the same-origin `/api/collaboration` WebSocket Function and cookie authentication. Set it only when using the standalone service. `YJS_ALLOWED_ORIGIN` can require an exact browser Origin for an externally hosted service.
 
 The database pooler settings are used only by the schema verifier; application data access goes through the Supabase Data API and RLS.
+
+## Deploy to Vercel
+
+The Next.js application, Route Handlers, Server Actions, and WebSocket collaboration route deploy as one Vercel project. Vercel Functions run in Tokyo (`hnd1`) near the configured Supabase project. Supabase stores complete Yjs state and relays document, awareness, and presenter updates between Vercel Function instances.
+
+Configure these Vercel variables for both Preview and Production:
+
+```dotenv
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
+NEXT_PUBLIC_SITE_URL=https://your-deployment.vercel.app
+OPENAI_API_KEY=your-server-only-openai-api-key
+```
+
+Do not configure `NEXT_PUBLIC_YJS_WS_URL` on Vercel. Add `https://your-deployment.vercel.app/auth/confirm` to the Supabase Auth redirect allow list before testing signup or password recovery.
+
+```bash
+vercel link
+vercel env add SUPABASE_URL production
+vercel env add SUPABASE_SERVICE_ROLE_KEY production --sensitive
+vercel env add NEXT_PUBLIC_SITE_URL production
+vercel env add OPENAI_API_KEY production --sensitive
+vercel --prod
+```
+
+Vercel WebSockets follow the Function maximum duration. The existing Yjs and presenter clients reconnect automatically and reload durable state after a Function rotation.
 
 ## Room lifecycle behavior
 
@@ -119,6 +145,8 @@ npm run verify:phase-3
 npm run verify:phase-3-storage
 npm run verify:phase-4
 npm run verify:saved-study-guides
+npm run verify:serverless-collaboration
+npm run verify:vercel
 ```
 
 `verify:version-history` uses disposable confirmed users and temporary database rows. It checks profile provisioning/privacy, RLS, read-only viewers, role-escalation denial, tokenless/unauthorized WebSocket rejection, multi-client sync, restart persistence, version creation, and immutability, then cleans up in `finally`.
@@ -137,6 +165,10 @@ npm run verify:saved-study-guides
 
 `verify:saved-study-guides` uses disposable confirmed users and a temporary room to verify the hosted saved-guide table, metadata-only lists, creator detail loading, member/outsider isolation, immutable grants, owner deletion, and cleanup cascades.
 
+`verify:serverless-collaboration` starts two isolated collaboration server processes and proves that Supabase Realtime relays edits and concurrent CRDT merges between them before checking the durable merged snapshot.
+
+`verify:vercel` checks the deployed health route, rejects an unauthenticated WebSocket, opens an authenticated same-origin cookie connection with a disposable user and room, and verifies the resulting Yjs edit in Supabase before cleanup. Set `QOLLAB_DEPLOYMENT_URL` to target a non-default deployment.
+
 ## Current limitations
 
 - Cold offline startup is not implemented: the protected route and application shell must already be available. A service worker/cache strategy remains roadmap work.
@@ -144,5 +176,5 @@ npm run verify:saved-study-guides
 - Yjs persistence currently rewrites the complete state blob; large documents will need incremental-update compaction and monitoring.
 - Phase 3 intentionally provides one active PDF per room and a focused SVG whiteboard. PDF libraries/OCR, semantic text selection, whiteboard templates, object transforms, and large media libraries remain later work.
 - Phase 4 sends only note snapshots; PDF and whiteboard extraction are not included. Saved guides are creator-private and not shared with room members; the in-memory rate limit is instance-local rather than a distributed production quota.
-- WebSocket access tokens are sent as upgrade query parameters. The service never logs request URLs, but production infrastructure should redact query strings or introduce short-lived connection tickets.
+- The standalone WebSocket service sends access tokens as upgrade query parameters and should redact request URLs. The same-origin Vercel Function authenticates with the existing secure session cookie and does not put access tokens in its WebSocket URL.
 - Adding collaborators is limited to existing Qollab accounts identified by exact email. Pending invitations, outbound invitation delivery, ownership transfer, room archival, and public-room pagination/search remain future work.

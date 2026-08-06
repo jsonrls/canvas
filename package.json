@@ -22,6 +22,8 @@
     "verify:phase-3-storage": "node --env-file=.env scripts/verify-phase-3-storage.mjs",
     "verify:phase-4": "node --import tsx scripts/verify-phase-4.ts",
     "verify:saved-study-guides": "node --env-file=.env scripts/verify-saved-study-guides.mjs",
+    "verify:serverless-collaboration": "node --env-file=.env scripts/verify-serverless-collaboration.mjs",
+    "verify:vercel": "node --env-file=.env scripts/verify-vercel-deployment.mjs",
     "format:check": "prettier --check package.json tsconfig.json next.config.ts postcss.config.mjs eslint.config.mjs \"src/**/*.{ts,tsx,css}\" \"server/**/*.mjs\" \"scripts/**/*.{mjs,ts}\" README.md"
   },
   "dependencies": {
@@ -34,11 +36,13 @@
     "@tiptap/pm": "3.28.0",
     "@tiptap/react": "3.28.0",
     "@tiptap/starter-kit": "3.28.0",
+    "@vercel/functions": "3.8.0",
     "lucide-react": "1.24.0",
-    "next": "16.2.10",
+    "next": "16.3.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-pdf": "10.4.1",
+    "ws": "8.21.1",
     "y-indexeddb": "9.0.12",
     "y-websocket": "2.1.0",
     "yjs": "13.6.31"
@@ -51,14 +55,13 @@
     "@types/ws": "8.18.1",
     "concurrently": "10.0.3",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.3.0",
     "fake-indexeddb": "6.2.5",
     "postcss": "8.5.19",
     "prettier": "3.9.5",
     "supabase": "2.109.1",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.1",
-    "typescript": "5.9.3",
-    "ws": "8.21.1"
+    "typescript": "5.9.3"
   }
 }

@@ -33,7 +33,7 @@ The response is `401` without a valid cookie session. The service-role key is ne
 NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
 ```
 
-`npm run dev:yjs` starts the separate durable service locally. `NEXT_PUBLIC_YJS_WS_URL` is a WebSocket base URL, not an HTTP API route or generated secret. Production environments must supply a separately hosted `wss://` endpoint.
+`npm run dev:yjs` starts the separate durable service locally. `NEXT_PUBLIC_YJS_WS_URL` is a WebSocket base URL, not a generated secret. When the variable is omitted on Vercel, the browser uses the same-origin `wss://<deployment>/api/collaboration` Function. Supabase persists complete Yjs state and relays updates, awareness, and presenter state between Function instances.
 
 #### Connection Parameters
 
@@ -46,7 +46,7 @@ const wsProvider = new WebsocketProvider(
 );
 ```
 
-The upgrade returns `401` for a missing/invalid token and `403` when the user is not an owner/editor of the requested room. Plain room slugs address notes; `--pdf` and `--whiteboard` suffixes select the other two document rows. Authorized state is loaded from `public.documents` before the first sync message and debounced back to the same row after updates.
+The standalone upgrade returns `401` for a missing/invalid token and `403` for a non-member. The same-origin Vercel route validates the secure Supabase session cookie before upgrading and never places the access token in the URL. Plain room slugs address notes; `--pdf` and `--whiteboard` suffixes select the other two document rows. Authorized state is loaded from `public.documents` before the first sync message and debounced back to the same row after updates.
 
 ### Private PDF Upload
 

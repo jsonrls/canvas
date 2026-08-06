@@ -30,6 +30,7 @@ import {
 } from "@/components/rooms/viewer-collaboration-toggle";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 import { buildBreakoutCollaborativeDocumentName } from "@/lib/collaboration/document-name";
+import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import type { BreakoutRoomWorkspace as BreakoutWorkspace } from "@/lib/breakout-rooms/repository";
 import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
@@ -115,6 +116,7 @@ export function BreakoutRoomWorkspace({
   breakout,
   currentUser,
 }: BreakoutRoomWorkspaceProps): React.ReactElement {
+  const collaborationEndpoint = getCollaborationWebSocketEndpoint();
   const { setViewerCanCollaborate, viewerCanCollaborate } =
     useViewerCollaboration({
       initialEnabled: breakout.viewerCanCollaborate,
@@ -161,7 +163,7 @@ export function BreakoutRoomWorkspace({
       name: currentUser.displayName || "Study partner",
     };
     const provider = new WebsocketProvider(
-      process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234",
+      collaborationEndpoint.url,
       buildBreakoutCollaborativeDocumentName(
         breakout.parentRoomSlug,
         breakout.code,
@@ -228,6 +230,7 @@ export function BreakoutRoomWorkspace({
     breakout.initialDocumentState,
     breakout.parentRoomSlug,
     canEdit,
+    collaborationEndpoint.url,
     currentUser.displayName,
   ]);
 
@@ -242,24 +245,27 @@ export function BreakoutRoomWorkspace({
 
     const connect = async (): Promise<void> => {
       setStatus(canEdit ? "connecting" : "viewing");
-      const response = await fetch("/api/auth/access-token", {
-        cache: "no-store",
-        credentials: "same-origin",
-        signal: abortController.signal,
-      });
+      if (collaborationEndpoint.authentication === "access-token") {
+        const response = await fetch("/api/auth/access-token", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: abortController.signal,
+        });
 
-      if (!response.ok) {
-        throw new Error("Your secure breakout session could not be opened.");
-      }
+        if (!response.ok) {
+          throw new Error("Your secure breakout session could not be opened.");
+        }
 
-      const payload = (await response.json()) as { accessToken?: unknown };
+        const payload = (await response.json()) as { accessToken?: unknown };
 
-      if (typeof payload.accessToken !== "string") {
-        throw new Error("The collaboration token response was invalid.");
+        if (typeof payload.accessToken !== "string") {
+          throw new Error("The collaboration token response was invalid.");
+        }
+
+        provider.params = { access_token: payload.accessToken };
       }
 
       if (active) {
-        provider.params = { access_token: payload.accessToken };
         provider.connect();
       }
     };
@@ -279,7 +285,7 @@ export function BreakoutRoomWorkspace({
       abortController.abort();
       provider.disconnect();
     };
-  }, [attempt, canEdit, connection]);
+  }, [attempt, canEdit, collaborationEndpoint.authentication, connection]);
 
   const reconnect = useCallback((): void => {
     providerRef.current?.disconnect();

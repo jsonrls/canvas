@@ -58,6 +58,7 @@ import {
   createOfflineDocument,
   type OfflineDocumentResult,
 } from "@/lib/collaboration/offline-document";
+import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import type { VersionSummary } from "@/lib/version-history/types";
 import type {
   RoomDocumentKind,
@@ -197,6 +198,7 @@ export function CollaborativeRoom({
   roomId,
 }: CollaborativeRoomProps): React.ReactElement {
   const router = useRouter();
+  const collaborationEndpoint = getCollaborationWebSocketEndpoint();
   const { setViewerCanCollaborate, viewerCanCollaborate } =
     useViewerCollaboration({
       initialEnabled: initialViewerCanCollaborate,
@@ -389,14 +391,17 @@ export function CollaborativeRoom({
     }
 
     const user = createStudyUser(document.clientID, currentUser.displayName);
-    const serverUrl =
-      process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234";
-    const provider = new WebsocketProvider(serverUrl, roomId, document, {
-      connect: false,
-      maxBackoffTime: 4000,
-      params: {},
-      resyncInterval: 2500,
-    });
+    const provider = new WebsocketProvider(
+      collaborationEndpoint.url,
+      roomId,
+      document,
+      {
+        connect: false,
+        maxBackoffTime: 4000,
+        params: {},
+        resyncInterval: 2500,
+      },
+    );
     documentRef.current = document;
     providerRef.current = provider;
 
@@ -605,6 +610,7 @@ export function CollaborativeRoom({
   }, [
     beginReconciliationWindow,
     canEdit,
+    collaborationEndpoint.url,
     currentUser.displayName,
     currentUser.id,
     initialDocumentStates.notes,
@@ -635,31 +641,32 @@ export function CollaborativeRoom({
       }
 
       setRemoteStatus("connecting");
-      const tokenResponse = await fetch("/api/auth/access-token", {
-        cache: "no-store",
-        credentials: "same-origin",
-        signal: abortController.signal,
-      });
+      if (collaborationEndpoint.authentication === "access-token") {
+        const tokenResponse = await fetch("/api/auth/access-token", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: abortController.signal,
+        });
 
-      if (!tokenResponse.ok) {
-        throw new Error(
-          "Your secure collaboration session could not be opened.",
-        );
-      }
+        if (!tokenResponse.ok) {
+          throw new Error(
+            "Your secure collaboration session could not be opened.",
+          );
+        }
 
-      const tokenPayload = (await tokenResponse.json()) as {
-        accessToken?: unknown;
-      };
+        const tokenPayload = (await tokenResponse.json()) as {
+          accessToken?: unknown;
+        };
 
-      if (typeof tokenPayload.accessToken !== "string") {
-        throw new Error("The collaboration token response was invalid.");
+        if (typeof tokenPayload.accessToken !== "string") {
+          throw new Error("The collaboration token response was invalid.");
+        }
+
+        provider.params = { access_token: tokenPayload.accessToken };
       }
 
       if (active) {
         provider.disconnect();
-        provider.params = {
-          access_token: tokenPayload.accessToken,
-        };
         provider.connect();
       }
     };
@@ -683,7 +690,13 @@ export function CollaborativeRoom({
       abortController.abort();
       provider.disconnect();
     };
-  }, [beginReconciliationWindow, canEdit, connection, connectionAttempt]);
+  }, [
+    beginReconciliationWindow,
+    canEdit,
+    collaborationEndpoint.authentication,
+    connection,
+    connectionAttempt,
+  ]);
 
   const reconnect = useCallback((): void => {
     beginReconciliationWindow();

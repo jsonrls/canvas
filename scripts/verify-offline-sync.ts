@@ -128,7 +128,7 @@ async function startServer(
   });
 
   await waitFor(
-    () => output.includes("BoardPrep Yjs server listening"),
+    () => output.includes("Qollab Yjs server listening"),
     `starting the offline verification server. Output: ${output}`,
   );
 

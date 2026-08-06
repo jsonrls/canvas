@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import {
+  getCollaborationWebSocketEndpoint,
+  type CollaborationWebSocketEndpoint,
+} from "@/lib/collaboration/websocket-endpoint";
 import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
 export type PresentedWorkspace = RoomDocumentKind;
@@ -31,12 +35,17 @@ interface UseRoomPresentationResult {
   updateScroll(y: number): void;
 }
 
-function presenceUrl(roomId: string, accessToken: string): string {
-  const url = new URL(
-    process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234",
-  );
-  url.pathname = `/presence/${encodeURIComponent(roomId)}`;
-  url.search = new URLSearchParams({ access_token: accessToken }).toString();
+function presenceUrl(
+  endpoint: CollaborationWebSocketEndpoint,
+  roomId: string,
+  accessToken?: string,
+): string {
+  const url = new URL(endpoint.url);
+  const basePath = url.pathname.replace(/\/$/, "");
+  url.pathname = `${basePath}/presence/${encodeURIComponent(roomId)}`;
+  url.search = accessToken
+    ? new URLSearchParams({ access_token: accessToken }).toString()
+    : "";
   return url.toString();
 }
 
@@ -128,19 +137,27 @@ export function useRoomPresentation({
     const abortController = new AbortController();
 
     const connect = async (): Promise<void> => {
-      const response = await fetch("/api/auth/access-token", {
-        cache: "no-store",
-        credentials: "same-origin",
-        signal: abortController.signal,
-      });
-      if (!response.ok) throw new Error("Presentation presence unavailable.");
+      const endpoint = getCollaborationWebSocketEndpoint();
+      let accessToken: string | undefined;
 
-      const payload = (await response.json()) as { accessToken?: unknown };
-      if (typeof payload.accessToken !== "string") {
-        throw new Error("Presentation presence unavailable.");
+      if (endpoint.authentication === "access-token") {
+        const response = await fetch("/api/auth/access-token", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: abortController.signal,
+        });
+        if (!response.ok) {
+          throw new Error("Presentation presence unavailable.");
+        }
+
+        const payload = (await response.json()) as { accessToken?: unknown };
+        if (typeof payload.accessToken !== "string") {
+          throw new Error("Presentation presence unavailable.");
+        }
+        accessToken = payload.accessToken;
       }
 
-      socket = new WebSocket(presenceUrl(roomId, payload.accessToken));
+      socket = new WebSocket(presenceUrl(endpoint, roomId, accessToken));
       socketRef.current = socket;
       socket.addEventListener("open", sendUpdate);
       socket.addEventListener("message", (event) => {
