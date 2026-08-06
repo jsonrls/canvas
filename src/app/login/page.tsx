@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/app/login/login-form";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -18,27 +19,17 @@ export default async function LoginPage({
     next?.startsWith("/") && !next.startsWith("//") ? next : "/rooms";
 
   return (
-    <main className="login-page">
-      <section className="login-card" aria-labelledby="login-title">
-        <div className="login-brand">
-          <span className="brand-mark" aria-hidden="true">
-            BP
-          </span>
-          <span>BoardPrep Canvas</span>
-        </div>
-        <p className="eyebrow">Secure study room</p>
-        <h1 id="login-title">Pick up the thread together.</h1>
-        <p className="login-intro">
-          Sign in before opening shared notes. Your room membership controls
-          collaboration and version-history access.
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Return to your study circle."
+      intro="Sign in to reopen the notes, questions, and ideas your group has been building together."
+    >
+      {reset === "success" ? (
+        <p className="login-message login-message--success" role="status">
+          Your password is updated. Sign in with the new one.
         </p>
-        {reset === "success" ? (
-          <p className="login-message login-message--success" role="status">
-            Your password is updated. Sign in with the new one.
-          </p>
-        ) : null}
-        <LoginForm nextPath={nextPath} />
-      </section>
-    </main>
+      ) : null}
+      <LoginForm nextPath={nextPath} />
+    </AuthShell>
   );
 }

@@ -1,8 +1,14 @@
 "use client";
 
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  UserRoundPlus,
+} from "lucide-react";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { type AuthActionState, signIn, signUp } from "@/app/login/actions";
 
@@ -12,10 +18,14 @@ const INITIAL_STATE: AuthActionState = {
 };
 
 interface LoginFormProps {
+  mode?: "signin" | "signup";
   nextPath: string;
 }
 
-export function LoginForm({ nextPath }: LoginFormProps): React.ReactElement {
+export function LoginForm({
+  mode = "signin",
+  nextPath,
+}: LoginFormProps): React.ReactElement {
   const [signInState, signInAction, isSigningIn] = useActionState(
     signIn,
     INITIAL_STATE,
@@ -24,25 +34,34 @@ export function LoginForm({ nextPath }: LoginFormProps): React.ReactElement {
     signUp,
     INITIAL_STATE,
   );
-  const state = signInState.status !== "idle" ? signInState : signUpState;
-  const isPending = isSigningIn || isSigningUp;
+  const [showPassword, setShowPassword] = useState(false);
+  const isSignUp = mode === "signup";
+  const state = isSignUp ? signUpState : signInState;
+  const isPending = isSignUp ? isSigningUp : isSigningIn;
+  const submitAction = isSignUp ? signUpAction : signInAction;
 
   return (
-    <form className="login-form" action={signInAction}>
+    <form className="login-form auth-credentials-form" action={submitAction}>
       <input type="hidden" name="next" value={nextPath} />
-      <label>
-        <span>Display name (new accounts)</span>
-        <input
-          name="displayName"
-          type="text"
-          autoComplete="name"
-          maxLength={60}
-          placeholder="How collaborators see you"
-        />
-      </label>
-      <label>
+      {isSignUp ? (
+        <label htmlFor="auth-display-name">
+          <span>Display name</span>
+          <input
+            id="auth-display-name"
+            name="displayName"
+            type="text"
+            autoComplete="name"
+            maxLength={60}
+            placeholder="How your study group will see you"
+            required
+          />
+        </label>
+      ) : null}
+
+      <label htmlFor="auth-email">
         <span>Email address</span>
         <input
+          id="auth-email"
           name="email"
           type="email"
           autoComplete="email"
@@ -50,19 +69,51 @@ export function LoginForm({ nextPath }: LoginFormProps): React.ReactElement {
           required
         />
       </label>
-      <label>
-        <span className="login-field-header">
-          Password
-          <Link href="/reset-password">Forgot password?</Link>
-        </span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          minLength={8}
-          required
-        />
-      </label>
+
+      <div className="auth-password-field">
+        <div className="login-field-header">
+          <label htmlFor="auth-password">
+            <span>Password</span>
+          </label>
+          {!isSignUp ? (
+            <Link href="/reset-password">Forgot password?</Link>
+          ) : null}
+        </div>
+        <div className="password-input-wrap">
+          <input
+            id="auth-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete={isSignUp ? "new-password" : "current-password"}
+            minLength={8}
+            aria-describedby={isSignUp ? "auth-password-help" : undefined}
+            placeholder={
+              isSignUp ? "Create at least 8 characters" : "Your password"
+            }
+            required
+          />
+          <button
+            className="password-toggle"
+            type="button"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-controls="auth-password"
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((visible) => !visible)}
+          >
+            {showPassword ? (
+              <EyeOff aria-hidden="true" size={18} />
+            ) : (
+              <Eye aria-hidden="true" size={18} />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {isSignUp ? (
+        <p className="auth-field-help" id="auth-password-help">
+          Use 8 or more characters. A unique password keeps your rooms safer.
+        </p>
+      ) : null}
 
       {state.message ? (
         <p
@@ -73,22 +124,38 @@ export function LoginForm({ nextPath }: LoginFormProps): React.ReactElement {
         </p>
       ) : null}
 
-      <button className="login-submit" type="submit" disabled={isPending}>
-        {isSigningIn ? (
+      <button
+        className="login-submit"
+        type="submit"
+        disabled={isPending}
+        aria-busy={isPending}
+      >
+        {isPending ? (
           <LoaderCircle className="spin" aria-hidden="true" size={17} />
+        ) : isSignUp ? (
+          <UserRoundPlus aria-hidden="true" size={17} />
         ) : (
           <ArrowRight aria-hidden="true" size={17} />
         )}
-        Sign in to your room
+        {isSignUp
+          ? isSigningUp
+            ? "Creating your account…"
+            : "Create my Qollab account"
+          : isSigningIn
+            ? "Opening your rooms…"
+            : "Sign in to Qollab"}
       </button>
-      <button
-        className="login-create"
-        type="submit"
-        formAction={signUpAction}
-        disabled={isPending}
-      >
-        {isSigningUp ? "Creating account…" : "Create a new account"}
-      </button>
+
+      <p className="auth-switch">
+        {isSignUp ? "Already have an account?" : "New to Qollab?"}{" "}
+        <Link
+          href={`${isSignUp ? "/login" : "/signup"}${
+            nextPath === "/rooms" ? "" : `?next=${encodeURIComponent(nextPath)}`
+          }`}
+        >
+          {isSignUp ? "Sign in" : "Create an account"}
+        </Link>
+      </p>
     </form>
   );
 }

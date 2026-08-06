@@ -13,6 +13,7 @@ import {
   Plus,
   Radio,
   RefreshCw,
+  Sparkles,
   Square,
   Trash2,
   Type,
@@ -51,6 +52,7 @@ import {
 } from "@/lib/whiteboard/model";
 
 interface WhiteboardStudyToolProps {
+  breakoutCode?: string;
   canEdit: boolean;
   currentUser: { displayName: string; id: string };
   initialState: string | null;
@@ -65,8 +67,7 @@ type WhiteboardTool =
   | "arrow"
   | "line"
   | "text"
-  | "image"
-  | "laser";
+  | "image";
 
 interface DraftElement {
   current: WhiteboardPoint;
@@ -91,6 +92,30 @@ interface MoveSession {
   startPoint: WhiteboardPoint;
 }
 
+interface WhiteboardAnswerPayload {
+  answer?: unknown;
+  error?: unknown;
+}
+
+interface WhiteboardAnswerPlacement {
+  question: string;
+  targetBounds: { height: number; width: number; x: number; y: number };
+  targetId: string;
+}
+
+interface HoveredWhiteboardAuthor {
+  authorId: string;
+  color: string;
+  elementId: string;
+  left: number;
+  name: string;
+  top: number;
+}
+
+interface CollaboratorNamesPayload {
+  collaborators?: unknown;
+}
+
 const TOOLS: Array<{
   icon: typeof MousePointer2;
   label: string;
@@ -104,7 +129,6 @@ const TOOLS: Array<{
   { icon: Minus, label: "Line", tool: "line" },
   { icon: Type, label: "Text", tool: "text" },
   { icon: ImagePlus, label: "Image", tool: "image" },
-  { icon: Radio, label: "Laser", tool: "laser" },
 ];
 const SAFE_IMAGE_TYPES = new Set([
   "image/gif",
@@ -113,6 +137,8 @@ const SAFE_IMAGE_TYPES = new Set([
   "image/webp",
 ]);
 const HANDLE_SIZE = 12;
+const LASER_TRAIL_LENGTH = 16;
+const LASER_IDLE_TIMEOUT_MS = 650;
 
 function getBoardPoint(
   camera: WhiteboardCamera,
@@ -195,7 +221,294 @@ function handleCursor(handle: ResizeHandle): string {
   }
 }
 
+function boundsCenter(bounds: {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}): WhiteboardPoint {
+  return {
+    x: bounds.x + bounds.width / 2,
+    y: bounds.y + bounds.height / 2,
+  };
+}
+
+function pointDistance(
+  first: WhiteboardPoint,
+  second: WhiteboardPoint,
+): number {
+  return Math.hypot(first.x - second.x, first.y - second.y);
+}
+
+function distanceToBounds(
+  point: WhiteboardPoint,
+  bounds: { height: number; width: number; x: number; y: number },
+): number {
+  const dx = Math.max(
+    bounds.x - point.x,
+    0,
+    point.x - (bounds.x + bounds.width),
+  );
+  const dy = Math.max(
+    bounds.y - point.y,
+    0,
+    point.y - (bounds.y + bounds.height),
+  );
+  return Math.hypot(dx, dy);
+}
+
+function isPointNearBounds(
+  point: WhiteboardPoint,
+  bounds: { height: number; width: number; x: number; y: number },
+  padding: number,
+): boolean {
+  return (
+    point.x >= bounds.x - padding &&
+    point.x <= bounds.x + bounds.width + padding &&
+    point.y >= bounds.y - padding &&
+    point.y <= bounds.y + bounds.height + padding
+  );
+}
+
+function drawPathLength(points: WhiteboardPoint[]): number {
+  return points
+    .slice(1)
+    .reduce(
+      (length, point, index) => length + pointDistance(points[index], point),
+      0,
+    );
+}
+
+function isCircleLikeElement(element: WhiteboardElement): boolean {
+  if (element.type === "ellipse") {
+    const bounds = getElementBounds(element);
+    return bounds.width >= 44 && bounds.height >= 32;
+  }
+
+  if (element.type !== "draw" || element.points.length < 12) return false;
+
+  const bounds = getElementBounds(element);
+  const width = Math.max(1, bounds.width);
+  const height = Math.max(1, bounds.height);
+  const ratio = width / height;
+  const diagonal = Math.hypot(width, height);
+  const pathLength = drawPathLength(element.points);
+  const endpoints = [element.points[0], element.points.at(-1)].filter(
+    (point): point is WhiteboardPoint => Boolean(point),
+  );
+  const endpointGap =
+    endpoints.length === 2
+      ? pointDistance(endpoints[0], endpoints[1])
+      : Infinity;
+
+  return (
+    width >= 64 &&
+    height >= 40 &&
+    ratio >= 0.18 &&
+    ratio <= 8 &&
+    (endpointGap <= diagonal * 0.38 || pathLength >= diagonal * 1.75)
+  );
+}
+
+function textCenter(element: WhiteboardElement): WhiteboardPoint {
+  const bounds = getElementBounds(element);
+  return {
+    x: bounds.x + Math.max(120, bounds.width) / 2,
+    y: bounds.y + Math.max(36, bounds.height) / 2,
+  };
+}
+
+function textInsideBounds(
+  textElement: WhiteboardElement,
+  bounds: { height: number; width: number; x: number; y: number },
+): boolean {
+  return isPointNearBounds(textCenter(textElement), bounds, 18);
+}
+
+function getDirectedElementEndpoints(
+  element: WhiteboardElement,
+): Array<{ end: WhiteboardPoint; start: WhiteboardPoint }> {
+  if (element.type === "arrow" || element.type === "line") {
+    const start = { x: element.x, y: element.y };
+    const end = { x: element.x + element.width, y: element.y + element.height };
+    return [
+      { start, end },
+      { start: end, end: start },
+    ];
+  }
+
+  if (
+    element.type === "draw" &&
+    !isCircleLikeElement(element) &&
+    element.points.length >= 2
+  ) {
+    const start = element.points[0];
+    const end = element.points[element.points.length - 1];
+    const bounds = getElementBounds(element);
+    if (
+      drawPathLength(element.points) < 48 ||
+      Math.hypot(bounds.width, bounds.height) < 48
+    ) {
+      return [];
+    }
+    return [
+      { start, end },
+      { start: end, end: start },
+    ];
+  }
+
+  return [];
+}
+
+function findWhiteboardAnswerPlacement(
+  elements: WhiteboardElement[],
+  selectedId: string | null,
+): WhiteboardAnswerPlacement | null {
+  const textElements = elements.filter(
+    (element) => element.type === "text" && element.text.trim().length > 0,
+  );
+  const circleElements = elements.filter(isCircleLikeElement);
+
+  if (textElements.length === 0 || circleElements.length < 2) return null;
+
+  const questionCandidates = circleElements.flatMap((circle) => {
+    const bounds = getElementBounds(circle);
+    return textElements
+      .filter((textElement) => textInsideBounds(textElement, bounds))
+      .map((textElement) => ({
+        circle,
+        circleBounds: bounds,
+        question: textElement.text.trim(),
+        textElement,
+      }));
+  });
+
+  if (questionCandidates.length === 0) return null;
+
+  const selectedElement = selectedId
+    ? (elements.find((element) => element.id === selectedId) ?? null)
+    : null;
+  const prioritizedQuestions = [...questionCandidates].sort((first, second) => {
+    const firstSelected =
+      first.circle.id === selectedId || first.textElement.id === selectedId;
+    const secondSelected =
+      second.circle.id === selectedId || second.textElement.id === selectedId;
+    if (firstSelected !== secondSelected) return firstSelected ? -1 : 1;
+    return second.circle.createdAt.localeCompare(first.circle.createdAt);
+  });
+  const possibleTargets = circleElements.filter((circle) => {
+    if (circle.id === selectedId && selectedElement?.type !== "text")
+      return false;
+    const bounds = getElementBounds(circle);
+    return !textElements.some((textElement) =>
+      textInsideBounds(textElement, bounds),
+    );
+  });
+
+  let best: {
+    placement: WhiteboardAnswerPlacement;
+    score: number;
+  } | null = null;
+
+  for (const question of prioritizedQuestions) {
+    for (const target of possibleTargets) {
+      if (target.id === question.circle.id) continue;
+
+      const targetBounds = getElementBounds(target);
+      const sourcePadding = Math.max(
+        88,
+        Math.hypot(question.circleBounds.width, question.circleBounds.height) *
+          0.25,
+      );
+      const targetPadding = Math.max(
+        96,
+        Math.hypot(targetBounds.width, targetBounds.height) * 0.24,
+      );
+
+      for (const connector of elements.flatMap(getDirectedElementEndpoints)) {
+        if (
+          !isPointNearBounds(
+            connector.start,
+            question.circleBounds,
+            sourcePadding,
+          ) ||
+          !isPointNearBounds(connector.end, targetBounds, targetPadding)
+        ) {
+          continue;
+        }
+
+        const score =
+          distanceToBounds(connector.start, question.circleBounds) +
+          distanceToBounds(connector.end, targetBounds) * 1.6;
+        if (!best || score < best.score) {
+          best = {
+            placement: {
+              question: question.question,
+              targetBounds,
+              targetId: target.id,
+            },
+            score,
+          };
+        }
+      }
+
+      if (!best && possibleTargets.length === 1) {
+        const sourceCenter = boundsCenter(question.circleBounds);
+        const targetCenter = boundsCenter(targetBounds);
+        if (
+          targetCenter.x > sourceCenter.x ||
+          targetCenter.y > sourceCenter.y
+        ) {
+          best = {
+            placement: {
+              question: question.question,
+              targetBounds,
+              targetId: target.id,
+            },
+            score: 10_000 + pointDistance(sourceCenter, targetCenter),
+          };
+        }
+      }
+    }
+  }
+
+  return best?.placement ?? null;
+}
+
+function wrapAnswerForTarget(answer: string, targetWidth: number): string {
+  const maxLineLength = Math.max(
+    18,
+    Math.min(58, Math.floor(Math.max(160, targetWidth - 48) / 13)),
+  );
+  const sourceLines = answer
+    .replace(/\s+\n/gu, "\n")
+    .split(/\n+/u)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const wrapped: string[] = [];
+
+  for (const sourceLine of sourceLines) {
+    const words = sourceLine.split(/\s+/u);
+    let line = "";
+
+    for (const word of words) {
+      const next = line ? `${line} ${word}` : word;
+      if (next.length > maxLineLength && line) {
+        wrapped.push(line);
+        line = word;
+      } else {
+        line = next;
+      }
+    }
+
+    if (line) wrapped.push(line);
+  }
+
+  return wrapped.slice(0, 7).join("\n");
+}
+
 export default function WhiteboardStudyTool({
+  breakoutCode,
   canEdit,
   currentUser,
   initialState,
@@ -204,12 +517,17 @@ export default function WhiteboardStudyTool({
   const [draft, setDraft] = useState<DraftElement | null>(null);
   const [elements, setElements] = useState<WhiteboardElement[]>([]);
   const [imageMessage, setImageMessage] = useState("");
+  const [aiAnswerMessage, setAiAnswerMessage] = useState("");
+  const [aiAnswerLoading, setAiAnswerLoading] = useState(false);
   const [pendingImage, setPendingImage] = useState("");
   const [resizeSession, setResizeSession] = useState<ResizeSession | null>(
     null,
   );
   const [moveSession, setMoveSession] = useState<MoveSession | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"delete" | "clear" | null>(
+    null,
+  );
   const [textValue, setTextValue] = useState("");
   const [textPlacement, setTextPlacement] = useState<WhiteboardPoint | null>(
     null,
@@ -234,17 +552,79 @@ export default function WhiteboardStudyTool({
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [drawingColor, setDrawingColor] = useState("#3871c2");
+  const [collaboratorNames, setCollaboratorNames] = useState<
+    Record<string, string>
+  >({
+    [currentUser.id]: currentUser.displayName || "Study partner",
+  });
+  const [hoveredAuthor, setHoveredAuthor] =
+    useState<HoveredWhiteboardAuthor | null>(null);
+  const [laserEnabled, setLaserEnabled] = useState(false);
   const undoManagerRef = useRef<Y.UndoManager | null>(null);
+  const laserIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const laserTrailRef = useRef<WhiteboardPoint[]>([]);
+  const autoAnswerTriggerRef = useRef<{
+    id: string;
+    type: WhiteboardElementType;
+  } | null>(null);
+  const pendingAnswerKeysRef = useRef<Set<string>>(new Set());
   const imageInputRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const collaboration = useCollaborativeTool({
+    breakoutCode,
     canEdit,
     currentUser,
     initialState,
     kind: "whiteboard",
     roomId,
   });
+  const { setAwarenessField } = collaboration;
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    const loadCollaboratorNames = async (): Promise<void> => {
+      const response = await fetch(
+        `/api/rooms/${encodeURIComponent(roomId)}/collaborator-names`,
+        {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: abortController.signal,
+        },
+      );
+
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as CollaboratorNamesPayload;
+
+      if (!Array.isArray(payload.collaborators)) return;
+
+      const names: Record<string, string> = {};
+
+      for (const collaborator of payload.collaborators) {
+        if (
+          collaborator &&
+          typeof collaborator === "object" &&
+          "id" in collaborator &&
+          "name" in collaborator &&
+          typeof collaborator.id === "string" &&
+          typeof collaborator.name === "string" &&
+          collaborator.name.trim()
+        ) {
+          names[collaborator.id] = collaborator.name.trim();
+        }
+      }
+
+      setCollaboratorNames((current) => ({ ...current, ...names }));
+    };
+
+    void loadCollaboratorNames().catch(() => {
+      // Stored author names remain available if profile resolution is offline.
+    });
+
+    return () => abortController.abort();
+  }, [roomId]);
 
   useEffect(() => {
     const document = collaboration.connection?.document;
@@ -337,12 +717,47 @@ export default function WhiteboardStudyTool({
     };
   }, []);
 
-  // Laser clean-up when switching tools
-  useEffect(() => {
-    if (tool !== "laser") {
-      collaboration.setAwarenessField("laser", null);
+  const clearLaser = useCallback((): void => {
+    if (laserIdleTimerRef.current) {
+      clearTimeout(laserIdleTimerRef.current);
+      laserIdleTimerRef.current = null;
     }
-  }, [tool, collaboration]);
+    laserTrailRef.current = [];
+    setAwarenessField("laser", null);
+  }, [setAwarenessField]);
+
+  const publishLaser = useCallback(
+    (point: WhiteboardPoint): void => {
+      const previous = laserTrailRef.current.at(-1);
+      const minimumDistance = 3 / camera.zoom;
+      if (
+        previous &&
+        Math.hypot(point.x - previous.x, point.y - previous.y) < minimumDistance
+      ) {
+        return;
+      }
+
+      laserTrailRef.current = [...laserTrailRef.current, point].slice(
+        -LASER_TRAIL_LENGTH,
+      );
+      setAwarenessField("laser", {
+        x: point.x,
+        y: point.y,
+        trail: laserTrailRef.current,
+      });
+
+      if (laserIdleTimerRef.current) clearTimeout(laserIdleTimerRef.current);
+      laserIdleTimerRef.current = setTimeout(clearLaser, LASER_IDLE_TIMEOUT_MS);
+    },
+    [camera.zoom, clearLaser, setAwarenessField],
+  );
+
+  useEffect(() => {
+    if (!laserEnabled) clearLaser();
+    return () => {
+      if (laserIdleTimerRef.current) clearTimeout(laserIdleTimerRef.current);
+    };
+  }, [clearLaser, laserEnabled]);
 
   const selectedElement = useMemo(
     () => elements.find((element) => element.id === selectedId) ?? null,
@@ -382,11 +797,12 @@ export default function WhiteboardStudyTool({
       points: WhiteboardPoint[] = [],
       text = "",
       src = "",
-    ): void => {
+    ): WhiteboardElement => {
       const id = crypto.randomUUID();
       const isLine = type === "line" || type === "arrow";
       const element: WhiteboardElement = {
         authorId: currentUser.id,
+        authorName: currentUser.displayName || "Study partner",
         color: drawingColor,
         createdAt: new Date().toISOString(),
         height: isLine
@@ -404,9 +820,11 @@ export default function WhiteboardStudyTool({
         y: isLine ? start.y : Math.min(start.y, end.y),
       };
       upsertElement(element);
+      autoAnswerTriggerRef.current = { id, type };
       setSelectedId(id);
+      return element;
     },
-    [currentUser.id, drawingColor, upsertElement],
+    [currentUser.displayName, currentUser.id, drawingColor, upsertElement],
   );
 
   const handlePointerDown = (
@@ -434,11 +852,9 @@ export default function WhiteboardStudyTool({
     setSelectedId(null);
     setResizeSession(null);
 
+    if (laserEnabled) publishLaser(point);
+
     if (tool === "select") return;
-    if (tool === "laser") {
-      collaboration.setAwarenessField("laser", point);
-      return;
-    }
     if (tool === "text") {
       setTextPlacement(point);
       return;
@@ -495,10 +911,7 @@ export default function WhiteboardStudyTool({
       event.clientY,
     );
 
-    if (tool === "laser") {
-      collaboration.setAwarenessField("laser", point);
-      return;
-    }
+    if (laserEnabled) publishLaser(point);
 
     if (moveSession) {
       const element = elements.find((el) => el.id === moveSession.elementId);
@@ -587,10 +1000,6 @@ export default function WhiteboardStudyTool({
   };
 
   const finishPointer = (event: React.PointerEvent<SVGSVGElement>): void => {
-    if (tool !== "laser") {
-      collaboration.setAwarenessField("laser", null);
-    }
-
     // Release pointer capture if it is held
     try {
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -823,19 +1232,25 @@ export default function WhiteboardStudyTool({
 
   const deleteSelected = (): void => {
     if (!selectedElement) return;
+    setConfirmAction("delete");
+  };
+
+  const confirmDeleteSelected = (): void => {
+    if (!selectedElement) return;
     transact((document) =>
       document.getMap("whiteboard-elements").delete(selectedElement.id),
     );
     setSelectedId(null);
     setResizeSession(null);
+    setConfirmAction(null);
   };
 
   const clearAllDrawings = (): void => {
     if (!canEdit || elements.length === 0) return;
-    const confirmed = window.confirm(
-      "Clear all drawings on this whiteboard? This cannot be undone.",
-    );
-    if (!confirmed) return;
+    setConfirmAction("clear");
+  };
+
+  const confirmClearAll = (): void => {
     transact((document) => {
       const elementMap = document.getMap("whiteboard-elements");
       for (const key of Array.from(elementMap.keys())) {
@@ -845,6 +1260,7 @@ export default function WhiteboardStudyTool({
     setSelectedId(null);
     setResizeSession(null);
     setDraft(null);
+    setConfirmAction(null);
   };
 
   const chooseImage = async (file: File): Promise<void> => {
@@ -867,9 +1283,134 @@ export default function WhiteboardStudyTool({
     }
   };
 
+  const answerWhiteboardQuestion = useCallback(
+    async (
+      candidateElements = elements,
+      candidateSelectedId = selectedId,
+      mode: "auto" | "manual" = "manual",
+    ): Promise<void> => {
+      if (!canEdit || aiAnswerLoading) return;
+
+      const placement = findWhiteboardAnswerPlacement(
+        candidateElements,
+        candidateSelectedId,
+      );
+      if (!placement) {
+        if (mode === "manual") {
+          setAiAnswerMessage(
+            "Circle a question and draw an arrow to one blank circle.",
+          );
+        }
+        return;
+      }
+
+      const answerKey = `${placement.targetId}:${placement.question}`;
+      if (pendingAnswerKeysRef.current.has(answerKey)) return;
+      pendingAnswerKeysRef.current.add(answerKey);
+      setAiAnswerLoading(true);
+      setAiAnswerMessage(
+        mode === "auto" ? "Answering inside the blank circle..." : "",
+      );
+
+      try {
+        const response = await fetch(`/api/rooms/${roomId}/whiteboard-answer`, {
+          body: JSON.stringify({ question: placement.question }),
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const payload = (await response.json()) as WhiteboardAnswerPayload;
+
+        if (!response.ok) {
+          throw new Error(
+            typeof payload.error === "string"
+              ? payload.error
+              : "The AI answer could not be generated.",
+          );
+        }
+
+        if (typeof payload.answer !== "string" || !payload.answer.trim()) {
+          throw new Error("The AI answer was empty. Try again.");
+        }
+
+        const answerText = wrapAnswerForTarget(
+          payload.answer.trim(),
+          placement.targetBounds.width,
+        );
+        const lines = answerText.split("\n").filter(Boolean);
+        const textHeight = Math.max(36, lines.length * 32);
+        const textWidth = Math.max(160, placement.targetBounds.width - 48);
+        const id = crypto.randomUUID();
+
+        upsertElement({
+          authorId: currentUser.id,
+          authorName: currentUser.displayName || "Study partner",
+          color: "#245ea8",
+          createdAt: new Date().toISOString(),
+          height: textHeight,
+          id,
+          points: [],
+          src: "",
+          text: answerText,
+          type: "text",
+          width: textWidth,
+          x:
+            placement.targetBounds.x +
+            Math.max(18, (placement.targetBounds.width - textWidth) / 2),
+          y:
+            placement.targetBounds.y +
+            Math.max(18, (placement.targetBounds.height - textHeight) / 2),
+        });
+        setSelectedId(id);
+        setTool("select");
+        setAiAnswerMessage("AI answer added inside the blank circle.");
+      } catch (error) {
+        setAiAnswerMessage(
+          error instanceof Error
+            ? error.message
+            : "The AI answer could not be generated.",
+        );
+      } finally {
+        pendingAnswerKeysRef.current.delete(answerKey);
+        setAiAnswerLoading(false);
+      }
+    },
+    [
+      aiAnswerLoading,
+      canEdit,
+      currentUser.displayName,
+      currentUser.id,
+      elements,
+      roomId,
+      selectedId,
+      upsertElement,
+    ],
+  );
+
+  useEffect(() => {
+    const trigger = autoAnswerTriggerRef.current;
+    if (!trigger || !canEdit || aiAnswerLoading) return;
+
+    if (!elements.some((element) => element.id === trigger.id)) return;
+
+    autoAnswerTriggerRef.current = null;
+    if (
+      trigger.type !== "arrow" &&
+      trigger.type !== "draw" &&
+      trigger.type !== "ellipse" &&
+      trigger.type !== "line" &&
+      trigger.type !== "text"
+    ) {
+      return;
+    }
+
+    void answerWhiteboardQuestion(elements, trigger.id, "auto");
+  }, [aiAnswerLoading, answerWhiteboardQuestion, canEdit, elements]);
+
   const draftElement = draft
     ? {
         authorId: currentUser.id,
+        authorName: currentUser.displayName || "Study partner",
         color: collaboration.connection?.user.color ?? "#3871c2",
         createdAt: "",
         height:
@@ -901,8 +1442,39 @@ export default function WhiteboardStudyTool({
     isDraft = false,
   ): React.ReactNode => {
     const className = `${selectedId === element.id ? "is-selected" : ""}${isDraft ? " is-draft" : ""}`;
+    const showAuthor = (event: React.PointerEvent<SVGElement>): void => {
+      if (isDraft || !containerRef.current) return;
+
+      const bounds = containerRef.current.getBoundingClientRect();
+      const registeredName =
+        collaboratorNames[element.authorId] ?? element.authorName;
+      setHoveredAuthor({
+        authorId: element.authorId,
+        color: element.color,
+        elementId: element.id,
+        left: Math.min(
+          Math.max(12, event.clientX - bounds.left + 12),
+          Math.max(12, bounds.width - 172),
+        ),
+        name: registeredName,
+        top: Math.min(
+          Math.max(12, event.clientY - bounds.top + 12),
+          Math.max(12, bounds.height - 58),
+        ),
+      });
+    };
+    const hideAuthor = (): void => {
+      setHoveredAuthor((current) =>
+        current?.elementId === element.id ? null : current,
+      );
+    };
     const common = {
+      "aria-label": `${element.type} by ${
+        collaboratorNames[element.authorId] ?? element.authorName
+      }`,
       className,
+      onPointerEnter: showAuthor,
+      onPointerLeave: hideAuthor,
       onPointerDown: (event: React.PointerEvent<SVGElement>) =>
         selectElement(event, element.id),
       stroke: element.color,
@@ -981,16 +1553,25 @@ export default function WhiteboardStudyTool({
             x={element.x}
             y={element.y + 30}
           >
-            {element.text}
+            {element.text.split("\n").map((line, index) => (
+              <tspan dy={index === 0 ? 0 : 32} key={index} x={element.x}>
+                {line}
+              </tspan>
+            ))}
           </text>
         );
       case "image":
         return (
           <image
+            aria-label={`image by ${
+              collaboratorNames[element.authorId] ?? element.authorName
+            }`}
             className={className}
             height={element.height}
             href={element.src}
             key={element.id}
+            onPointerEnter={showAuthor}
+            onPointerLeave={hideAuthor}
             onPointerDown={(event) => selectElement(event, element.id)}
             preserveAspectRatio="xMidYMid meet"
             width={element.width}
@@ -1100,6 +1681,12 @@ export default function WhiteboardStudyTool({
                   <span className="tooltip-desc">Zoom at cursor</span>
                 </div>
                 <div className="tooltip-row">
+                  <span>
+                    <kbd>Scroll</kbd>
+                  </span>
+                  <span className="tooltip-desc">Pan Canvas</span>
+                </div>
+                <div className="tooltip-row">
                   <span>Drag selected shape</span>
                   <span className="tooltip-desc">Move element</span>
                 </div>
@@ -1154,6 +1741,36 @@ export default function WhiteboardStudyTool({
             <span>{label}</span>
           </button>
         ))}
+        <button
+          aria-pressed={laserEnabled}
+          className={`whiteboard-laser-toggle${laserEnabled ? " is-active" : ""}`}
+          disabled={!canEdit}
+          onClick={() => setLaserEnabled((enabled) => !enabled)}
+          title={
+            laserEnabled
+              ? `Turn laser off (using ${tool})`
+              : `Use laser with ${tool}`
+          }
+          type="button"
+        >
+          <Radio aria-hidden="true" size={17} />
+          <span>Laser</span>
+          <span
+            aria-hidden="true"
+            className="whiteboard-laser-toggle__status"
+          />
+        </button>
+        <button
+          aria-busy={aiAnswerLoading}
+          className="whiteboard-ai-answer"
+          disabled={!canEdit || aiAnswerLoading || elements.length === 0}
+          onClick={() => void answerWhiteboardQuestion()}
+          title="AI answer"
+          type="button"
+        >
+          <Sparkles aria-hidden="true" size={17} />
+          <span>{aiAnswerLoading ? "Answering" : "AI answer"}</span>
+        </button>
         <input
           ref={imageInputRef}
           accept="image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
@@ -1231,6 +1848,12 @@ export default function WhiteboardStudyTool({
                 </span>
                 <span className="tooltip-desc">Zoom at cursor</span>
               </div>
+              <div className="tooltip-row">
+                <span>
+                  <kbd>Scroll</kbd>
+                </span>
+                <span className="tooltip-desc">Pan Canvas</span>
+              </div>
             </div>
           </button>
         </div>
@@ -1258,22 +1881,60 @@ export default function WhiteboardStudyTool({
         ) : null}
       </div>
 
-      {imageMessage || collaboration.message ? (
+      {imageMessage || aiAnswerMessage || collaboration.message ? (
         <p className="study-tool__message" role="status">
-          {imageMessage || collaboration.message}
+          {imageMessage || aiAnswerMessage || collaboration.message}
         </p>
+      ) : null}
+
+      {confirmAction ? (
+        <div className="whiteboard-confirm-backdrop" role="presentation">
+          <div
+            aria-labelledby="whiteboard-confirm-title"
+            aria-modal="true"
+            className="whiteboard-confirm-dialog"
+            role="dialog"
+          >
+            <h2 id="whiteboard-confirm-title">
+              {confirmAction === "delete"
+                ? "Delete selected item?"
+                : "Clear the whiteboard?"}
+            </h2>
+            <p>
+              {confirmAction === "delete"
+                ? "This item will be removed for everyone in the room."
+                : "All drawings and objects will be removed for everyone in the room."}
+            </p>
+            <div className="whiteboard-confirm-actions">
+              <button onClick={() => setConfirmAction(null)} type="button">
+                Cancel
+              </button>
+              <button
+                className="whiteboard-confirm-danger"
+                onClick={
+                  confirmAction === "delete"
+                    ? confirmDeleteSelected
+                    : confirmClearAll
+                }
+                type="button"
+              >
+                {confirmAction === "delete" ? "Delete" : "Clear all"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <div
         ref={containerRef}
-        className={`whiteboard-stage whiteboard-stage--${tool}${resizeSession ? " whiteboard-stage--resizing" : ""}${isPanning ? " whiteboard-stage--panning" : ""}${isSpacePressed ? " whiteboard-stage--space-pressed" : ""}${moveSession ? " whiteboard-stage--moving" : ""}`}
+        className={`whiteboard-stage whiteboard-stage--${tool}${laserEnabled ? " whiteboard-stage--laser-enabled" : ""}${resizeSession ? " whiteboard-stage--resizing" : ""}${isPanning ? " whiteboard-stage--panning" : ""}${isSpacePressed ? " whiteboard-stage--space-pressed" : ""}${moveSession ? " whiteboard-stage--moving" : ""}`}
       >
         <svg
           ref={svgRef}
           aria-label="Collaborative whiteboard canvas"
           onPointerCancel={finishPointer}
           onPointerDown={handlePointerDown}
-          onPointerLeave={() => collaboration.setAwarenessField("laser", null)}
+          onPointerLeave={clearLaser}
           onPointerMove={handlePointerMove}
           onPointerUp={finishPointer}
           onWheel={handleWheel}
@@ -1300,6 +1961,25 @@ export default function WhiteboardStudyTool({
             >
               <circle cx="1" cy="1" fill="#d8d1c7" r="1" />
             </pattern>
+            <radialGradient id="laser-core" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="24%" stopColor="#fff4f1" />
+              <stop offset="52%" stopColor="#ff3b30" />
+              <stop offset="100%" stopColor="#d60909" />
+            </radialGradient>
+            <filter
+              id="laser-glow"
+              height="460%"
+              width="460%"
+              x="-180%"
+              y="-180%"
+            >
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
           <rect
             fill="url(#board-grid)"
@@ -1354,14 +2034,41 @@ export default function WhiteboardStudyTool({
             const isSelf =
               participant.clientId === collaboration.connection?.user.clientId;
             return participant.laser ? (
-              <g
-                className="whiteboard-laser"
-                key={participant.clientId}
-                transform={`translate(${participant.laser.x} ${participant.laser.y})`}
-              >
-                <circle fill="#ef4444" r="9" />
+              <g className="whiteboard-laser" key={participant.clientId}>
+                {participant.laser.trail.slice(1).map((point, index, trail) => {
+                  const previous = participant.laser?.trail[index];
+                  if (!previous) return null;
+                  const progress = (index + 1) / Math.max(1, trail.length);
+                  return (
+                    <line
+                      className="whiteboard-laser__trail"
+                      key={`${participant.clientId}-${index}`}
+                      opacity={0.08 + progress * 0.58}
+                      strokeWidth={1.5 + progress * 4.5}
+                      x1={previous.x}
+                      x2={point.x}
+                      y1={previous.y}
+                      y2={point.y}
+                    />
+                  );
+                })}
+                <g
+                  transform={`translate(${participant.laser.x} ${participant.laser.y})`}
+                >
+                  <circle className="whiteboard-laser__halo" r="15" />
+                  <circle
+                    className="whiteboard-laser__dot"
+                    fill="url(#laser-core)"
+                    filter="url(#laser-glow)"
+                    r="6.5"
+                  />
+                </g>
                 {!isSelf ? (
-                  <text fill={participant.color} x="14" y="-12">
+                  <text
+                    fill={participant.color}
+                    x={participant.laser.x + 14}
+                    y={participant.laser.y - 12}
+                  >
                     {participant.name}
                   </text>
                 ) : null}
@@ -1369,6 +2076,30 @@ export default function WhiteboardStudyTool({
             ) : null;
           })}
         </svg>
+        {hoveredAuthor &&
+        elements.some((element) => element.id === hoveredAuthor.elementId) ? (
+          <div
+            className="whiteboard-author-tooltip"
+            role="tooltip"
+            style={{ left: hoveredAuthor.left, top: hoveredAuthor.top }}
+          >
+            <span
+              aria-hidden="true"
+              style={{ backgroundColor: hoveredAuthor.color }}
+            >
+              {(collaboratorNames[hoveredAuthor.authorId] ?? hoveredAuthor.name)
+                .charAt(0)
+                .toUpperCase()}
+            </span>
+            <div>
+              <strong>
+                {collaboratorNames[hoveredAuthor.authorId] ??
+                  hoveredAuthor.name}
+              </strong>
+              <small>Created this</small>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

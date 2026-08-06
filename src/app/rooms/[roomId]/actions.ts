@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  getRoomMemberAccess,
+  updateViewerCollaboration,
+} from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 import {
   insertVersion,
@@ -18,6 +22,38 @@ function safeErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : "Version history is temporarily unavailable.";
+}
+
+export async function updateViewerCollaborationAction(
+  roomSlug: string,
+  enabled: boolean,
+): Promise<{ enabled: boolean; error: string | null }> {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return {
+      enabled: !enabled,
+      error: "Sign in again to change viewer collaboration.",
+    };
+  }
+
+  try {
+    const access = await getRoomMemberAccess(
+      context.client,
+      roomSlug,
+      context.userId,
+    );
+    const updated = await updateViewerCollaboration(
+      context.client,
+      access.id,
+      enabled,
+    );
+    revalidatePath(`/rooms/${roomSlug}`);
+    revalidatePath(`/rooms/${roomSlug}/breakouts`);
+    return { enabled: updated, error: null };
+  } catch (error) {
+    return { enabled: !enabled, error: safeErrorMessage(error) };
+  }
 }
 
 export async function createVersionAction(

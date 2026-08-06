@@ -15,8 +15,8 @@ const bodyFont = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "BoardPrep Canvas",
-    template: "%s · BoardPrep Canvas",
+    default: "Qollab",
+    template: "%s · Qollab",
   },
   description:
     "A focused, collaborative study canvas for board exam preparation.",

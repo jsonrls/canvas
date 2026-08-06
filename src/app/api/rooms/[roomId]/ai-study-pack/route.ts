@@ -23,7 +23,7 @@ const PRIVATE_HEADERS = {
 const GENERATION_WINDOW_MS = 10 * 60 * 1_000;
 const GENERATION_LIMIT = 5;
 const PROVIDER_TIMEOUT_MS = 55_000;
-const DEFAULT_OPENAI_MODEL = "gpt-5-mini";
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const generationBuckets = new Map<string, number[]>();
 
 // Keep the platform request window slightly above the provider abort so the
@@ -68,8 +68,12 @@ async function readRequestBody(
   }
 
   const body = value as Record<string, unknown>;
+  const allowedKeys = new Set(["sourceText", "quizCount", "flashcardCount"]);
 
-  if (Object.keys(body).length !== 1 || !("sourceText" in body)) {
+  if (
+    !("sourceText" in body) ||
+    Object.keys(body).some((k) => !allowedKeys.has(k))
+  ) {
     throw new StudyPackInputError("The study-pack request is invalid.");
   }
 
@@ -107,6 +111,8 @@ async function callStudyPackProvider(
   request: Request,
   roomSlug: string,
   sourceText: string,
+  quizCount: number,
+  flashcardCount: number,
 ): Promise<unknown> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
 
@@ -128,6 +134,8 @@ async function callStudyPackProvider(
           process.env.OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL,
           roomSlug,
           sourceText,
+          quizCount,
+          flashcardCount,
         ),
       ),
       cache: "no-store",
@@ -167,6 +175,25 @@ export async function POST(
       readRequestBody(request),
     ]);
     const sourceText = normalizeStudySource(body.sourceText);
+
+    // Clamp and validate the user-chosen counts.
+    const quizCount = Math.min(
+      10,
+      Math.max(
+        3,
+        Number.isInteger(body.quizCount) ? (body.quizCount as number) : 5,
+      ),
+    );
+    const flashcardCount = Math.min(
+      15,
+      Math.max(
+        4,
+        Number.isInteger(body.flashcardCount)
+          ? (body.flashcardCount as number)
+          : 8,
+      ),
+    );
+
     const retryAfter = consumeGenerationAllowance(
       `${context.userId}:${access.id}`,
     );
@@ -183,11 +210,17 @@ export async function POST(
       request,
       access.slug,
       sourceText,
+      quizCount,
+      flashcardCount,
     );
     const response: StudyPackResponse = {
       generatedAt: new Date().toISOString(),
       sourceCharacters: sourceText.length,
-      studyPack: readStudyPackProviderResponse(providerPayload),
+      studyPack: readStudyPackProviderResponse(
+        providerPayload,
+        quizCount,
+        flashcardCount,
+      ),
     };
 
     return NextResponse.json(response, { headers: PRIVATE_HEADERS });

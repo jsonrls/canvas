@@ -8,6 +8,8 @@ import {
   Highlighter,
   MessageSquare,
   Minus,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   RefreshCw,
   StickyNote,
@@ -40,10 +42,13 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 interface PdfStudyToolProps {
+  breakoutCode?: string;
   canEdit: boolean;
+  canManageAsset: boolean;
   currentUser: { displayName: string; id: string };
   initialAsset: RoomPdfAsset | null;
   initialState: string | null;
+  pdfApiPath?: string;
   roomId: string;
 }
 
@@ -55,6 +60,11 @@ interface UploadStartResponse {
 }
 
 interface UploadFinishResponse {
+  asset?: unknown;
+  error?: unknown;
+}
+
+interface AssetRefreshResponse {
   asset?: unknown;
   error?: unknown;
 }
@@ -123,20 +133,28 @@ function formatBytes(size: number): string {
 }
 
 export default function PdfStudyTool({
+  breakoutCode,
   canEdit,
+  canManageAsset,
   currentUser,
   initialAsset,
   initialState,
+  pdfApiPath,
   roomId,
 }: PdfStudyToolProps): React.ReactElement {
   const router = useRouter();
+  const apiPath = pdfApiPath ?? `/api/rooms/${roomId}/pdf`;
   const [asset, setAsset] = useState(initialAsset);
   const [annotations, setAnnotations] = useState<PdfAnnotation[]>([]);
   const [bookmarkedPages, setBookmarkedPages] = useState<Set<number>>(
     new Set(),
   );
+  const [commentsOpen, setCommentsOpen] = useState(true);
   const [draft, setDraft] = useState<DraftMark | null>(null);
   const [fileMessage, setFileMessage] = useState("");
+  const [isRefreshingAsset, setIsRefreshingAsset] = useState(
+    Boolean(initialAsset),
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -149,8 +167,10 @@ export default function PdfStudyTool({
   const [textDraft, setTextDraft] = useState("");
   const [zoom, setZoom] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadRecoveryRevisionRef = useRef<string | null>(null);
   const pageHostRef = useRef<HTMLDivElement>(null);
   const collaboration = useCollaborativeTool({
+    breakoutCode,
     canEdit,
     currentUser,
     initialState,
@@ -158,6 +178,89 @@ export default function PdfStudyTool({
     roomId,
   });
   const revision = asset?.revision ?? "";
+
+  const refreshPdfAsset = useCallback(
+    async (signal?: AbortSignal): Promise<void> => {
+      const response = await fetch(apiPath, {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal,
+      });
+      const payload = (await response.json()) as AssetRefreshResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          readError(payload, "The shared PDF access could not be refreshed."),
+        );
+      }
+
+      if (payload.asset === null) {
+        setAsset(null);
+        return;
+      }
+
+      if (!isRoomPdfAsset(payload.asset)) {
+        throw new Error("The refreshed PDF response was invalid.");
+      }
+
+      setAsset(payload.asset);
+    },
+    [apiPath],
+  );
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    queueMicrotask(() => {
+      if (abortController.signal.aborted) return;
+
+      void refreshPdfAsset(abortController.signal)
+        .then(() => {
+          if (!abortController.signal.aborted) setFileMessage("");
+        })
+        .catch((error: unknown) => {
+          if (abortController.signal.aborted) return;
+          setAsset(null);
+          setFileMessage(
+            error instanceof Error
+              ? error.message
+              : "The shared PDF access could not be refreshed.",
+          );
+        })
+        .finally(() => {
+          if (!abortController.signal.aborted) setIsRefreshingAsset(false);
+        });
+    });
+
+    return () => abortController.abort();
+  }, [refreshPdfAsset]);
+
+  const handlePdfLoadError = useCallback((): void => {
+    if (
+      !asset ||
+      isRefreshingAsset ||
+      loadRecoveryRevisionRef.current === asset.revision
+    ) {
+      setFileMessage("This PDF could not be rendered.");
+      return;
+    }
+
+    loadRecoveryRevisionRef.current = asset.revision;
+    setIsRefreshingAsset(true);
+    setFileMessage("Refreshing secure PDF access…");
+
+    void refreshPdfAsset()
+      .then(() => setFileMessage(""))
+      .catch((error: unknown) => {
+        setAsset(null);
+        setFileMessage(
+          error instanceof Error
+            ? error.message
+            : "The shared PDF access could not be refreshed.",
+        );
+      })
+      .finally(() => setIsRefreshingAsset(false));
+  }, [asset, isRefreshingAsset, refreshPdfAsset]);
 
   useEffect(() => {
     const host = pageHostRef.current;
@@ -171,7 +274,7 @@ export default function PdfStudyTool({
     observer.observe(host);
     updateWidth();
     return () => observer.disconnect();
-  }, []);
+  }, [asset, isRefreshingAsset]);
 
   useEffect(() => {
     const document = collaboration.connection?.document;
@@ -411,12 +514,14 @@ export default function PdfStudyTool({
   };
 
   const uploadPdf = async (file: File): Promise<void> => {
+    if (!canManageAsset) return;
+
     setIsUploading(true);
     setFileMessage("");
 
     try {
       const validated = await validatePdfUpload(file);
-      const startResponse = await fetch(`/api/rooms/${roomId}/pdf`, {
+      const startResponse = await fetch(apiPath, {
         body: JSON.stringify({
           fileName: validated.fileName,
           mimeType: file.type,
@@ -450,7 +555,7 @@ export default function PdfStudyTool({
         throw new Error("The PDF could not be uploaded to private storage.");
       }
 
-      const finishResponse = await fetch(`/api/rooms/${roomId}/pdf`, {
+      const finishResponse = await fetch(apiPath, {
         body: JSON.stringify({
           fileName: start.fileName,
           revision: start.revision,
@@ -493,12 +598,12 @@ export default function PdfStudyTool({
     >
       <div className="study-tool__heading">
         <div className="study-tool__file-actions">
-          {asset ? (
+          {asset && !isRefreshingAsset ? (
             <a href={asset.signedUrl} download={asset.fileName}>
               <Download aria-hidden="true" size={16} /> Download
             </a>
           ) : null}
-          {canEdit ? (
+          {canManageAsset ? (
             <>
               <input
                 ref={fileInputRef}
@@ -534,23 +639,31 @@ export default function PdfStudyTool({
         </p>
       ) : null}
 
-      {!asset ? (
+      {isRefreshingAsset ? (
+        <div className="pdf-empty-state" role="status">
+          <RefreshCw aria-hidden="true" size={30} />
+          <strong>Refreshing secure PDF access…</strong>
+          <p>The shared document will open automatically.</p>
+        </div>
+      ) : !asset ? (
         <div className="pdf-empty-state">
           <Upload aria-hidden="true" size={30} />
           <strong>
-            {canEdit
+            {canManageAsset
               ? "Share the room’s first PDF"
               : "Waiting for a shared PDF"}
           </strong>
           <p>Private PDF files can be up to 15 MB.</p>
-          {canEdit ? (
+          {canManageAsset ? (
             <button onClick={() => fileInputRef.current?.click()} type="button">
               Choose PDF
             </button>
           ) : null}
         </div>
       ) : (
-        <div className="pdf-studio">
+        <div
+          className={`pdf-studio${commentsOpen ? "" : " pdf-studio--comments-collapsed"}`}
+        >
           <div className="pdf-canvas-column">
             <div className="pdf-toolbar" aria-label="PDF annotation tools">
               {TOOL_LABELS.map(({ icon: Icon, label, type }) => (
@@ -597,6 +710,29 @@ export default function PdfStudyTool({
               >
                 <ZoomIn aria-hidden="true" size={16} />
               </button>
+              <button
+                aria-controls="pdf-comments-panel"
+                aria-expanded={commentsOpen}
+                aria-label={
+                  commentsOpen
+                    ? "Hide comments and notes"
+                    : "Show comments and notes"
+                }
+                className="pdf-comments-toggle"
+                onClick={() => setCommentsOpen((isOpen) => !isOpen)}
+                title={
+                  commentsOpen
+                    ? "Hide comments and notes"
+                    : "Show comments and notes"
+                }
+                type="button"
+              >
+                {commentsOpen ? (
+                  <PanelRightClose aria-hidden="true" size={18} />
+                ) : (
+                  <PanelRightOpen aria-hidden="true" size={18} />
+                )}
+              </button>
               <div className="pdf-toolbar__meta" role="status">
                 <span
                   className={`connection-badge connection-badge--${collaboration.status}`}
@@ -632,6 +768,7 @@ export default function PdfStudyTool({
                 }
                 file={asset.signedUrl}
                 loading={<p className="pdf-load-state">Opening PDF…</p>}
+                onLoadError={handlePdfLoadError}
                 onLoadSuccess={({ numPages: loadedPages }) =>
                   setNumPages(loadedPages)
                 }
@@ -748,116 +885,122 @@ export default function PdfStudyTool({
             </div>
           </div>
 
-          <aside className="pdf-comments" aria-label="PDF comments">
-            <div className="pdf-comments__heading">
-              <div>
-                <p className="sidebar-label">Page {page}</p>
-                <h2>Comments & notes</h2>
-              </div>
-              <span>{pageComments.length}</span>
-            </div>
-            {bookmarkedPages.size ? (
-              <div className="pdf-bookmarks">
-                <strong>Bookmarks</strong>
+          {commentsOpen ? (
+            <aside
+              className="pdf-comments"
+              id="pdf-comments-panel"
+              aria-label="PDF comments"
+            >
+              <div className="pdf-comments__heading">
                 <div>
-                  {[...bookmarkedPages]
-                    .sort((a, b) => a - b)
-                    .map((bookmarkedPage) => (
+                  <p className="sidebar-label">Page {page}</p>
+                  <h2>Comments & notes</h2>
+                </div>
+                <span>{pageComments.length}</span>
+              </div>
+              {bookmarkedPages.size ? (
+                <div className="pdf-bookmarks">
+                  <strong>Bookmarks</strong>
+                  <div>
+                    {[...bookmarkedPages]
+                      .sort((a, b) => a - b)
+                      .map((bookmarkedPage) => (
+                        <button
+                          key={bookmarkedPage}
+                          onClick={() => setPage(bookmarkedPage)}
+                          type="button"
+                        >
+                          {bookmarkedPage}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ) : null}
+              <div className="pdf-comment-list">
+                {pageComments.map((annotation) => (
+                  <button
+                    className={selectedId === annotation.id ? "is-active" : ""}
+                    key={annotation.id}
+                    onClick={() => selectAnnotation(annotation)}
+                    type="button"
+                  >
+                    <span style={{ background: annotation.color }}>
+                      {annotation.authorName.charAt(0)}
+                    </span>
+                    <div>
+                      <strong>{annotation.authorName}</strong>
+                      <p>{annotation.text || "Add a note…"}</p>
+                    </div>
+                  </button>
+                ))}
+                {pageComments.length === 0 ? (
+                  <p className="pdf-comment-empty">No page comments yet.</p>
+                ) : null}
+              </div>
+
+              {selectedAnnotation ? (
+                <div className="pdf-comment-editor">
+                  <div className="pdf-comment-editor__heading">
+                    <strong>{selectedAnnotation.type}</strong>
+                    {canEdit ? (
                       <button
-                        key={bookmarkedPage}
-                        onClick={() => setPage(bookmarkedPage)}
+                        aria-label="Delete annotation"
+                        onClick={deleteSelected}
                         type="button"
                       >
-                        {bookmarkedPage}
+                        <Trash2 aria-hidden="true" size={15} />
                       </button>
-                    ))}
-                </div>
-              </div>
-            ) : null}
-            <div className="pdf-comment-list">
-              {pageComments.map((annotation) => (
-                <button
-                  className={selectedId === annotation.id ? "is-active" : ""}
-                  key={annotation.id}
-                  onClick={() => selectAnnotation(annotation)}
-                  type="button"
-                >
-                  <span style={{ background: annotation.color }}>
-                    {annotation.authorName.charAt(0)}
-                  </span>
-                  <div>
-                    <strong>{annotation.authorName}</strong>
-                    <p>{annotation.text || "Add a note…"}</p>
+                    ) : null}
                   </div>
-                </button>
-              ))}
-              {pageComments.length === 0 ? (
-                <p className="pdf-comment-empty">No page comments yet.</p>
-              ) : null}
-            </div>
-
-            {selectedAnnotation ? (
-              <div className="pdf-comment-editor">
-                <div className="pdf-comment-editor__heading">
-                  <strong>{selectedAnnotation.type}</strong>
+                  <textarea
+                    disabled={!canEdit}
+                    maxLength={4000}
+                    onChange={(event) => setTextDraft(event.target.value)}
+                    placeholder="Add context for your study partners…"
+                    value={textDraft}
+                  />
                   {canEdit ? (
-                    <button
-                      aria-label="Delete annotation"
-                      onClick={deleteSelected}
-                      type="button"
-                    >
-                      <Trash2 aria-hidden="true" size={15} />
+                    <button onClick={saveAnnotationText} type="button">
+                      Save note
                     </button>
                   ) : null}
-                </div>
-                <textarea
-                  disabled={!canEdit}
-                  maxLength={4000}
-                  onChange={(event) => setTextDraft(event.target.value)}
-                  placeholder="Add context for your study partners…"
-                  value={textDraft}
-                />
-                {canEdit ? (
-                  <button onClick={saveAnnotationText} type="button">
-                    Save note
-                  </button>
-                ) : null}
-                <div className="pdf-replies">
-                  {replies
-                    .filter(
-                      (reply) => reply.annotationId === selectedAnnotation.id,
-                    )
-                    .map((reply) => (
-                      <div key={reply.id}>
-                        <strong>{reply.authorName}</strong>
-                        <p>{reply.text}</p>
-                      </div>
-                    ))}
-                </div>
-                {canEdit ? (
-                  <div className="pdf-reply-form">
-                    <input
-                      maxLength={1200}
-                      onChange={(event) => setReplyText(event.target.value)}
-                      placeholder="Reply…"
-                      value={replyText}
-                    />
-                    <button
-                      disabled={!replyText.trim()}
-                      onClick={addReply}
-                      type="button"
-                    >
-                      Reply
-                    </button>
+                  <div className="pdf-replies">
+                    {replies
+                      .filter(
+                        (reply) => reply.annotationId === selectedAnnotation.id,
+                      )
+                      .map((reply) => (
+                        <div key={reply.id}>
+                          <strong>{reply.authorName}</strong>
+                          <p>{reply.text}</p>
+                        </div>
+                      ))}
                   </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="pdf-comment-empty">
-                Select a mark to view its details.
-              </p>
-            )}
-          </aside>
+                  {canEdit ? (
+                    <div className="pdf-reply-form">
+                      <input
+                        maxLength={1200}
+                        onChange={(event) => setReplyText(event.target.value)}
+                        placeholder="Reply…"
+                        value={replyText}
+                      />
+                      <button
+                        disabled={!replyText.trim()}
+                        onClick={addReply}
+                        type="button"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="pdf-comment-empty">
+                  Select a mark to view its details.
+                </p>
+              )}
+            </aside>
+          ) : null}
         </div>
       )}
     </section>

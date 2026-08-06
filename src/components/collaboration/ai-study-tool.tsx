@@ -41,6 +41,12 @@ interface ViewDefinition {
 }
 
 const MIN_SOURCE_CHARACTERS = 80;
+const DEFAULT_QUIZ_COUNT = 5;
+const DEFAULT_FLASHCARD_COUNT = 8;
+const MIN_QUIZ_COUNT = 3;
+const MAX_QUIZ_COUNT = 20;
+const MIN_FLASHCARD_COUNT = 4;
+const MAX_FLASHCARD_COUNT = 20;
 const VIEW_DEFINITIONS: readonly ViewDefinition[] = [
   {
     icon: BookCheck,
@@ -127,6 +133,147 @@ function readErrorMessage(value: unknown): string | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const error = (value as { error?: unknown }).error;
   return typeof error === "string" ? error : null;
+}
+
+interface StudyPackConfigDialogProps {
+  flashcardCount: number;
+  isGenerating: boolean;
+  onClose(): void;
+  onConfirm(quizCount: number, flashcardCount: number): void;
+  quizCount: number;
+  setFlashcardCount(n: number): void;
+  setQuizCount(n: number): void;
+}
+
+function CountSlider({
+  id,
+  label,
+  max,
+  min,
+  onChange,
+  value,
+}: {
+  id: string;
+  label: string;
+  max: number;
+  min: number;
+  onChange(n: number): void;
+  value: number;
+}): React.ReactElement {
+  const pct = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div className="sp-config-slider">
+      <div className="sp-config-slider__header">
+        <label className="sp-config-slider__label" htmlFor={id}>
+          {label}
+        </label>
+        <output className="sp-config-slider__value" htmlFor={id}>
+          {value}
+        </output>
+      </div>
+      <div className="sp-config-slider__track-wrap">
+        <input
+          className="sp-config-slider__input"
+          id={id}
+          max={max}
+          min={min}
+          onChange={(e) => onChange(Number(e.target.value))}
+          step={1}
+          style={{ "--pct": `${pct}%` } as React.CSSProperties}
+          type="range"
+          value={value}
+        />
+      </div>
+      <div className="sp-config-slider__labels" aria-hidden="true">
+        <span>{min}</span>
+        <span>{max}</span>
+      </div>
+    </div>
+  );
+}
+
+function StudyPackConfigDialog({
+  flashcardCount,
+  isGenerating,
+  onClose,
+  onConfirm,
+  quizCount,
+  setFlashcardCount,
+  setQuizCount,
+}: StudyPackConfigDialogProps): React.ReactElement {
+  return (
+    <div
+      className="sp-config-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sp-config-title"
+    >
+      <div className="sp-config-panel">
+        <div className="sp-config-header">
+          <div>
+            <p className="ai-section-kicker">Customise your pack</p>
+            <h2 id="sp-config-title">Choose how much to generate</h2>
+            <p>
+              Adjust the quiz and flashcard counts before the AI builds your
+              study pack.
+            </p>
+          </div>
+          <button
+            aria-label="Close configuration"
+            className="sp-config-close"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" size={18} />
+          </button>
+        </div>
+
+        <div className="sp-config-body">
+          <CountSlider
+            id="sp-quiz-count"
+            label="Quiz questions"
+            max={MAX_QUIZ_COUNT}
+            min={MIN_QUIZ_COUNT}
+            onChange={setQuizCount}
+            value={quizCount}
+          />
+          <CountSlider
+            id="sp-flashcard-count"
+            label="Flashcards"
+            max={MAX_FLASHCARD_COUNT}
+            min={MIN_FLASHCARD_COUNT}
+            onChange={setFlashcardCount}
+            value={flashcardCount}
+          />
+        </div>
+
+        <div className="sp-config-footer">
+          <button
+            className="ai-primary-button"
+            disabled={isGenerating}
+            onClick={() => onConfirm(quizCount, flashcardCount)}
+            type="button"
+          >
+            {isGenerating ? (
+              <RefreshCw className="spin" aria-hidden="true" size={18} />
+            ) : (
+              <Sparkles aria-hidden="true" size={18} />
+            )}
+            {isGenerating ? "Building study pack…" : "Generate study pack"}
+          </button>
+          <button
+            className="sp-config-cancel"
+            disabled={isGenerating}
+            onClick={onClose}
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SummaryView({ pack }: { pack: StudyPack }): React.ReactElement {
@@ -436,6 +583,9 @@ export default function AiStudyTool({
   const [revealedCards, setRevealedCards] = useState<Set<number>>(
     () => new Set(),
   );
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [quizCount, setQuizCount] = useState(DEFAULT_QUIZ_COUNT);
+  const [flashcardCount, setFlashcardCount] = useState(DEFAULT_FLASHCARD_COUNT);
   const abortControllerRef = useRef<AbortController | null>(null);
   const normalizedSource = sourceText.trim();
   const sourceWordCount = normalizedSource
@@ -491,9 +641,13 @@ export default function AiStudyTool({
     return () => controller.abort();
   }, [roomId]);
 
-  const generateStudyPack = async (): Promise<void> => {
+  const generateStudyPack = async (
+    configQuizCount = quizCount,
+    configFlashcardCount = flashcardCount,
+  ): Promise<void> => {
     if (!canGenerate || isGenerating) return;
 
+    setShowConfigDialog(false);
     abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -502,7 +656,11 @@ export default function AiStudyTool({
 
     try {
       const response = await fetch(`/api/rooms/${roomId}/ai-study-pack`, {
-        body: JSON.stringify({ sourceText: normalizedSource }),
+        body: JSON.stringify({
+          sourceText: normalizedSource,
+          quizCount: configQuizCount,
+          flashcardCount: configFlashcardCount,
+        }),
         cache: "no-store",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
@@ -728,15 +886,18 @@ export default function AiStudyTool({
 
   return (
     <div className="study-tool ai-study-tool">
+      {showConfigDialog ? (
+        <StudyPackConfigDialog
+          flashcardCount={flashcardCount}
+          isGenerating={isGenerating}
+          onClose={() => setShowConfigDialog(false)}
+          onConfirm={(qc, fc) => void generateStudyPack(qc, fc)}
+          quizCount={quizCount}
+          setFlashcardCount={setFlashcardCount}
+          setQuizCount={setQuizCount}
+        />
+      ) : null}
       <header className="ai-study-heading">
-        <div>
-          <p className="eyebrow">AI study assistant · {roomId}</p>
-          <h1>Turn the room into a study pack.</h1>
-          <p>
-            One grounded pass creates a summary, quiz, cards, next steps, and a
-            cautious misconception review.
-          </p>
-        </div>
         <button
           className="ai-back-button"
           onClick={onReturnToNotes}
@@ -871,7 +1032,7 @@ export default function AiStudyTool({
           </div>
           <button
             disabled={isGenerating}
-            onClick={generateStudyPack}
+            onClick={() => void generateStudyPack()}
             type="button"
           >
             Retry
@@ -927,7 +1088,9 @@ export default function AiStudyTool({
             <button
               className="ai-primary-button"
               disabled={isGenerating}
-              onClick={canGenerate ? generateStudyPack : onReturnToNotes}
+              onClick={
+                canGenerate ? () => setShowConfigDialog(true) : onReturnToNotes
+              }
               type="button"
             >
               {isGenerating ? (
@@ -962,7 +1125,7 @@ export default function AiStudyTool({
             </div>
             <button
               disabled={isGenerating}
-              onClick={generateStudyPack}
+              onClick={() => void generateStudyPack()}
               type="button"
             >
               <RefreshCw

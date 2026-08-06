@@ -27,7 +27,7 @@ export async function requestPasswordReset(
 
   if (!email) {
     return {
-      message: "Enter the email address used for your BoardPrep account.",
+      message: "Enter the email address used for your Qollab account.",
       status: "error",
     };
   }
@@ -57,7 +57,7 @@ export async function requestPasswordReset(
 
   return {
     message:
-      "If a BoardPrep account uses that email, a secure reset link is on its way.",
+      "If a Qollab account uses that email, a secure reset link is on its way.",
     status: "success",
   };
 }

@@ -14,6 +14,14 @@ import {
   StudyPackValidationError,
   type StudyPack,
 } from "../src/lib/ai/study-pack";
+import {
+  buildWhiteboardAnswerProviderRequest,
+  MAX_WHITEBOARD_ANSWER_OUTPUT_TOKENS,
+  normalizeWhiteboardQuestion,
+  readWhiteboardAnswerProviderResponse,
+  WhiteboardAnswerInputError,
+  WhiteboardAnswerProviderError,
+} from "../src/lib/ai/whiteboard-answer";
 
 const fixture: StudyPack = {
   summary: {
@@ -95,8 +103,7 @@ function verifyStudyPackValidation(): void {
     StudyPackValidationError,
   );
   assert.throws(
-    () =>
-      readStudyPack({ ...fixture, flashcards: fixture.flashcards.slice(0, 3) }),
+    () => readStudyPack({ ...fixture, flashcards: [] }),
     StudyPackValidationError,
   );
   assert.throws(
@@ -114,13 +121,13 @@ function verifyStudyPackValidation(): void {
 
 function verifyProviderContract(): void {
   const request = buildStudyPackProviderRequest(
-    "gpt-5-mini",
+    " gpt-4o-mini",
     "cardiology-review",
     normalizeStudySource("Grounded room note. ".repeat(8)),
   );
   assert.equal(request.store, false);
   assert.equal(request.max_output_tokens, MAX_STUDY_PACK_OUTPUT_TOKENS);
-  assert.equal(request.model, "gpt-5-mini");
+  assert.equal(request.model, "gpt-4o-mini");
   assert.match(String(request.instructions), /untrusted room-note data/);
   assert.match(String(request.instructions), /not medical advice/);
 
@@ -129,7 +136,15 @@ function verifyProviderContract(): void {
   };
   assert.equal(text.format?.type, "json_schema");
   assert.equal(text.format?.strict, true);
-  assert.equal(text.format?.schema, STUDY_PACK_JSON_SCHEMA);
+  assert.notEqual(text.format?.schema, STUDY_PACK_JSON_SCHEMA);
+  const schema = text.format?.schema as {
+    properties?: {
+      flashcards?: { maxItems?: unknown };
+      quiz?: { maxItems?: unknown };
+    };
+  };
+  assert.equal(schema.properties?.quiz?.maxItems, 5);
+  assert.equal(schema.properties?.flashcards?.maxItems, 8);
 
   const input = request.input as Array<{ content?: unknown }>;
   assert.equal(typeof input[0]?.content, "string");
@@ -158,21 +173,78 @@ function verifyProviderContract(): void {
   );
 }
 
+function verifyWhiteboardAnswerContract(): void {
+  const question = normalizeWhiteboardQuestion(
+    "What are the top AI models for board-style study support?",
+  );
+  assert.equal(
+    question,
+    "What are the top AI models for board-style study support?",
+  );
+  assert.throws(
+    () => normalizeWhiteboardQuestion(""),
+    WhiteboardAnswerInputError,
+  );
+  assert.throws(
+    () => normalizeWhiteboardQuestion("x".repeat(501)),
+    WhiteboardAnswerInputError,
+  );
+
+  const request = buildWhiteboardAnswerProviderRequest(
+    " gpt-4o-mini",
+    "cardiology-review",
+    question,
+  );
+  assert.equal(request.store, false);
+  assert.equal(request.max_output_tokens, MAX_WHITEBOARD_ANSWER_OUTPUT_TOKENS);
+  assert.equal(request.model, "gpt-4o-mini");
+  assert.match(String(request.instructions), /whiteboard answer assistant/);
+  assert.match(String(request.instructions), /fit inside a whiteboard circle/);
+
+  const text = request.text as {
+    format?: { strict?: unknown; type?: unknown };
+  };
+  assert.equal(text.format?.type, "json_schema");
+  assert.equal(text.format?.strict, true);
+
+  assert.equal(
+    readWhiteboardAnswerProviderResponse({
+      output_text: JSON.stringify({ answer: "1. GPT-5 mini\n2. o3-mini" }),
+    }),
+    "1. GPT-5 mini\n2. o3-mini",
+  );
+  assert.throws(
+    () =>
+      readWhiteboardAnswerProviderResponse({
+        output: [{ content: [{ type: "refusal", refusal: "declined" }] }],
+      }),
+    (error: unknown) =>
+      error instanceof WhiteboardAnswerProviderError &&
+      error.code === "refusal",
+  );
+}
+
 async function verifyApplicationWiring(): Promise<void> {
   const [
     routeSource,
+    whiteboardAnswerHelperSource,
+    whiteboardAnswerRouteSource,
     savedRouteSource,
     roomSource,
     componentSource,
+    whiteboardSource,
     repositorySource,
     styles,
     savedMigration,
     env,
   ] = await Promise.all([
     readFile("src/app/api/rooms/[roomId]/ai-study-pack/route.ts", "utf8"),
+    readFile("src/lib/ai/whiteboard-answer.ts", "utf8"),
+    readFile("src/app/api/rooms/[roomId]/whiteboard-answer/route.ts", "utf8"),
     readFile("src/app/api/rooms/[roomId]/saved-study-guides/route.ts", "utf8"),
     readFile("src/components/collaboration/collaborative-room.tsx", "utf8"),
     readFile("src/components/collaboration/ai-study-tool.tsx", "utf8"),
+    readFile("src/components/collaboration/whiteboard-study-tool.tsx", "utf8"),
     readFile("src/lib/rooms/repository.ts", "utf8"),
     readFile("src/app/globals.css", "utf8"),
     readFile(
@@ -189,6 +261,12 @@ async function verifyApplicationWiring(): Promise<void> {
   assert.match(routeSource, /private, no-store/);
   assert.match(routeSource, /process\.env\.OPENAI_API_KEY/);
   assert.doesNotMatch(routeSource, /createServiceRoleClient/);
+  assert.match(whiteboardAnswerRouteSource, /getAuthenticatedContext/);
+  assert.match(whiteboardAnswerRouteSource, /getRoomMemberAccess/);
+  assert.match(whiteboardAnswerRouteSource, /access\.role === "viewer"/);
+  assert.match(whiteboardAnswerRouteSource, /OPENAI_WHITEBOARD_MODEL/);
+  assert.match(whiteboardAnswerRouteSource, /private, no-store/);
+  assert.match(whiteboardAnswerHelperSource, /store: false/);
   assert.match(savedRouteSource, /export async function GET/);
   assert.match(savedRouteSource, /export async function POST/);
   assert.match(savedRouteSource, /export async function DELETE/);
@@ -218,12 +296,21 @@ async function verifyApplicationWiring(): Promise<void> {
   assert.match(componentSource, /Save guide/);
   assert.match(componentSource, /Delete this saved guide/);
   assert.match(componentSource, /saved-study-guides/);
+  assert.match(whiteboardSource, /findWhiteboardAnswerPlacement/);
+  assert.match(whiteboardSource, /whiteboard-answer/);
+  assert.match(whiteboardSource, /Sparkles/);
+  assert.match(whiteboardSource, /wrapAnswerForTarget/);
+  assert.match(whiteboardSource, /autoAnswerTriggerRef/);
+  assert.match(whiteboardSource, /Answering inside the blank circle/);
 
   assert.match(styles, /grid-template-columns: repeat\(4, 1fr\)/);
   assert.match(styles, /@media \(max-width: 430px\)/);
   assert.match(styles, /min-height: 44px/);
+  assert.match(styles, /whiteboard-ai-answer/);
   assert.match(env, /^OPENAI_API_KEY=/m);
+  assert.match(env, /^# OPENAI_WHITEBOARD_MODEL=gpt-4o-mini/m);
   assert.doesNotMatch(componentSource, /OPENAI_API_KEY/);
+  assert.doesNotMatch(whiteboardSource, /OPENAI_API_KEY/);
   assert.match(savedMigration, /create table public\.saved_study_guides/);
   assert.match(savedMigration, /enable row level security/);
   assert.match(savedMigration, /grant select, insert, delete/);
@@ -233,6 +320,7 @@ async function main(): Promise<void> {
   verifyInputBoundaries();
   verifyStudyPackValidation();
   verifyProviderContract();
+  verifyWhiteboardAnswerContract();
   await verifyApplicationWiring();
   console.log("Phase 4 AI assistant contracts verified.");
 }

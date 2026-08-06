@@ -38,7 +38,7 @@ export function LoadingScreen({
   return (
     <main
       className="bp-loading-shell"
-      aria-label="Loading BoardPrep Canvas"
+      aria-label="Loading Canvas"
       role="status"
     >
       {/* Ambient background orbs */}
@@ -76,7 +76,7 @@ export function LoadingScreen({
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
           >
-            {/* Stylised BP monogram — two overlapping rounded rectangles */}
+            {/* Stylised Qollab mark — two overlapping rounded rectangles */}
             <rect
               className="bp-loading-mark-rect bp-loading-mark-rect--b"
               x="6"
@@ -123,7 +123,7 @@ export function LoadingScreen({
 
       {/* Brand wordmark */}
       <p className="bp-loading-wordmark" aria-hidden="true">
-        BoardPrep <span>Canvas</span>
+        <span>Qollab</span>
       </p>
 
       {/* Cycling status message */}

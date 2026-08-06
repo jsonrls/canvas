@@ -86,7 +86,7 @@ export function VersionHistoryPanel({
     }
 
     const shouldRestore = window.confirm(
-      `Restore “${version.label}”? BoardPrep will first save the current notes as a safety version.`,
+      `Restore “${version.label}”? Qollab will first save the current notes as a safety version.`,
     );
 
     if (!shouldRestore) {

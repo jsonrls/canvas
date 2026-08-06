@@ -19,6 +19,7 @@ interface RoomRow {
   owner_id: string;
   slug: string;
   updated_at: string;
+  viewer_can_collaborate: boolean;
 }
 
 interface MembershipRow {
@@ -72,6 +73,7 @@ export interface RoomWorkspace {
   pdfAsset: RoomPdfAsset | null;
   role: RoomRole;
   slug: string;
+  viewerCanCollaborate: boolean;
 }
 
 export interface RoomToolAccess {
@@ -79,6 +81,7 @@ export interface RoomToolAccess {
   pdfStoragePath: string | null;
   role: RoomRole;
   slug: string;
+  viewerCanCollaborate: boolean;
 }
 
 export type RoomMemberAccess = Omit<RoomToolAccess, "pdfStoragePath">;
@@ -125,7 +128,7 @@ export function normalizeRoomName(value: FormDataEntryValue | null): string {
 
 export function normalizeMemberEmail(value: FormDataEntryValue | null): string {
   if (typeof value !== "string") {
-    throw new RoomDomainError("Enter a valid BoardPrep account email.");
+    throw new RoomDomainError("Enter a valid Qollab account email.");
   }
 
   const normalized = value.trim().toLowerCase();
@@ -135,7 +138,7 @@ export function normalizeMemberEmail(value: FormDataEntryValue | null): string {
     normalized.length > 320 ||
     !normalized.includes("@")
   ) {
-    throw new RoomDomainError("Enter a valid BoardPrep account email.");
+    throw new RoomDomainError("Enter a valid Qollab account email.");
   }
 
   return normalized;
@@ -177,7 +180,9 @@ async function findRoom(
   assertRoomSlug(roomSlug);
   const { data, error } = await client
     .from("rooms")
-    .select("id, slug, name, owner_id, is_public, updated_at")
+    .select(
+      "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate",
+    )
     .eq("slug", roomSlug)
     .maybeSingle();
 
@@ -214,7 +219,9 @@ export async function listRoomDirectory(
   const [roomsResult, membershipsResult] = await Promise.all([
     client
       .from("rooms")
-      .select("id, slug, name, owner_id, is_public, updated_at")
+      .select(
+        "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate",
+      )
       .order("updated_at", { ascending: false })
       .limit(100),
     client.from("room_members").select("room_id, role").eq("user_id", userId),
@@ -340,6 +347,7 @@ export async function getRoomWorkspace(
     pdfAsset,
     role: membership.role,
     slug: room.slug,
+    viewerCanCollaborate: room.viewer_can_collaborate,
   };
 }
 
@@ -371,6 +379,7 @@ export async function getRoomToolAccess(
         : null,
     role: membership.role,
     slug: room.slug,
+    viewerCanCollaborate: room.viewer_can_collaborate,
   };
 }
 
@@ -390,7 +399,27 @@ export async function getRoomMemberAccess(
     id: room.id,
     role: membership.role,
     slug: room.slug,
+    viewerCanCollaborate: room.viewer_can_collaborate,
   };
+}
+
+export async function updateViewerCollaboration(
+  client: SupabaseClient,
+  roomId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  const { data, error } = await client.rpc("set_viewer_collaboration", {
+    input_enabled: enabled,
+    input_room_id: roomId,
+  });
+
+  if (error || typeof data !== "boolean") {
+    throw new RoomDomainError(
+      "Viewer collaboration could not be updated. Try again.",
+    );
+  }
+
+  return data;
 }
 
 export async function getRoomSettings(
@@ -547,7 +576,7 @@ export async function addRoomMember(
 
   if (error) {
     const allowedMessages = [
-      "No BoardPrep account matches that email.",
+      "No Qollab account matches that email.",
       "That account is already a room member.",
       "The room owner is already a member.",
       "Only the room owner can add collaborators.",

@@ -218,6 +218,69 @@ try {
     throw new Error("A viewer modified room notes.");
   }
 
+  const { error: outsiderToggleError } = await outsider.client.rpc(
+    "set_viewer_collaboration",
+    {
+      input_enabled: true,
+      input_room_id: first.id,
+    },
+  );
+
+  if (!outsiderToggleError) {
+    throw new Error("A non-member changed viewer collaboration.");
+  }
+
+  const { data: enabled, error: enableError } = await owner.client.rpc(
+    "set_viewer_collaboration",
+    {
+      input_enabled: true,
+      input_room_id: first.id,
+    },
+  );
+
+  if (enableError || enabled !== true) {
+    throw new Error("The owner could not enable viewer collaboration.");
+  }
+
+  const { data: collaboratingWrites, error: collaboratingWriteError } =
+    await member.client
+      .from("documents")
+      .update({
+        title: "Viewer collaboration verified",
+        updated_by: member.id,
+      })
+      .eq("room_id", first.id)
+      .eq("kind", "notes")
+      .select("id");
+
+  if (collaboratingWriteError || collaboratingWrites.length !== 1) {
+    throw new Error("An enabled viewer could not collaborate on room notes.");
+  }
+
+  const { data: disabled, error: disableError } = await owner.client.rpc(
+    "set_viewer_collaboration",
+    {
+      input_enabled: false,
+      input_room_id: first.id,
+    },
+  );
+
+  if (disableError || disabled !== false) {
+    throw new Error("The owner could not disable viewer collaboration.");
+  }
+
+  const { data: disabledWrites, error: disabledWriteError } =
+    await member.client
+      .from("documents")
+      .update({ title: "Disabled viewer must not write" })
+      .eq("room_id", first.id)
+      .eq("kind", "notes")
+      .select("id");
+
+  if (!disabledWriteError && disabledWrites.length > 0) {
+    throw new Error("A viewer kept editing after collaboration was disabled.");
+  }
+
   const { data: promoted, error: promoteError } = await owner.client
     .from("room_members")
     .update({ role: "editor" })
@@ -382,7 +445,7 @@ try {
   }
 
   process.stdout.write(
-    "Room management verification passed: atomic creation with three study tools, unique slugs, private/public access, exact-email membership, roles, immutable ownership, join/leave, owner settings, deletion, and cascades.\n",
+    "Room management verification passed: atomic creation with three study tools, unique slugs, private/public access, exact-email membership, global viewer collaboration, roles, immutable ownership, join/leave, owner settings, deletion, and cascades.\n",
   );
 } finally {
   await cleanup();

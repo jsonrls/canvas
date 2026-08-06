@@ -103,6 +103,73 @@ async function removeUploadedAsset(path: string): Promise<void> {
   await createServiceRoleClient().storage.from(PDF_BUCKET).remove([path]);
 }
 
+export async function GET(
+  _request: Request,
+  { params }: PdfRouteProps,
+): Promise<NextResponse> {
+  const context = await getAuthenticatedContext();
+
+  if (!context) {
+    return errorResponse("Authentication required.", 401);
+  }
+
+  try {
+    const { roomId } = await params;
+    const access = await getRoomToolAccess(
+      context.client,
+      roomId,
+      context.userId,
+    );
+
+    if (!access.pdfStoragePath) {
+      return NextResponse.json({ asset: null }, { headers: PRIVATE_HEADERS });
+    }
+
+    const { data: document, error: documentError } = await context.client
+      .from("documents")
+      .select("pdf_asset_revision, pdf_file_name, pdf_file_size")
+      .eq("room_id", access.id)
+      .eq("kind", "pdf")
+      .single();
+
+    if (
+      documentError ||
+      !document ||
+      typeof document.pdf_asset_revision !== "string" ||
+      typeof document.pdf_file_name !== "string" ||
+      typeof document.pdf_file_size !== "number"
+    ) {
+      throw new PdfUploadError("The shared PDF is unavailable.");
+    }
+
+    const { data: signedPdf, error: signedPdfError } =
+      await createServiceRoleClient()
+        .storage.from(PDF_BUCKET)
+        .createSignedUrl(access.pdfStoragePath, 10 * 60);
+
+    if (signedPdfError || !signedPdf?.signedUrl) {
+      throw new PdfUploadError("The shared PDF could not be opened.");
+    }
+
+    const asset: RoomPdfAsset = {
+      fileName: document.pdf_file_name,
+      revision: document.pdf_asset_revision,
+      signedUrl: signedPdf.signedUrl,
+      size: document.pdf_file_size,
+      storagePath: access.pdfStoragePath,
+    };
+
+    return NextResponse.json({ asset }, { headers: PRIVATE_HEADERS });
+  } catch (error) {
+    const message =
+      error instanceof PdfUploadError || error instanceof RoomDomainError
+        ? error.message
+        : "The shared PDF could not be opened.";
+
+    return errorResponse(message, 400);
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: PdfRouteProps,

@@ -135,7 +135,7 @@ async function startServer(port) {
   });
 
   await waitFor(
-    () => output.includes("BoardPrep Yjs server listening"),
+    () => output.includes("Qollab Yjs server listening"),
     `starting the durable Yjs server. Output: ${output}`,
   );
 
@@ -336,14 +336,10 @@ try {
   const serverUrl = `ws://${host}:${port}`;
   let child = await startServer(port);
   await expectUpgradeRejection(`${serverUrl}/${roomSlug}`, 401);
-  await expectUpgradeRejection(
-    `${serverUrl}/${roomSlug}?access_token=${encodeURIComponent(outsider.accessToken)}`,
-    403,
-  );
 
-  documents.push(new Y.Doc(), new Y.Doc());
+  documents.push(new Y.Doc(), new Y.Doc(), new Y.Doc());
   providers.push(
-    ...documents.map(
+    ...documents.slice(0, 2).map(
       (document) =>
         new WebsocketProvider(serverUrl, roomSlug, document, {
           WebSocketPolyfill: WebSocket,
@@ -352,18 +348,85 @@ try {
           params: { access_token: owner.accessToken },
         }),
     ),
+    new WebsocketProvider(serverUrl, roomSlug, documents[2], {
+      WebSocketPolyfill: WebSocket,
+      disableBc: true,
+      maxBackoffTime: 1_000,
+      params: { access_token: outsider.accessToken },
+    }),
   );
   await waitFor(
     () => providers.every((provider) => provider.synced),
     "synchronizing authenticated Yjs clients",
   );
 
-  const expectedText = "Durable BoardPrep version history verified.";
+  let expectedText = "Durable BoardPrep version history verified.";
   documents[0].getText(documentName).insert(0, expectedText);
   await waitFor(
     () => documents[1].getText(documentName).toString() === expectedText,
     "replicating an authenticated edit",
   );
+  await waitFor(
+    () => documents[2].getText(documentName).toString() === expectedText,
+    "replicating an authenticated edit to a viewer",
+  );
+  documents[2].getText(documentName).insert(expectedText.length, " blocked");
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  if (
+    documents[0].getText(documentName).toString() !== expectedText ||
+    documents[1].getText(documentName).toString() !== expectedText
+  ) {
+    throw new Error("A viewer wrote to the shared Yjs document.");
+  }
+
+  const { data: collaborationEnabled, error: collaborationEnableError } =
+    await owner.client.rpc("set_viewer_collaboration", {
+      input_enabled: true,
+      input_room_id: room.room_id,
+    });
+
+  if (collaborationEnableError || collaborationEnabled !== true) {
+    throw new Error("The owner could not enable live viewer collaboration.");
+  }
+
+  providers[2].destroy();
+  documents[2].destroy();
+  const collaboratingViewerDocument = new Y.Doc();
+  const collaboratingViewerProvider = new WebsocketProvider(
+    serverUrl,
+    roomSlug,
+    collaboratingViewerDocument,
+    {
+      WebSocketPolyfill: WebSocket,
+      disableBc: true,
+      maxBackoffTime: 1_000,
+      params: { access_token: outsider.accessToken },
+    },
+  );
+  providers[2] = collaboratingViewerProvider;
+  documents[2] = collaboratingViewerDocument;
+
+  await waitFor(
+    () =>
+      collaboratingViewerProvider.synced &&
+      collaboratingViewerDocument.getText(documentName).toString() ===
+        expectedText,
+    "reconnecting an enabled viewer to the shared Yjs document",
+  );
+
+  const viewerContribution = " Viewer collaboration verified.";
+  collaboratingViewerDocument
+    .getText(documentName)
+    .insert(expectedText.length, viewerContribution);
+  expectedText += viewerContribution;
+
+  await waitFor(
+    () =>
+      documents[0].getText(documentName).toString() === expectedText &&
+      documents[1].getText(documentName).toString() === expectedText,
+    "broadcasting an enabled viewer edit to room collaborators",
+  );
+
   await waitFor(async () => {
     const { data } = await admin
       .from("documents")
@@ -375,6 +438,17 @@ try {
 
   providers.splice(0).forEach((provider) => provider.destroy());
   documents.splice(0).forEach((document) => document.destroy());
+
+  const { data: collaborationDisabled, error: collaborationDisableError } =
+    await owner.client.rpc("set_viewer_collaboration", {
+      input_enabled: false,
+      input_room_id: room.room_id,
+    });
+
+  if (collaborationDisableError || collaborationDisabled !== false) {
+    throw new Error("The owner could not restore read-only viewer access.");
+  }
+
   await stopServer(child);
 
   child = await startServer(port);
@@ -462,7 +536,7 @@ try {
   }
 
   console.log(
-    "Version-history verification passed: profile provisioning, privacy, self-update, RLS, read-only viewers, role escalation denial, WebSocket auth, restart persistence, snapshots, and immutability.",
+    "Version-history verification passed: profile provisioning, privacy, self-update, RLS, viewer collaboration broadcast, role escalation denial, WebSocket auth, restart persistence, snapshots, and immutability.",
   );
 } finally {
   providers.forEach((provider) => provider.destroy());

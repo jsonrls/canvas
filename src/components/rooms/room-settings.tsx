@@ -23,6 +23,7 @@ import {
   updateRoomAction,
 } from "@/app/rooms/actions";
 import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
+import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
 
 function SettingsSubmitButton({
@@ -176,15 +177,8 @@ export function RoomSettingsPanel({
           <ArrowLeft aria-hidden="true" size={17} />
           Back to room
         </Link>
-        <Link
-          className="brand-lockup"
-          href="/rooms"
-          aria-label="BoardPrep rooms"
-        >
-          <span className="brand-mark" aria-hidden="true">
-            BP
-          </span>
-          <span className="brand-name">BoardPrep</span>
+        <Link className="brand-lockup" href="/rooms" aria-label="Qollab rooms">
+          <QollabBrandLogo />
         </Link>
       </header>
 
@@ -265,7 +259,7 @@ export function RoomSettingsPanel({
 
           <form action={memberAction} className="add-member-form">
             <div>
-              <label htmlFor="member-email">BoardPrep account email</label>
+              <label htmlFor="member-email">Qollab account email</label>
               <input
                 id="member-email"
                 name="email"

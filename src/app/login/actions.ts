@@ -115,7 +115,7 @@ export async function signUp(
   }
 
   return {
-    message: "Check your email to confirm your BoardPrep account.",
+    message: "Check your email to confirm your Qollab account.",
     status: "success",
   };
 }

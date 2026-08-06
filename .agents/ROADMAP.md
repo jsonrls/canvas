@@ -65,6 +65,19 @@ This document outlines the development roadmap for the MyBoardPrep Collaborative
 - [x] Creator deletion with confirmation
 - [x] Supabase RLS, retention limits, and cleanup cascades
 
+## Added Features by Developer ✅
+
+**Status**: Completed
+
+- [x] PowerPoint-style whiteboard laser with a bright focal point and fading pointer trail
+- [x] Laser can remain active while drawing, creating shapes or arrows, and placing text on the whiteboard
+- [x] Viewer follow-presenter control with a three-second lost-presenter prompt
+- [x] Follow presenter across Shared Notes, Whiteboard, and PDF Annotation workspaces
+- [x] Following viewers automatically track the presenter’s relative Shared Notes scroll position
+- [x] Viewer-only participants receive live whiteboard drawings, annotations, shapes, arrows, and text
+- [x] Viewer-only participants can securely render shared PDFs using renewable signed access URLs
+- [x] Failed or expired PDF access refreshes before the PDF renderer mounts, with bounded load recovery
+
 ## Version 1.1 - Enhanced Collaboration
 
 ### Timeline**: Q3 2024
@@ -323,6 +336,7 @@ This roadmap is influenced by:
 - **v1.4** (2026-07-17): Completed Phase 3 with private collaborative PDF annotation, a dependency-free SVG/Yjs whiteboard, isolated offline/remote document channels, hosted Storage authorization verification, and desktop/mobile browser acceptance
 - **v1.5** (2026-07-18): Completed Phase 4 with room-authorized ephemeral AI study packs, strict structured outputs, grounded safety controls, full Phase 1–3 regression coverage, live-provider verification, and desktop/mobile browser acceptance
 - **v1.6** (2026-07-18): Added completed creator-private saved AI study guides with metadata-only lists, validated detail loads, immutable RLS, deletion, and hosted lifecycle verification
+- **v1.7** (2026-07-18): Documented the completed developer-added presentation laser, combined whiteboard tools, viewer live collaboration, cross-workspace follow mode, notes scroll tracking, and renewable viewer PDF access
 
 ## Next Review
 

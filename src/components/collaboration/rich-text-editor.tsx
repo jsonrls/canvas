@@ -1,5 +1,6 @@
 "use client";
 
+import { Mark, mergeAttributes } from "@tiptap/core";
 import type { Editor, JSONContent } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCaret from "@tiptap/extension-collaboration-caret";
@@ -20,7 +21,7 @@ import {
   Undo2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { Fragment, forwardRef, useEffect, useImperativeHandle } from "react";
 import type { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
@@ -56,6 +57,28 @@ interface ToolbarAction {
   label: string;
   run: (editor: Editor) => void;
 }
+
+const FontSize = Mark.create({
+  name: "fontSize",
+  inclusive: true,
+  addAttributes() {
+    return {
+      size: {
+        default: "11px",
+        parseHTML: (element: HTMLElement) => element.style.fontSize || "11px",
+        renderHTML: (attributes: { size?: string }) => ({
+          style: `font-size: ${attributes.size ?? "11px"}`,
+        }),
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "span[style*=font-size]" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["span", mergeAttributes(HTMLAttributes), 0];
+  },
+});
 
 const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
   [
@@ -134,12 +157,66 @@ const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
   ],
 ];
 
+function FontSizeControl({
+  editable,
+  fontSize,
+  applyFontSize,
+}: {
+  editable: boolean;
+  fontSize: number;
+  applyFontSize: (nextSize: number) => void;
+}): React.ReactElement {
+  return (
+    <div className="toolbar-group toolbar-font-size" aria-label="Font size">
+      <button
+        type="button"
+        className="toolbar-button toolbar-font-size__step"
+        aria-label="Decrease font size"
+        title="Decrease font size"
+        onClick={() => applyFontSize(fontSize - 1)}
+        disabled={!editable}
+      >
+        −
+      </button>
+      <input
+        className="toolbar-font-size__value"
+        aria-label="Font size in pixels"
+        inputMode="numeric"
+        type="number"
+        min={8}
+        max={72}
+        value={fontSize}
+        onChange={(event) => applyFontSize(Number(event.target.value) || 11)}
+        onBlur={() => applyFontSize(fontSize)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
+        }}
+        disabled={!editable}
+      />
+      <button
+        type="button"
+        className="toolbar-button toolbar-font-size__step"
+        aria-label="Increase font size"
+        title="Increase font size"
+        onClick={() => applyFontSize(fontSize + 1)}
+        disabled={!editable}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 function EditorToolbar({
   editor,
+  editable,
   syncLabel,
   syncStatus,
 }: {
   editor: Editor;
+  editable: boolean;
   syncLabel?: string;
   syncStatus?: string;
 }): React.ReactElement {
@@ -150,35 +227,61 @@ function EditorToolbar({
       wordCount: currentEditor.getText().trim()
         ? currentEditor.getText().trim().split(/\s+/u).length
         : 0,
+      fontSize: Number.parseInt(
+        currentEditor.getAttributes("fontSize").size ?? "11",
+        10,
+      ),
     }),
   });
+
+  const fontSize = Number.isFinite(toolbarState.fontSize)
+    ? toolbarState.fontSize
+    : 11;
+
+  const applyFontSize = (nextSize: number) => {
+    const clampedSize = Math.min(72, Math.max(8, nextSize));
+    editor
+      .chain()
+      .focus()
+      .setMark("fontSize", { size: `${clampedSize}px` })
+      .run();
+  };
 
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Text formatting">
       <div className="toolbar-actions">
         {TOOLBAR_GROUPS.map((group, groupIndex) => (
-          <div className="toolbar-group" key={groupIndex}>
-            {group.map((action) => {
-              const Icon = action.icon;
-              const isActive = action.isActive?.(editor) ?? false;
-              const isDisabled = action.isDisabled?.(editor) ?? false;
+          <Fragment key={groupIndex}>
+            {groupIndex === 1 ? (
+              <FontSizeControl
+                editable={editable}
+                fontSize={fontSize}
+                applyFontSize={applyFontSize}
+              />
+            ) : null}
+            <div className="toolbar-group">
+              {group.map((action) => {
+                const Icon = action.icon;
+                const isActive = action.isActive?.(editor) ?? false;
+                const isDisabled = action.isDisabled?.(editor) ?? false;
 
-              return (
-                <button
-                  type="button"
-                  className={`toolbar-button${isActive ? " toolbar-button--active" : ""}`}
-                  key={action.label}
-                  aria-label={action.label}
-                  aria-pressed={action.isActive ? isActive : undefined}
-                  disabled={isDisabled}
-                  onClick={() => action.run(editor)}
-                  title={action.label}
-                >
-                  <Icon aria-hidden="true" size={17} strokeWidth={1.9} />
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    type="button"
+                    className={`toolbar-button${isActive ? " toolbar-button--active" : ""}`}
+                    key={action.label}
+                    aria-label={action.label}
+                    aria-pressed={action.isActive ? isActive : undefined}
+                    disabled={isDisabled}
+                    onClick={() => action.run(editor)}
+                    title={action.label}
+                  >
+                    <Icon aria-hidden="true" size={17} strokeWidth={1.9} />
+                  </button>
+                );
+              })}
+            </div>
+          </Fragment>
         ))}
       </div>
       {syncLabel ? (
@@ -219,6 +322,7 @@ export const RichTextEditor = forwardRef<
     {
       extensions: [
         StarterKit.configure({ undoRedo: false }),
+        FontSize,
         Placeholder.configure({
           placeholder:
             "Start with the mechanism, then add the exam clues your group never wants to miss…",
@@ -300,6 +404,7 @@ export const RichTextEditor = forwardRef<
       {editable ? (
         <EditorToolbar
           editor={editor}
+          editable={editable}
           syncLabel={syncLabel}
           syncStatus={syncStatus}
         />

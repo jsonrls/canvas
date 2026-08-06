@@ -1,10 +1,10 @@
 {
-  "name": "boardprep-canvas",
+  "name": "qollab",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:yjs": "node --env-file=.env server/yjs-server.mjs",
+    "dev:yjs": "node --watch --env-file=.env server/yjs-server.mjs",
     "dev:all": "concurrently -k -n WEB,YJS -c blue,yellow \"npm:dev\" \"npm:dev:yjs\"",
     "build": "next build",
     "start": "next start",
@@ -14,6 +14,7 @@
     "verify:schema": "node --env-file=.env scripts/verify-schema.mjs",
     "verify:version-history": "node --env-file=.env scripts/verify-version-history.mjs",
     "verify:rooms": "node --env-file=.env scripts/verify-room-management.mjs",
+    "verify:breakouts": "node --env-file=.env scripts/verify-breakout-rooms.mjs",
     "verify:offline-sync": "node --env-file=.env --import tsx scripts/verify-offline-sync.ts",
     "verify:conflict-review": "node --import tsx scripts/verify-conflict-review.ts",
     "verify:password-reset": "node --import tsx scripts/verify-password-reset.ts",

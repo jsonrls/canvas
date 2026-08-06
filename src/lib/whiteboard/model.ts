@@ -8,6 +8,7 @@ export interface WhiteboardPoint {
 
 export interface WhiteboardElement {
   authorId: string;
+  authorName: string;
   color: string;
   createdAt: string;
   height: number;
@@ -389,8 +390,15 @@ export function readWhiteboardElement(
           isCoordinate(point.y, WHITEBOARD_HEIGHT),
       )
     : [];
+  const authorName =
+    value.authorName === undefined
+      ? "Study partner"
+      : isString(value.authorName, 120) && value.authorName.trim()
+        ? value.authorName.trim()
+        : null;
 
   if (
+    authorName === null ||
     !isString(value.id, 80) ||
     !isString(value.authorId, 80) ||
     !isString(value.color, 32) ||
@@ -409,6 +417,7 @@ export function readWhiteboardElement(
 
   return {
     authorId: value.authorId,
+    authorName,
     color: value.color,
     createdAt: value.createdAt,
     height: value.height,

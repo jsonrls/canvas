@@ -8,14 +8,17 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Flame,
   Globe2,
   House,
+  Eye,
   LockKeyhole,
+  MousePointer2,
   PanelLeft,
   PanelsTopLeft,
+  Presentation,
   Radio,
   RefreshCw,
+  Split,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +30,7 @@ import * as Y from "yjs";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { createVersionAction } from "@/app/rooms/[roomId]/actions";
+import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import {
   ConflictReviewPanel,
   type ConflictResolutionResult,
@@ -36,6 +40,10 @@ import {
   type RichTextEditorHandle,
 } from "@/components/collaboration/rich-text-editor";
 import { VersionHistoryPanel } from "@/components/collaboration/version-history-panel";
+import {
+  ViewerCollaborationStatus,
+  ViewerCollaborationToggle,
+} from "@/components/rooms/viewer-collaboration-toggle";
 import {
   captureOfflineDraft,
   createConflictCheckpointLabel,
@@ -56,6 +64,8 @@ import type {
   RoomPdfAsset,
   RoomRole,
 } from "@/lib/rooms/repository";
+import { useRoomPresentation } from "@/hooks/use-room-presentation";
+import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
 type LocalPersistenceStatus = "disabled" | "loading" | "saved" | "unavailable";
 type RemoteSyncStatus =
@@ -76,6 +86,7 @@ interface CollaborationConnection {
 
 interface CollaborativeRoomProps {
   availableRooms: Array<{ name: string; slug: string }>;
+  breakoutRoomCount: number;
   currentUser: {
     displayName: string;
     id: string;
@@ -84,6 +95,7 @@ interface CollaborativeRoomProps {
   initialDocumentStates: Record<RoomDocumentKind, string | null>;
   initialPdfAsset: RoomPdfAsset | null;
   initialVersions: VersionSummary[];
+  initialViewerCanCollaborate: boolean;
   isPublic: boolean;
   roomId: string;
 }
@@ -174,19 +186,31 @@ function readParticipants(provider: WebsocketProvider): StudyUser[] {
 
 export function CollaborativeRoom({
   availableRooms,
+  breakoutRoomCount,
   currentUser,
   currentUserRole,
   initialDocumentStates,
   initialPdfAsset,
   initialVersions,
+  initialViewerCanCollaborate,
   isPublic,
   roomId,
 }: CollaborativeRoomProps): React.ReactElement {
   const router = useRouter();
-  const canEdit = currentUserRole !== "viewer";
+  const { setViewerCanCollaborate, viewerCanCollaborate } =
+    useViewerCollaboration({
+      initialEnabled: initialViewerCanCollaborate,
+      role: currentUserRole,
+      roomSlug: roomId,
+    });
+  const canManagePdf = currentUserRole !== "viewer";
+  const canEdit = canManagePdf || viewerCanCollaborate;
   const [activeTool, setActiveTool] = useState<WorkspaceTool>("notes");
+  const [followingPresenterId, setFollowingPresenterId] = useState<
+    string | null
+  >(null);
+  const [showFollowPrompt, setShowFollowPrompt] = useState(false);
   const [assistantSourceText, setAssistantSourceText] = useState("");
-  const [isMenuSidebarCollapsed, setIsMenuSidebarCollapsed] = useState(false);
   const [isVersionHistoryCollapsed, setIsVersionHistoryCollapsed] =
     useState(false);
   const [connection, setConnection] = useState<CollaborationConnection | null>(
@@ -205,6 +229,7 @@ export function CollaborativeRoom({
   const [localMessage, setLocalMessage] = useState("");
   const [reconciliationMessage, setReconciliationMessage] = useState("");
   const editorRef = useRef<RichTextEditorHandle>(null);
+  const notesWorkspaceRef = useRef<HTMLElement>(null);
   const documentRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const reconciliationWindowRef = useRef<ReconciliationWindow | null>(null);
@@ -212,6 +237,129 @@ export function CollaborativeRoom({
   const offlineInitializationRef =
     useRef<Promise<OfflineDocumentResult> | null>(null);
   const isSigningOutRef = useRef(false);
+  const presentedWorkspace: RoomDocumentKind =
+    activeTool === "assistant" ? "notes" : activeTool;
+  const roomPresentation = useRoomPresentation({
+    canPresent: canEdit,
+    currentUser,
+    roomId,
+    workspace: presentedWorkspace,
+  });
+  const {
+    isPresenting,
+    presentation,
+    startPresenting,
+    stopPresenting,
+    updateCursor,
+    updateScroll,
+  } = roomPresentation;
+  const isFollowingPresenter = Boolean(
+    presentation && followingPresenterId === presentation.presenterId,
+  );
+  const presenterId = presentation?.presenterId;
+  const presenterWorkspace = presentation?.workspace;
+
+  useEffect(() => {
+    if (activeTool === "assistant" && isPresenting) {
+      stopPresenting();
+    }
+  }, [activeTool, isPresenting, stopPresenting]);
+
+  const chooseTool = useCallback(
+    (nextTool: WorkspaceTool): void => {
+      if (!canEdit) {
+        setFollowingPresenterId(null);
+        setShowFollowPrompt(false);
+      }
+      setActiveTool(nextTool);
+    },
+    [canEdit],
+  );
+
+  const followPresenter = useCallback((): void => {
+    if (!presentation || canEdit) return;
+    setFollowingPresenterId(presentation.presenterId);
+    setShowFollowPrompt(false);
+    setActiveTool(presentation.workspace);
+  }, [canEdit, presentation]);
+
+  useEffect(() => {
+    if (canEdit) return;
+
+    if (!presenterId || !presenterWorkspace) return;
+
+    if (followingPresenterId === presenterId) {
+      if (activeTool !== presenterWorkspace) {
+        queueMicrotask(() => setActiveTool(presenterWorkspace));
+      }
+      return;
+    }
+
+    const promptTimer = setTimeout(() => setShowFollowPrompt(true), 3_000);
+    return () => clearTimeout(promptTimer);
+  }, [
+    activeTool,
+    canEdit,
+    followingPresenterId,
+    presenterId,
+    presenterWorkspace,
+  ]);
+
+  const handleNotesScroll = useCallback(
+    (event: React.UIEvent<HTMLElement>): void => {
+      const target = event.target;
+      if (
+        !canEdit ||
+        !(target instanceof HTMLElement) ||
+        !target.classList.contains("boardprep-editor")
+      ) {
+        return;
+      }
+
+      const maximumScroll = Math.max(
+        0,
+        target.scrollHeight - target.clientHeight,
+      );
+      updateScroll(maximumScroll > 0 ? target.scrollTop / maximumScroll : 0);
+    },
+    [canEdit, updateScroll],
+  );
+
+  useEffect(() => {
+    const scrollY = presentation?.scrollY;
+    if (
+      activeTool !== "notes" ||
+      !isFollowingPresenter ||
+      presentation?.workspace !== "notes" ||
+      typeof scrollY !== "number"
+    ) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      const scroller =
+        notesWorkspaceRef.current?.querySelector<HTMLElement>(
+          ".boardprep-editor",
+        );
+      if (!scroller) return;
+      const maximumScroll = Math.max(
+        0,
+        scroller.scrollHeight - scroller.clientHeight,
+      );
+      scroller.scrollTo({
+        behavior: "auto",
+        top: scrollY * maximumScroll,
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [
+    activeTool,
+    isFollowingPresenter,
+    presentation?.scrollY,
+    presentation?.updatedAt,
+    presentation?.workspace,
+  ]);
 
   const beginReconciliationWindow = useCallback((): void => {
     if (!canEdit) {
@@ -314,10 +462,10 @@ export function CollaborativeRoom({
         }
       }
 
-      setRemoteStatus("connecting");
+      setRemoteStatus(canEdit ? "connecting" : "viewing");
     };
     const handleSync = (synced: boolean): void => {
-      setRemoteStatus(synced ? "synced" : "connecting");
+      setRemoteStatus(synced ? (canEdit ? "synced" : "viewing") : "connecting");
 
       if (!synced) {
         beginReconciliationWindow();
@@ -464,7 +612,7 @@ export function CollaborativeRoom({
   ]);
 
   useEffect(() => {
-    if (!connection || !canEdit) {
+    if (!connection) {
       return;
     }
 
@@ -538,23 +686,15 @@ export function CollaborativeRoom({
   }, [beginReconciliationWindow, canEdit, connection, connectionAttempt]);
 
   const reconnect = useCallback((): void => {
-    if (!canEdit) {
-      return;
-    }
-
     beginReconciliationWindow();
     providerRef.current?.disconnect();
     setRemoteStatus("connecting");
     setConnectionMessage("");
     setParticipants([]);
     setConnectionAttempt((attempt) => attempt + 1);
-  }, [beginReconciliationWindow, canEdit]);
+  }, [beginReconciliationWindow]);
 
   useEffect(() => {
-    if (!canEdit) {
-      return;
-    }
-
     const handleOnline = (): void => reconnect();
     const handleOffline = (): void => {
       beginReconciliationWindow();
@@ -720,11 +860,21 @@ export function CollaborativeRoom({
 
   const openAssistant = (): void => {
     setAssistantSourceText(editorRef.current?.captureDraft()?.text ?? "");
-    setActiveTool("assistant");
+    chooseTool("assistant");
   };
 
   return (
-    <main className="room-shell">
+    <main
+      className="room-shell"
+      onPointerMove={(event) => {
+        if (isPresenting) {
+          updateCursor(
+            event.clientX / Math.max(1, window.innerWidth),
+            event.clientY / Math.max(1, window.innerHeight),
+          );
+        }
+      }}
+    >
       <header className="room-header">
         <div className="brand-lockup">
           <Link
@@ -732,10 +882,7 @@ export function CollaborativeRoom({
             href="/rooms"
             aria-label="All study rooms"
           >
-            <span className="brand-mark" aria-hidden="true">
-              BP
-            </span>
-            <span className="brand-name">BoardPrep</span>
+            <QollabBrandLogo />
           </Link>
           <span className="brand-divider" aria-hidden="true" />
           <label className="room-switcher" aria-label="Switch study room">
@@ -762,6 +909,13 @@ export function CollaborativeRoom({
             <PanelLeft aria-hidden="true" size={18} />
           </Link>
           <Link
+            className="icon-button mobile-only"
+            href={`/rooms/${roomId}/breakouts`}
+            aria-label="Breakout rooms"
+          >
+            <Split aria-hidden="true" size={18} />
+          </Link>
+          <Link
             className="icon-button"
             href="/rooms"
             aria-label="All study rooms"
@@ -783,6 +937,51 @@ export function CollaborativeRoom({
               </span>
             ))}
           </div>
+          {canEdit ? (
+            <button
+              aria-pressed={isPresenting}
+              aria-label={
+                isPresenting
+                  ? "Stop presenting"
+                  : "Start presenting this workspace"
+              }
+              className={`presentation-control${isPresenting ? " presentation-control--active" : ""}`}
+              onClick={isPresenting ? stopPresenting : startPresenting}
+              type="button"
+            >
+              <Presentation aria-hidden="true" size={16} />
+              {isPresenting ? "Stop presenting" : "Present"}
+            </button>
+          ) : (
+            <button
+              aria-pressed={isFollowingPresenter}
+              aria-label={
+                isFollowingPresenter && presentation
+                  ? `Stop following ${presentation.presenterName}`
+                  : presentation
+                    ? `Follow ${presentation.presenterName}`
+                    : "No active presenter"
+              }
+              className={`presentation-control${isFollowingPresenter ? " presentation-control--following" : ""}`}
+              disabled={!presentation}
+              onClick={() => {
+                if (isFollowingPresenter) {
+                  setFollowingPresenterId(null);
+                  setShowFollowPrompt(false);
+                } else {
+                  followPresenter();
+                }
+              }}
+              type="button"
+            >
+              <Eye aria-hidden="true" size={16} />
+              {isFollowingPresenter && presentation
+                ? `Following ${presentation.presenterName}`
+                : presentation
+                  ? `Follow ${presentation.presenterName}`
+                  : "No presenter"}
+            </button>
+          )}
           {currentUserRole === "owner" ? (
             <Link className="invite-button" href={`/rooms/${roomId}/settings`}>
               <UsersRound aria-hidden="true" size={16} />
@@ -808,7 +1007,7 @@ export function CollaborativeRoom({
       <nav className="mobile-workspace-tabs" aria-label="Room workspace">
         <button
           aria-pressed={activeTool === "notes"}
-          onClick={() => setActiveTool("notes")}
+          onClick={() => chooseTool("notes")}
           type="button"
         >
           <BookOpenText aria-hidden="true" size={17} />
@@ -816,7 +1015,7 @@ export function CollaborativeRoom({
         </button>
         <button
           aria-pressed={activeTool === "pdf"}
-          onClick={() => setActiveTool("pdf")}
+          onClick={() => chooseTool("pdf")}
           type="button"
         >
           <FileText aria-hidden="true" size={17} />
@@ -824,7 +1023,7 @@ export function CollaborativeRoom({
         </button>
         <button
           aria-pressed={activeTool === "whiteboard"}
-          onClick={() => setActiveTool("whiteboard")}
+          onClick={() => chooseTool("whiteboard")}
           type="button"
         >
           <PanelsTopLeft aria-hidden="true" size={17} />
@@ -839,36 +1038,21 @@ export function CollaborativeRoom({
           AI
         </button>
       </nav>
+      <div className="mobile-collaboration-control">
+        {currentUserRole === "viewer" ? (
+          <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
+        ) : (
+          <ViewerCollaborationToggle
+            enabled={viewerCanCollaborate}
+            onEnabledChange={setViewerCanCollaborate}
+            roomSlug={roomId}
+          />
+        )}
+      </div>
 
       <div
-        className={`room-body${activeTool === "notes" ? " room-body--notes" : " room-body--study-tool"}${isMenuSidebarCollapsed ? " room-body--menu-collapsed" : ""}${activeTool === "notes" && isVersionHistoryCollapsed ? " room-body--history-collapsed" : ""}`}
+        className={`room-body${activeTool === "notes" ? " room-body--notes" : " room-body--study-tool"}${activeTool === "notes" && isVersionHistoryCollapsed ? " room-body--history-collapsed" : ""}`}
       >
-        <button
-          aria-controls="room-menu-sidebar"
-          aria-expanded={!isMenuSidebarCollapsed}
-          aria-label={
-            isMenuSidebarCollapsed
-              ? "Expand menu sidebar"
-              : "Collapse menu sidebar"
-          }
-          className={`sidebar-edge-toggle menu-sidebar-toggle${isMenuSidebarCollapsed ? " menu-sidebar-toggle--collapsed" : ""}`}
-          onClick={() =>
-            setIsMenuSidebarCollapsed((isCollapsed) => !isCollapsed)
-          }
-          title={
-            isMenuSidebarCollapsed
-              ? "Expand menu sidebar"
-              : "Collapse menu sidebar"
-          }
-          type="button"
-        >
-          {isMenuSidebarCollapsed ? (
-            <ChevronRight aria-hidden="true" size={18} strokeWidth={2} />
-          ) : (
-            <ChevronLeft aria-hidden="true" size={18} strokeWidth={2} />
-          )}
-        </button>
-
         <aside
           className="room-sidebar"
           id="room-menu-sidebar"
@@ -895,7 +1079,7 @@ export function CollaborativeRoom({
             <nav className="sidebar-nav">
               <button
                 className={`sidebar-link${activeTool === "notes" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("notes")}
+                onClick={() => chooseTool("notes")}
                 type="button"
               >
                 <BookOpenText aria-hidden="true" size={17} />
@@ -903,7 +1087,7 @@ export function CollaborativeRoom({
               </button>
               <button
                 className={`sidebar-link${activeTool === "pdf" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("pdf")}
+                onClick={() => chooseTool("pdf")}
                 type="button"
               >
                 <FileText aria-hidden="true" size={17} />
@@ -911,7 +1095,7 @@ export function CollaborativeRoom({
               </button>
               <button
                 className={`sidebar-link${activeTool === "whiteboard" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("whiteboard")}
+                onClick={() => chooseTool("whiteboard")}
                 type="button"
               >
                 <PanelsTopLeft aria-hidden="true" size={17} />
@@ -929,21 +1113,26 @@ export function CollaborativeRoom({
           </div>
 
           <div className="sidebar-section">
-            <p className="sidebar-label">Today&apos;s focus</p>
-            <div className="focus-card">
-              <div className="focus-card-heading">
-                <Flame aria-hidden="true" size={16} />
-                High-yield block
-              </div>
-              <strong>Cardiovascular pharmacology</strong>
-              <div
-                className="focus-progress"
-                aria-label="Study block 68 percent complete"
+            <p className="sidebar-label">Collaboration</p>
+            <nav className="sidebar-nav">
+              <Link
+                className="sidebar-link"
+                href={`/rooms/${roomId}/breakouts`}
               >
-                <span style={{ width: "68%" }} />
-              </div>
-              <small>34 minutes remaining</small>
-            </div>
+                <Split aria-hidden="true" size={17} />
+                Breakouts
+                <span>{breakoutRoomCount}</span>
+              </Link>
+            </nav>
+            {currentUserRole === "viewer" ? (
+              <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
+            ) : (
+              <ViewerCollaborationToggle
+                enabled={viewerCanCollaborate}
+                onEnabledChange={setViewerCanCollaborate}
+                roomSlug={roomId}
+              />
+            )}
           </div>
 
           <div className="sidebar-footer">
@@ -969,6 +1158,8 @@ export function CollaborativeRoom({
             className="editor-workspace"
             id="notes"
             aria-label="Shared notes workspace"
+            onScrollCapture={handleNotesScroll}
+            ref={notesWorkspaceRef}
           >
             {conflictReview ? (
               <ConflictReviewPanel
@@ -1057,6 +1248,7 @@ export function CollaborativeRoom({
             {activeTool === "pdf" ? (
               <PdfStudyTool
                 canEdit={canEdit}
+                canManageAsset={canManagePdf}
                 currentUser={currentUser}
                 initialAsset={initialPdfAsset}
                 initialState={initialDocumentStates.pdf}
@@ -1071,13 +1263,62 @@ export function CollaborativeRoom({
               />
             ) : (
               <AiStudyTool
-                onReturnToNotes={() => setActiveTool("notes")}
+                onReturnToNotes={() => chooseTool("notes")}
                 roomId={roomId}
                 sourceText={assistantSourceText}
               />
             )}
           </section>
         )}
+
+        {!canEdit &&
+        !isFollowingPresenter &&
+        showFollowPrompt &&
+        presentation ? (
+          <div
+            aria-labelledby="follow-presenter-title"
+            className="follow-presenter-dialog"
+            role="dialog"
+          >
+            <div className="follow-presenter-dialog__icon" aria-hidden="true">
+              <Presentation size={20} />
+            </div>
+            <div className="follow-presenter-dialog__copy">
+              <strong id="follow-presenter-title">Lost the presenter?</strong>
+              <p>
+                {presentation.presenterName} is now presenting{" "}
+                {presentation.workspace === "notes"
+                  ? "Shared Notes"
+                  : presentation.workspace === "pdf"
+                    ? "PDF Annotation"
+                    : "the Whiteboard"}
+                . Follow to move with them automatically.
+              </p>
+            </div>
+            <div className="follow-presenter-dialog__actions">
+              <button onClick={() => setShowFollowPrompt(false)} type="button">
+                Not now
+              </button>
+              <button onClick={followPresenter} type="button">
+                <Eye aria-hidden="true" size={15} /> Follow presenter
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {!canEdit && isFollowingPresenter && presentation?.cursor ? (
+          <div
+            aria-hidden="true"
+            className="presenter-cursor"
+            style={{
+              left: `${presentation.cursor.x * 100}vw`,
+              top: `${presentation.cursor.y * 100}vh`,
+            }}
+          >
+            <MousePointer2 fill="currentColor" size={22} />
+            <span>{presentation.presenterName}</span>
+          </div>
+        ) : null}
 
         {activeTool === "notes" ? (
           <>

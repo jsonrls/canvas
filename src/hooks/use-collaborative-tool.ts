@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
-import { buildCollaborativeDocumentName } from "@/lib/collaboration/document-name";
+import {
+  buildBreakoutCollaborativeDocumentName,
+  buildCollaborativeDocumentName,
+} from "@/lib/collaboration/document-name";
 import {
   createOfflineDocument,
   type CollaborativeDocumentKind,
@@ -14,10 +17,19 @@ import {
 export type ToolSyncStatus =
   "connecting" | "error" | "offline" | "synced" | "viewing";
 
+export interface ToolLaserPoint {
+  x: number;
+  y: number;
+}
+
+export interface ToolLaser extends ToolLaserPoint {
+  trail: ToolLaserPoint[];
+}
+
 export interface ToolParticipant {
   clientId: number;
   color: string;
-  laser?: { x: number; y: number };
+  laser?: ToolLaser;
   name: string;
 }
 
@@ -28,6 +40,7 @@ export interface CollaborativeToolConnection {
 }
 
 interface UseCollaborativeToolOptions {
+  breakoutCode?: string;
   canEdit: boolean;
   currentUser: { displayName: string; id: string };
   initialState: string | null;
@@ -85,18 +98,31 @@ function readParticipants(provider: WebsocketProvider): ToolParticipant[] {
       return;
     }
 
+    const validLaserPoint = (point: unknown): point is ToolLaserPoint =>
+      Boolean(
+        point &&
+        typeof point === "object" &&
+        "x" in point &&
+        "y" in point &&
+        typeof point.x === "number" &&
+        Number.isFinite(point.x) &&
+        typeof point.y === "number" &&
+        Number.isFinite(point.y),
+      );
+
     participants.push({
       clientId,
       color: user.color,
-      laser:
-        laser &&
-        typeof laser === "object" &&
-        "x" in laser &&
-        "y" in laser &&
-        typeof laser.x === "number" &&
-        typeof laser.y === "number"
-          ? { x: laser.x, y: laser.y }
-          : undefined,
+      laser: validLaserPoint(laser)
+        ? {
+            x: laser.x,
+            y: laser.y,
+            trail:
+              "trail" in laser && Array.isArray(laser.trail)
+                ? laser.trail.filter(validLaserPoint).slice(-16)
+                : [],
+          }
+        : undefined,
       name: user.name,
     });
   });
@@ -107,6 +133,7 @@ function readParticipants(provider: WebsocketProvider): ToolParticipant[] {
 }
 
 export function useCollaborativeTool({
+  breakoutCode,
   canEdit,
   currentUser,
   initialState,
@@ -128,6 +155,9 @@ export function useCollaborativeTool({
     let persistence: OfflineDocumentResult["persistence"] = null;
     const abortController = new AbortController();
     const document = new Y.Doc();
+    const offlineRoomId = breakoutCode
+      ? `breakout-${breakoutCode.toLowerCase()}`
+      : roomId;
     const snapshotMessage = applySnapshot(document, initialState);
     const user: ToolParticipant = {
       clientId: document.clientID,
@@ -136,7 +166,9 @@ export function useCollaborativeTool({
     };
     const provider = new WebsocketProvider(
       process.env.NEXT_PUBLIC_YJS_WS_URL ?? "ws://localhost:1234",
-      buildCollaborativeDocumentName(roomId, kind),
+      breakoutCode
+        ? buildBreakoutCollaborativeDocumentName(roomId, breakoutCode, kind)
+        : buildCollaborativeDocumentName(roomId, kind),
       document,
       {
         connect: false,
@@ -165,11 +197,11 @@ export function useCollaborativeTool({
         return;
       }
 
-      setStatus("connecting");
+      setStatus(canEdit ? "connecting" : "viewing");
     };
     const updateSync = (synced: boolean): void => {
       if (!active) return;
-      setStatus(synced ? "synced" : "connecting");
+      setStatus(synced ? (canEdit ? "synced" : "viewing") : "connecting");
 
       if (synced) {
         setMessage("");
@@ -197,64 +229,61 @@ export function useCollaborativeTool({
       if (!active) return;
       setConnection({ document, provider, user });
 
-      if (!canEdit) {
-        setMessage(snapshotMessage);
-        setStatus("viewing");
-      }
+      if (!canEdit) setMessage(snapshotMessage);
     });
 
-    if (canEdit) {
-      const initialize = async (): Promise<void> => {
+    const initialize = async (): Promise<void> => {
+      if (canEdit) {
         const offline = await createOfflineDocument(
           currentUser.id,
-          roomId,
+          offlineRoomId,
           document,
           kind,
         );
         persistence = offline.persistence;
+      }
 
-        if (!active) {
-          await persistence?.destroy();
-          return;
-        }
+      if (!active) {
+        await persistence?.destroy();
+        return;
+      }
 
-        if (!navigator.onLine) {
-          handleOffline();
-          return;
-        }
+      if (!navigator.onLine) {
+        handleOffline();
+        return;
+      }
 
-        const response = await fetch("/api/auth/access-token", {
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("The secure collaboration session could not open.");
-        }
-
-        const payload = (await response.json()) as { accessToken?: unknown };
-
-        if (typeof payload.accessToken !== "string") {
-          throw new Error("The collaboration token response was invalid.");
-        }
-
-        if (active) {
-          provider.params = { access_token: payload.accessToken };
-          provider.connect();
-        }
-      };
-
-      void initialize().catch((error: unknown) => {
-        if (!active || abortController.signal.aborted) return;
-        setStatus(navigator.onLine ? "error" : "offline");
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "The collaboration session could not open.",
-        );
+      const response = await fetch("/api/auth/access-token", {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: abortController.signal,
       });
-    }
+
+      if (!response.ok) {
+        throw new Error("The secure collaboration session could not open.");
+      }
+
+      const payload = (await response.json()) as { accessToken?: unknown };
+
+      if (typeof payload.accessToken !== "string") {
+        throw new Error("The collaboration token response was invalid.");
+      }
+
+      if (active) {
+        provider.params = { access_token: payload.accessToken };
+        provider.connect();
+      }
+    };
+
+    void initialize().catch((error: unknown) => {
+      if (!active || abortController.signal.aborted) return;
+      setStatus(navigator.onLine ? "error" : "offline");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "The collaboration session could not open.",
+      );
+    });
 
     return () => {
       active = false;
@@ -275,6 +304,7 @@ export function useCollaborativeTool({
   }, [
     attempt,
     canEdit,
+    breakoutCode,
     currentUser.displayName,
     currentUser.id,
     initialState,

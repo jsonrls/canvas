@@ -23,7 +23,7 @@ const connection = [
 const assertionSql = String.raw`
 do $$
 declare
-  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles', 'saved_study_guides'];
+  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles', 'saved_study_guides', 'breakout_rooms', 'breakout_documents', 'breakout_room_members'];
   table_name text;
 begin
   foreach table_name in array expected_tables loop
@@ -53,8 +53,26 @@ begin
     from pg_policies
     where schemaname = 'public'
       and tablename = any(expected_tables)
-  ) <> 18 then
-    raise exception 'Expected exactly 18 public-table RLS policies';
+  ) <> 22 then
+    raise exception 'Expected exactly 22 public-table RLS policies';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_attribute a
+    join pg_class c on c.oid = a.attrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    left join pg_attrdef d
+      on d.adrelid = a.attrelid
+      and d.adnum = a.attnum
+    where n.nspname = 'public'
+      and c.relname = 'rooms'
+      and a.attname = 'viewer_can_collaborate'
+      and a.atttypid = 'boolean'::regtype
+      and a.attnotnull
+      and pg_get_expr(d.adbin, d.adrelid) = 'false'
+  ) then
+    raise exception 'The global viewer collaboration switch is missing or unsafe';
   end if;
 
   if has_table_privilege('authenticated', 'public.rooms', 'INSERT')
@@ -86,6 +104,33 @@ begin
     or has_table_privilege('anon', 'public.saved_study_guides', 'SELECT')
   then
     raise exception 'Saved study-guide grants do not match creator-private immutability';
+  end if;
+
+  if not has_table_privilege('authenticated', 'public.breakout_rooms', 'SELECT')
+    or has_table_privilege('authenticated', 'public.breakout_rooms', 'INSERT')
+    or has_table_privilege('authenticated', 'public.breakout_rooms', 'UPDATE')
+    or has_table_privilege('authenticated', 'public.breakout_rooms', 'DELETE')
+    or has_table_privilege('anon', 'public.breakout_rooms', 'SELECT')
+  then
+    raise exception 'Breakout-room grants do not enforce function-only creation';
+  end if;
+
+  if not has_table_privilege('authenticated', 'public.breakout_documents', 'SELECT')
+    or not has_table_privilege('authenticated', 'public.breakout_documents', 'UPDATE')
+    or has_table_privilege('authenticated', 'public.breakout_documents', 'INSERT')
+    or has_table_privilege('authenticated', 'public.breakout_documents', 'DELETE')
+    or has_table_privilege('anon', 'public.breakout_documents', 'SELECT')
+  then
+    raise exception 'Breakout-document grants do not match parent-room access';
+  end if;
+
+  if not has_table_privilege('authenticated', 'public.breakout_room_members', 'SELECT')
+    or has_table_privilege('authenticated', 'public.breakout_room_members', 'INSERT')
+    or has_table_privilege('authenticated', 'public.breakout_room_members', 'UPDATE')
+    or has_table_privilege('authenticated', 'public.breakout_room_members', 'DELETE')
+    or has_table_privilege('anon', 'public.breakout_room_members', 'SELECT')
+  then
+    raise exception 'Breakout membership grants do not enforce function-only joins';
   end if;
 
   if (
@@ -138,11 +183,18 @@ begin
         'is_room_owner_user',
         'can_read_room_pdf_object',
         'can_write_room_pdf_object',
-        'enforce_saved_study_guide_limit'
+        'enforce_saved_study_guide_limit',
+        'is_breakout_member',
+        'can_edit_breakout',
+        'can_read_breakout_pdf_object',
+        'can_write_breakout_pdf_object',
+        'can_collaborate_room',
+        'can_collaborate_document',
+        'can_collaborate_breakout'
       )
       and p.prosecdef
       and p.proconfig = array['search_path=""']
-  ) <> 10 then
+  ) <> 17 then
     raise exception 'Private authorization helpers are not fully hardened';
   end if;
 
@@ -154,11 +206,16 @@ begin
       and p.proname in (
         'create_study_room',
         'add_room_member_by_email',
-        'join_public_room'
+        'join_public_room',
+        'create_breakout_room',
+        'list_breakout_room_directory',
+        'count_breakout_rooms',
+        'join_breakout_room',
+        'set_viewer_collaboration'
       )
       and p.prosecdef
       and p.proconfig = array['search_path=""']
-  ) <> 3 then
+  ) <> 8 then
     raise exception 'Public room lifecycle functions are not hardened';
   end if;
 
@@ -192,6 +249,56 @@ begin
       'public.join_public_room(uuid)',
       'EXECUTE'
     )
+    or not has_function_privilege(
+      'authenticated',
+      'public.create_breakout_room(uuid,text)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'public.create_breakout_room(uuid,text)',
+      'EXECUTE'
+    )
+    or not has_function_privilege(
+      'authenticated',
+      'public.list_breakout_room_directory(uuid)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'public.list_breakout_room_directory(uuid)',
+      'EXECUTE'
+    )
+    or not has_function_privilege(
+      'authenticated',
+      'public.count_breakout_rooms(uuid)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'public.count_breakout_rooms(uuid)',
+      'EXECUTE'
+    )
+    or not has_function_privilege(
+      'authenticated',
+      'public.join_breakout_room(uuid,text)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'public.join_breakout_room(uuid,text)',
+      'EXECUTE'
+    )
+    or not has_function_privilege(
+      'authenticated',
+      'public.set_viewer_collaboration(uuid,boolean)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'public.set_viewer_collaboration(uuid,boolean)',
+      'EXECUTE'
+    )
   then
     raise exception 'Room lifecycle function grants are unsafe';
   end if;
@@ -220,6 +327,18 @@ begin
     raise exception 'A room lacks a Phase 3 study-tool document';
   end if;
 
+  if exists (
+    select 1
+    from public.breakout_rooms b
+    cross join (values ('notes'), ('pdf'), ('whiteboard')) as tool(kind)
+    left join public.breakout_documents d
+      on d.breakout_room_id = b.id
+      and d.kind = tool.kind
+    where d.id is null
+  ) then
+    raise exception 'A breakout room lacks an isolated study-tool document';
+  end if;
+
   if not exists (
     select 1
     from pg_constraint c
@@ -232,6 +351,20 @@ begin
       and pg_get_constraintdef(c.oid) like '%15728640%'
   ) then
     raise exception 'The PDF metadata constraint is missing or incomplete';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'breakout_documents'
+      and c.conname = 'breakout_documents_pdf_metadata'
+      and pg_get_constraintdef(c.oid) like '%breakouts/%'
+      and pg_get_constraintdef(c.oid) like '%15728640%'
+  ) then
+    raise exception 'The breakout PDF metadata constraint is missing or incomplete';
   end if;
 
   if (
@@ -247,6 +380,21 @@ begin
       )
   ) <> 4 then
     raise exception 'Private PDF Storage policies are incomplete';
+  end if;
+
+  if (
+    select count(*)
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname in (
+        'Breakout members can read private PDFs',
+        'Breakout editors can upload private PDFs',
+        'Breakout editors can replace private PDFs',
+        'Breakout editors can delete replaced private PDFs'
+      )
+  ) <> 4 then
+    raise exception 'Breakout PDF Storage policies are incomplete';
   end if;
 
   if not exists (
@@ -293,7 +441,7 @@ begin
 end
 $$;
 
-select 'Schema verification passed: 6 RLS tables, 18 public policies, 4 private-PDF policies, 13 hardened helpers, three room documents, immutable saved study guides, constrained private storage, owner invariants, immutable versions, and profile provisioning.';
+select 'Schema verification passed: 9 RLS tables, 22 public policies, 8 private-PDF policies, 25 hardened helpers, global viewer collaboration, persistent breakout memberships, isolated room and breakout study tools, constrained private storage, owner invariants, immutable versions, and profile provisioning.';
 `;
 const result = spawnSync(
   "psql",

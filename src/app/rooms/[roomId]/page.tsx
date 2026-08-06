@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { CollaborativeRoom } from "@/components/collaboration/collaborative-room";
+import { countBreakoutRooms } from "@/lib/breakout-rooms/repository";
 import { getProfile } from "@/lib/profiles/repository";
 import { getRoomWorkspace, RoomDomainError } from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
@@ -60,14 +61,16 @@ export default async function RoomPage({
     throw error;
   }
 
-  const [profile, versions] = await Promise.all([
+  const [profile, versions, breakoutRoomCount] = await Promise.all([
     getProfile(context.client, context.userId),
     listVersions(context.client, room.slug),
+    countBreakoutRooms(context.client, room.id),
   ]);
 
   return (
     <CollaborativeRoom
       availableRooms={room.joinedRooms}
+      breakoutRoomCount={breakoutRoomCount}
       currentUser={{
         displayName: profile.displayName,
         id: context.userId,
@@ -76,6 +79,7 @@ export default async function RoomPage({
       initialDocumentStates={room.initialDocumentStates}
       initialPdfAsset={room.pdfAsset}
       initialVersions={versions}
+      initialViewerCanCollaborate={room.viewerCanCollaborate}
       isPublic={room.isPublic}
       key={room.slug}
       roomId={room.slug}

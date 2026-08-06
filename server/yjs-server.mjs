@@ -8,6 +8,7 @@ import { parseDocumentName } from "./document-name.mjs";
 
 const require = createRequire(import.meta.url);
 const Y = require("yjs");
+const decoding = require("lib0/decoding");
 const {
   docs,
   getYDoc,
@@ -29,6 +30,11 @@ const loadOrigin = Symbol("supabase-persistence-load");
 const documentIds = new Map();
 const persistTimers = new Map();
 const lastEditors = new Map();
+const presenceRooms = new Map();
+const activePresentations = new Map();
+const PRESENTATION_WORKSPACES = new Set(["notes", "pdf", "whiteboard"]);
+const MESSAGE_SYNC = 0;
+const SYNC_STEP_ONE = 0;
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
@@ -57,7 +63,7 @@ async function findDocument(documentName) {
 
   const { data: room, error: roomError } = await supabase
     .from("rooms")
-    .select("id")
+    .select("id, viewer_can_collaborate")
     .eq("slug", parsed.roomSlug)
     .single();
 
@@ -65,24 +71,50 @@ async function findDocument(documentName) {
     throw new Error("Room document not found.");
   }
 
-  const { data: document, error: documentError } = await supabase
-    .from("documents")
-    .select("id, yjs_state")
-    .eq("room_id", room.id)
-    .eq("kind", parsed.kind)
-    .single();
+  let documentQuery;
+
+  if (parsed.isBreakout) {
+    const { data: breakout, error: breakoutError } = await supabase
+      .from("breakout_rooms")
+      .select("id")
+      .eq("room_id", room.id)
+      .eq("code", parsed.breakoutCode)
+      .single();
+
+    if (breakoutError || !breakout) {
+      throw new Error("Breakout document not found.");
+    }
+
+    documentQuery = supabase
+      .from("breakout_documents")
+      .select("id, yjs_state")
+      .eq("breakout_room_id", breakout.id)
+      .eq("kind", parsed.kind)
+      .single();
+  } else {
+    documentQuery = supabase
+      .from("documents")
+      .select("id, yjs_state")
+      .eq("room_id", room.id)
+      .eq("kind", parsed.kind)
+      .single();
+  }
+  const { data: document, error: documentError } = await documentQuery;
 
   if (documentError || !document) {
     throw new Error("Room document not found.");
   }
 
-  return document;
+  return {
+    ...document,
+    table: parsed.isBreakout ? "breakout_documents" : "documents",
+  };
 }
 
 async function persistDocument(documentName, document) {
-  const documentId = documentIds.get(documentName);
+  const storedDocument = documentIds.get(documentName);
 
-  if (!documentId) {
+  if (!storedDocument) {
     throw new Error("Cannot persist an uninitialized room document.");
   }
 
@@ -99,9 +131,9 @@ async function persistDocument(documentName, document) {
   }
 
   const { error } = await supabase
-    .from("documents")
+    .from(storedDocument.table)
     .update(changes)
-    .eq("id", documentId);
+    .eq("id", storedDocument.id);
 
   if (error) {
     throw new Error("Supabase rejected a collaborative document write.");
@@ -134,7 +166,7 @@ function schedulePersist(documentName, document, origin) {
 
 setContentInitializor(async (document) => {
   const stored = await findDocument(document.name);
-  documentIds.set(document.name, stored.id);
+  documentIds.set(document.name, { id: stored.id, table: stored.table });
 
   if (stored.yjs_state) {
     Y.applyUpdate(
@@ -179,11 +211,19 @@ async function authorizeUpgrade(request) {
   }
 
   const requestUrl = new URL(request.url ?? "/", "http://localhost");
-  const documentName = decodeURIComponent(requestUrl.pathname.slice(1));
-  const parsed = parseDocumentName(documentName);
+  const isPresenceRequest = requestUrl.pathname.startsWith("/presence/");
+  const requestedName = decodeURIComponent(
+    requestUrl.pathname.slice(isPresenceRequest ? "/presence/".length : 1),
+  );
+  const parsed = parseDocumentName(requestedName);
   const token = requestUrl.searchParams.get("access_token");
 
-  if (!parsed || !token) {
+  if (
+    !parsed ||
+    !token ||
+    (isPresenceRequest &&
+      (parsed.kind !== "notes" || parsed.roomSlug !== requestedName))
+  ) {
     return { error: "Unauthorized", status: 401 };
   }
 
@@ -198,7 +238,7 @@ async function authorizeUpgrade(request) {
 
   const { data: room, error: roomError } = await supabase
     .from("rooms")
-    .select("id")
+    .select("id, viewer_can_collaborate")
     .eq("slug", parsed.roomSlug)
     .single();
 
@@ -213,15 +253,176 @@ async function authorizeUpgrade(request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (
-    membershipError ||
-    !membership ||
-    !["owner", "editor"].includes(membership.role)
-  ) {
+  if (membershipError || !membership) {
     return { error: "Forbidden", status: 403 };
   }
 
-  return { documentName, userId: user.id };
+  if (parsed.isBreakout) {
+    const { data: breakout, error: breakoutError } = await supabase
+      .from("breakout_rooms")
+      .select("id")
+      .eq("room_id", room.id)
+      .eq("code", parsed.breakoutCode)
+      .maybeSingle();
+
+    if (breakoutError || !breakout) {
+      return { error: "Forbidden", status: 403 };
+    }
+
+    if (membership.role === "viewer") {
+      const { data: breakoutMembership, error: breakoutMembershipError } =
+        await supabase
+          .from("breakout_room_members")
+          .select("breakout_room_id")
+          .eq("breakout_room_id", breakout.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+      if (breakoutMembershipError || !breakoutMembership) {
+        return { error: "Forbidden", status: 403 };
+      }
+    }
+  }
+
+  if (isPresenceRequest) {
+    return {
+      channel: "presence",
+      role: membership.role,
+      roomSlug: parsed.roomSlug,
+      userId: user.id,
+    };
+  }
+
+  return {
+    documentName: requestedName,
+    readOnly: membership.role === "viewer" && !room.viewer_can_collaborate,
+    userId: user.id,
+  };
+}
+
+function isReadOnlyMessageAllowed(data) {
+  try {
+    const decoder = decoding.createDecoder(new Uint8Array(data));
+    const messageType = decoding.readVarUint(decoder);
+
+    if (messageType !== MESSAGE_SYNC) return true;
+
+    return decoding.readVarUint(decoder) === SYNC_STEP_ONE;
+  } catch {
+    return false;
+  }
+}
+
+function setupDocumentConnection(websocket, request, authorization) {
+  websocket.boardprepUserId = authorization.userId;
+
+  if (!authorization.readOnly) {
+    setupWSConnection(websocket, request, {
+      docName: authorization.documentName,
+      gc: true,
+    });
+    return;
+  }
+
+  const addListener = websocket.on;
+  websocket.on = function addReadOnlyListener(eventName, listener) {
+    if (eventName !== "message") {
+      return addListener.call(this, eventName, listener);
+    }
+
+    return addListener.call(this, eventName, (data, isBinary) => {
+      if (isReadOnlyMessageAllowed(data)) listener(data, isBinary);
+    });
+  };
+  setupWSConnection(websocket, request, {
+    docName: authorization.documentName,
+    gc: true,
+  });
+  websocket.on = addListener;
+}
+
+function broadcastPresentation(roomSlug) {
+  const message = JSON.stringify({
+    presentation: activePresentations.get(roomSlug)?.state ?? null,
+    type: "presentation",
+  });
+
+  for (const client of presenceRooms.get(roomSlug) ?? []) {
+    if (client.readyState === 1) client.send(message);
+  }
+}
+
+function handlePresenceConnection(websocket, authorization) {
+  const { role, roomSlug, userId } = authorization;
+  const clients = presenceRooms.get(roomSlug) ?? new Set();
+  clients.add(websocket);
+  presenceRooms.set(roomSlug, clients);
+
+  const current = activePresentations.get(roomSlug)?.state ?? null;
+  websocket.send(
+    JSON.stringify({ presentation: current, type: "presentation" }),
+  );
+
+  websocket.on("message", (data) => {
+    if (!["owner", "editor"].includes(role) || data.length > 4_096) return;
+
+    try {
+      const payload = JSON.parse(data.toString());
+
+      if (payload?.type === "presentation-stop") {
+        if (activePresentations.get(roomSlug)?.state.presenterId === userId) {
+          activePresentations.delete(roomSlug);
+          broadcastPresentation(roomSlug);
+        }
+        return;
+      }
+
+      if (
+        payload?.type !== "presentation-update" ||
+        !PRESENTATION_WORKSPACES.has(payload.workspace) ||
+        typeof payload.presenterName !== "string"
+      ) {
+        return;
+      }
+
+      const state = {
+        ...(payload.cursor &&
+        typeof payload.cursor === "object" &&
+        Number.isFinite(payload.cursor.x) &&
+        payload.cursor.x >= 0 &&
+        payload.cursor.x <= 1 &&
+        Number.isFinite(payload.cursor.y) &&
+        payload.cursor.y >= 0 &&
+        payload.cursor.y <= 1
+          ? { cursor: { x: payload.cursor.x, y: payload.cursor.y } }
+          : {}),
+        ...(payload.workspace === "notes" &&
+        Number.isFinite(payload.scrollY) &&
+        payload.scrollY >= 0 &&
+        payload.scrollY <= 1
+          ? { scrollY: payload.scrollY }
+          : {}),
+        presenterId: userId,
+        presenterName: payload.presenterName.trim().slice(0, 80) || "Presenter",
+        updatedAt: new Date().toISOString(),
+        workspace: payload.workspace,
+      };
+      activePresentations.set(roomSlug, { socket: websocket, state });
+      broadcastPresentation(roomSlug);
+    } catch {
+      // Ignore malformed ephemeral presence messages.
+    }
+  });
+
+  websocket.on("close", () => {
+    clients.delete(websocket);
+    if (clients.size === 0) presenceRooms.delete(roomSlug);
+
+    if (activePresentations.get(roomSlug)?.socket === websocket) {
+      activePresentations.delete(roomSlug);
+      broadcastPresentation(roomSlug);
+    }
+  });
 }
 
 const server = createServer((request, response) => {
@@ -242,8 +443,18 @@ const websocketServer = new WebSocketServer({ noServer: true });
 server.on("upgrade", (request, socket, head) => {
   void authorizeUpgrade(request)
     .then(async (authorization) => {
-      if (!("documentName" in authorization)) {
+      if (
+        !("documentName" in authorization) &&
+        authorization.channel !== "presence"
+      ) {
         rejectUpgrade(socket, authorization.status, authorization.error);
+        return;
+      }
+
+      if (authorization.channel === "presence") {
+        websocketServer.handleUpgrade(request, socket, head, (websocket) => {
+          handlePresenceConnection(websocket, authorization);
+        });
         return;
       }
 
@@ -259,18 +470,14 @@ server.on("upgrade", (request, socket, head) => {
       }
 
       websocketServer.handleUpgrade(request, socket, head, (websocket) => {
-        websocket.boardprepUserId = authorization.userId;
-        setupWSConnection(websocket, request, {
-          docName: authorization.documentName,
-          gc: true,
-        });
+        setupDocumentConnection(websocket, request, authorization);
       });
     })
     .catch(() => rejectUpgrade(socket, 500, "Internal Server Error"));
 });
 
 server.listen(port, host, () => {
-  console.log(`BoardPrep Yjs server listening on ws://${host}:${port}.`);
+  console.log(`Qollab Yjs server listening on ws://${host}:${port}.`);
 });
 
 let isShuttingDown = false;

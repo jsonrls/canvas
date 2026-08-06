@@ -19,6 +19,7 @@ import {
   getElementBounds,
   readWhiteboardElement,
   resizeWhiteboardElement,
+  WHITEBOARD_WIDTH,
 } from "../src/lib/whiteboard/model";
 
 const userId = "11111111-1111-4111-8111-111111111111";
@@ -93,6 +94,7 @@ function verifyPayloadBoundaries(): void {
 
   const boardElement = {
     authorId: userId,
+    authorName: "Phase Three",
     color: "#3871c2",
     createdAt: new Date().toISOString(),
     height: 120,
@@ -106,7 +108,20 @@ function verifyPayloadBoundaries(): void {
     y: 40,
   };
   assert.deepEqual(readWhiteboardElement(boardElement), boardElement);
-  assert.equal(readWhiteboardElement({ ...boardElement, x: -1 }), null);
+  const legacyBoardElement: Record<string, unknown> = { ...boardElement };
+  delete legacyBoardElement.authorName;
+  assert.deepEqual(readWhiteboardElement(legacyBoardElement), {
+    ...boardElement,
+    authorName: "Study partner",
+  });
+  assert.equal(
+    readWhiteboardElement({ ...boardElement, authorName: "A".repeat(121) }),
+    null,
+  );
+  assert.equal(
+    readWhiteboardElement({ ...boardElement, x: -WHITEBOARD_WIDTH - 1 }),
+    null,
+  );
   assert.equal(
     readWhiteboardElement({
       ...boardElement,
@@ -190,30 +205,85 @@ function verifyIndependentCrdtMerges(): void {
 }
 
 async function verifyWorkspaceContract(): Promise<void> {
-  const [roomSource, pdfSource, whiteboardSource, routeSource] =
-    await Promise.all([
-      readFile("src/components/collaboration/collaborative-room.tsx", "utf8"),
-      readFile("src/components/collaboration/pdf-study-tool.tsx", "utf8"),
-      readFile(
-        "src/components/collaboration/whiteboard-study-tool.tsx",
-        "utf8",
-      ),
-      readFile("src/app/api/rooms/[roomId]/pdf/route.ts", "utf8"),
-    ]);
+  const [
+    roomSource,
+    pdfSource,
+    whiteboardSource,
+    routeSource,
+    presentationSource,
+    toolHookSource,
+    yjsServerSource,
+  ] = await Promise.all([
+    readFile("src/components/collaboration/collaborative-room.tsx", "utf8"),
+    readFile("src/components/collaboration/pdf-study-tool.tsx", "utf8"),
+    readFile("src/components/collaboration/whiteboard-study-tool.tsx", "utf8"),
+    readFile("src/app/api/rooms/[roomId]/pdf/route.ts", "utf8"),
+    readFile("src/hooks/use-room-presentation.ts", "utf8"),
+    readFile("src/hooks/use-collaborative-tool.ts", "utf8"),
+    readFile("server/yjs-server.mjs", "utf8"),
+  ]);
 
   assert.match(roomSource, /dynamic\(/);
   assert.match(roomSource, /ssr: false/);
   assert.match(roomSource, /PDF annotation/);
   assert.match(roomSource, /Whiteboard/);
+  assert.match(roomSource, /followPresenter/);
+  assert.match(
+    roomSource,
+    /setTimeout\(\(\) => setShowFollowPrompt\(true\), 3_000\)/,
+  );
+  assert.match(roomSource, /presentation-control/);
+  assert.match(roomSource, /presenter-cursor/);
+  assert.match(roomSource, /handleNotesScroll/);
+  assert.match(roomSource, /top: scrollY \* maximumScroll/);
+  assert.doesNotMatch(
+    roomSource,
+    /if \(!connection \|\| !canEdit\) \{\s*return;/,
+  );
   assert.match(pdfSource, /disabled=\{!canEdit\}/);
   assert.match(pdfSource, /renderTextLayer=\{false\}/);
   assert.match(pdfSource, /ZoomIn/);
+  assert.match(pdfSource, /refreshPdfAsset/);
+  assert.match(
+    pdfSource,
+    /const apiPath = pdfApiPath \?\? `\/api\/rooms\/\$\{roomId\}\/pdf`/,
+  );
+  assert.match(pdfSource, /fetch\(apiPath/);
+  assert.match(pdfSource, /isRefreshingAsset \? \(/);
+  assert.match(pdfSource, /asset && !isRefreshingAsset/);
+  assert.match(pdfSource, /onLoadError=\{handlePdfLoadError\}/);
   assert.match(whiteboardSource, /disabled=\{!canEdit\}/);
   assert.match(whiteboardSource, /whiteboard-elements/);
+  assert.match(whiteboardSource, /whiteboard-author-tooltip/);
+  assert.match(whiteboardSource, /authorName: currentUser\.displayName/);
+  assert.match(whiteboardSource, /collaboratorNames\[element\.authorId\]/);
+  assert.match(whiteboardSource, /collaborator-names/);
   assert.match(whiteboardSource, /resizeWhiteboardElement/);
   assert.match(whiteboardSource, /Clear all/);
   assert.match(whiteboardSource, /clearAllDrawings/);
+  assert.match(whiteboardSource, /laserEnabled/);
+  assert.match(whiteboardSource, /LASER_TRAIL_LENGTH/);
+  assert.match(whiteboardSource, /whiteboard-laser__trail/);
+  assert.match(presentationSource, /presentation-update/);
+  assert.match(presentationSource, /presentation-stop/);
+  assert.match(presentationSource, /updateCursor/);
+  assert.match(presentationSource, /updateScroll/);
+  assert.match(presentationSource, /scrollY/);
+  assert.match(yjsServerSource, /isPresenceRequest/);
+  assert.match(
+    yjsServerSource,
+    /membership\.role === "viewer" && !room\.viewer_can_collaborate/,
+  );
+  assert.match(yjsServerSource, /isReadOnlyMessageAllowed/);
+  assert.match(yjsServerSource, /SYNC_STEP_ONE/);
+  assert.match(yjsServerSource, /handlePresenceConnection/);
+  assert.match(yjsServerSource, /payload\.workspace === "notes"/);
+  assert.match(yjsServerSource, /authorization\.channel !== "presence"/);
+  assert.match(toolHookSource, /provider\.connect\(\)/);
+  assert.doesNotMatch(toolHookSource, /if \(canEdit\) \{\s*const initialize/);
   assert.match(routeSource, /getAuthenticatedContext/);
+  assert.match(routeSource, /export async function GET/);
+  assert.match(routeSource, /createServiceRoleClient\(\)\.storage/);
   assert.match(routeSource, /requireEditor/);
   assert.match(routeSource, /hasPdfHeader/);
 }

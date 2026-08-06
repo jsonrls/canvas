@@ -99,7 +99,7 @@ export function ConflictReviewPanel({
             Your notes merged with shared changes
           </h2>
           <p>
-            BoardPrep combined
+            Qollab combined
             {` ${describeBatches(review.localUpdateCount, "local")} `}
             and{` ${describeBatches(review.remoteUpdateCount, "shared")} `}.
             Nothing was discarded.
@@ -141,7 +141,7 @@ export function ConflictReviewPanel({
           <div>
             <strong>Replace the live note with your offline draft?</strong>
             <p>
-              This changes the shared note for everyone. BoardPrep will save the
+              This changes the shared note for everyone. Qollab will save the
               latest merged result as a durable checkpoint first.
             </p>
           </div>

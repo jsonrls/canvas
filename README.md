@@ -1,6 +1,6 @@
-# BoardPrep Canvas
+# Qollab
 
-BoardPrep Canvas is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the OpenAI Responses API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB, while the separate Yjs service persists each shared document in Supabase and reloads it after a restart.
+Qollab is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the OpenAI Responses API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB, while the separate Yjs service persists each shared document in Supabase and reloads it after a restart.
 
 Each Supabase Auth account has a constrained `public.profiles` row. Signup creates it automatically from the supplied display name, existing accounts are backfilled, and the application uses that name for presence and version authorship. Profile RLS limits reads to the current user and collaborators who share a room.
 
@@ -43,8 +43,10 @@ NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
 YJS_HOST=127.0.0.1
 YJS_PORT=1234
 OPENAI_API_KEY=your-server-only-openai-api-key
-# Optional; defaults to gpt-5-mini
-# OPENAI_MODEL=gpt-5-mini
+# Optional; defaults to gpt-4o-mini
+# OPENAI_MODEL=gpt-4o-mini
+# Optional; defaults to gpt-4o-mini for quick whiteboard answers
+# OPENAI_WHITEBOARD_MODEL=gpt-4o-mini
 ```
 
 `NEXT_PUBLIC_YJS_WS_URL` is the browser-visible address of the service started by `npm run dev:yjs`; it is not a generated credential. Production must use a separately hosted `wss://` endpoint. `YJS_ALLOWED_ORIGIN` can require an exact browser Origin in production.
@@ -75,6 +77,7 @@ The database pooler settings are used only by the schema verifier; application d
 - Strict JSON Schema and runtime validation protect the UI from incomplete model output. Note text is labeled as untrusted data and kept separate from model instructions.
 - Generated packs are private, ephemeral browser state: they are not written to Postgres, Yjs, or the collaborative notes. The interface consistently labels them as study aids that require verification, not medical advice.
 - Creators can explicitly save a validated guide to a private room library, reopen it without another model call, and delete it after inline confirmation. Lists return metadata only; the source note snapshot, revealed-card state, and provider metadata are never stored.
+- Whiteboard editors can generate a compact answer from a detected circled question and place it inside the blank circled target indicated by an arrow. Drawing the arrow or blank target triggers the answer automatically, with the toolbar action available as a retry. The question is sent through a separate server-only route, and the generated answer is stored as a normal collaborative whiteboard text element.
 
 ## Version history behavior
 
@@ -93,10 +96,10 @@ The database pooler settings are used only by the schema verifier; application d
 
 ## Reconnection review behavior
 
-- Yjs always performs the document merge. BoardPrep opens a review only when the current mounted browser session produced focused editor updates while remote sync was unavailable and then received remote document updates during reconciliation; editor initialization, presence changes, and conflict-free reconnects stay silent.
+- Yjs always performs the document merge. Qollab opens a review only when the current mounted browser session produced focused editor updates while remote sync was unavailable and then received remote document updates during reconciliation; editor initialization, presence changes, and conflict-free reconnects stay silent.
 - The inline review compares plain-text excerpts from `Your offline draft` and the `Current merged note`. Keeping the merged note is the recommended, non-destructive action.
 - `Use my offline draft` requires a second confirmation and first saves the current merged JSON and Yjs state as an authenticated immutable version. A checkpoint failure or an intervening live edit aborts replacement and leaves the merged note unchanged.
-- Review drafts and update counters are transient in-memory data. BoardPrep does not persist a separate conflict queue or treat the review as an authorization source.
+- Review drafts and update counters are transient in-memory data. Qollab does not persist a separate conflict queue or treat the review as an authorization source.
 
 ## Verification
 
@@ -142,4 +145,4 @@ npm run verify:saved-study-guides
 - Phase 3 intentionally provides one active PDF per room and a focused SVG whiteboard. PDF libraries/OCR, semantic text selection, whiteboard templates, object transforms, and large media libraries remain later work.
 - Phase 4 sends only note snapshots; PDF and whiteboard extraction are not included. Saved guides are creator-private and not shared with room members; the in-memory rate limit is instance-local rather than a distributed production quota.
 - WebSocket access tokens are sent as upgrade query parameters. The service never logs request URLs, but production infrastructure should redact query strings or introduce short-lived connection tickets.
-- Adding collaborators is limited to existing BoardPrep accounts identified by exact email. Pending invitations, outbound invitation delivery, ownership transfer, room archival, and public-room pagination/search remain future work.
+- Adding collaborators is limited to existing Qollab accounts identified by exact email. Pending invitations, outbound invitation delivery, ownership transfer, room archival, and public-room pagination/search remain future work.
