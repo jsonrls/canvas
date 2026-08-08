@@ -63,7 +63,7 @@ function verifyPayloadBoundaries(): void {
   const annotation = {
     authorId: userId,
     authorName: "Phase Three",
-    color: "#3871c2",
+    color: "#7352FA",
     createdAt: new Date().toISOString(),
     height: 0.1,
     id: "annotation-1",
@@ -95,7 +95,7 @@ function verifyPayloadBoundaries(): void {
   const boardElement = {
     authorId: userId,
     authorName: "Phase Three",
-    color: "#3871c2",
+    color: "#7352FA",
     createdAt: new Date().toISOString(),
     height: 120,
     id: "shape-1",

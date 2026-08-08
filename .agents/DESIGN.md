@@ -4,11 +4,11 @@ name: BoardPrep-design-system
 description: A vibrant, modern educational platform featuring a color system derived from the BoardPrep logo. The system uses brand blue as the primary color with golden yellow, red-orange, and supporting blue tones to create an energetic and engaging learning environment. The design balances modern aesthetics with educational functionality, using the brand palette for CTAs and highlights while maintaining readability with supporting neutral tones.
 
 colors:
-  brand-blue: "#3871C2"
+  brand-blue: "#7352FA"
   golden-yellow: "#FEBD59"
   red-orange: "#F04623"
-  light-blue: "#86CEE7"
-  medium-blue: "#69ABDF"
+  light-blue: "#7352FA"
+  medium-blue: "#7352FA"
   soft-pink: "#EFC2BC"
   tan: "#CC9E8F"
   brown: "#9C614F"
@@ -17,7 +17,7 @@ colors:
   success: "#10B981"
   warning: "#F59E0B"
   error: "#EF4444"
-  info: "#3871C2"
+  info: "#7352FA"
 
 typography:
   display-xl:
@@ -337,11 +337,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'brand-blue': '#3871C2',
+        'brand-blue': '#7352FA',
         'golden-yellow': '#FEBD59',
         'red-orange': '#F04623',
-        'light-blue': '#86CEE7',
-        'medium-blue': '#69ABDF',
+        'light-blue': '#7352FA',
+        'medium-blue': '#7352FA',
         'soft-pink': '#EFC2BC',
         tan: '#CC9E8F',
         brown: '#9C614F',
@@ -350,7 +350,7 @@ module.exports = {
         success: '#10B981',
         warning: '#F59E0B',
         error: '#EF4444',
-        info: '#3871C2',
+        info: '#7352FA',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
@@ -376,7 +376,7 @@ module.exports = {
         full: '9999px',
       },
       backgroundImage: {
-        'brand-gradient': 'linear-gradient(135deg, #3871C2, #69ABDF, #86CEE7, #FEBD59, #F04623)',
+        'brand-gradient': 'linear-gradient(135deg, #7352FA, #7352FA, #7352FA, #FEBD59, #F04623)',
         'brand-gradient-subtle': 'linear-gradient(135deg, rgba(56,113,194,0.1), rgba(105,171,223,0.1), rgba(134,206,231,0.1))',
       },
     },
@@ -456,7 +456,7 @@ const buttonVariants = cva(
 
 BoardPrep is a vibrant, modern educational platform featuring a color system derived from the official BoardPrep logo. The base atmosphere uses a **white background** (`{colors.white}` — #FFFFFF) with **brand blue** as the primary color and supporting golden yellow, red-orange, and blue tones for accents. Headlines use **Inter** at weight 600-700 for a clean, modern feel that appeals to students and educators. The combination creates an energetic and engaging learning environment.
 
-Brand voltage comes from the **brand blue** (`{colors.brand-blue}` — #3871C2) as the primary color, complemented by **golden yellow** (`{colors.golden-yellow}` — #FEBD59) for warmth and **red-orange** (`{colors.red-orange}` — #F04623) for energy. Supporting colors include light blue, medium blue, soft pink, tan, brown, and charcoal for depth and variety. These colors are used on primary CTAs, hero sections, featured cards, and accent elements while maintaining excellent readability.
+Brand voltage comes from the **brand blue** (`{colors.brand-blue}` — #7352FA) as the primary color, complemented by **golden yellow** (`{colors.golden-yellow}` — #FEBD59) for warmth and **red-orange** (`{colors.red-orange}` — #F04623) for energy. Supporting colors include light blue, medium blue, soft pink, tan, brown, and charcoal for depth and variety. These colors are used on primary CTAs, hero sections, featured cards, and accent elements while maintaining excellent readability.
 
 The system has three surface modes that alternate page-by-page:
 1. **White background** (`{colors.white}`) — default body floor
@@ -467,7 +467,7 @@ The charcoal surfaces provide contrast and depth, making the brand blue and gold
 
 **Key Characteristics:**
 - White background (`{colors.white}` — #FFFFFF) with charcoal text (`{colors.charcoal}` — #393536). Clean, modern base.
-- Brand blue primary CTA (`{colors.brand-blue}` — #3871C2) featuring the logo's main color. Used for primary buttons, links, and key interactive elements.
+- Brand blue primary CTA (`{colors.brand-blue}` — #7352FA) featuring the logo's main color. Used for primary buttons, links, and key interactive elements.
 - Golden yellow accents (`{colors.golden-yellow}` — #FEBD59) for warmth and highlights. Red-orange (`{colors.red-orange}` — #F04623) for energetic CTAs.
 - Inter sans-serif headlines at weight 600-700 for a modern, approachable feel. Pairs with Inter body for consistency.
 - Charcoal mockup cards (`{colors.charcoal}` — #393536) carrying code blocks, terminal panels, and collaboration interfaces — excellent contrast for brand blue accents.
@@ -479,11 +479,11 @@ The charcoal surfaces provide contrast and depth, making the brand blue and gold
 ## Colors
 
 ### Brand & Accent
-- **Brand Blue** (`{colors.brand-blue}` — #3871C2): Main brand color from the logo. Used for primary buttons, links, and key interactive elements.
+- **Brand Blue** (`{colors.brand-blue}` — #7352FA): Main brand color from the logo. Used for primary buttons, links, and key interactive elements.
 - **Golden Yellow** (`{colors.golden-yellow}` — #FEBD59): Warm accent from the logo. Used for highlights, featured elements, and warmth.
 - **Red-Orange** (`{colors.red-orange}` — #F04623): Energetic accent from the logo. Used for attention-grabbing CTAs and energy.
-- **Light Blue** (`{colors.light-blue}` — #86CEE7): Soft accent from the logo. Used for secondary highlights and variety.
-- **Medium Blue** (`{colors.medium-blue}` — #69ABDF): Supporting blue from the logo. Used for secondary UI elements and depth.
+- **Light Blue** (`{colors.light-blue}` — #7352FA): Soft accent from the logo. Used for secondary highlights and variety.
+- **Medium Blue** (`{colors.medium-blue}` — #7352FA): Supporting blue from the logo. Used for secondary UI elements and depth.
 - **Brand Gradient**: Linear gradient (135deg) combining brand blue, medium blue, light blue, golden yellow, and red-orange. Used for hero sections and featured elements.
 
 ### Surface
@@ -501,7 +501,7 @@ The charcoal surfaces provide contrast and depth, making the brand blue and gold
 - **Success** (`{colors.success}` — #10B981): Green status dots, "available" indicators, success states.
 - **Warning** (`{colors.warning}` — #F59E0B): Warning callouts, caution states.
 - **Error** (`{colors.error}` — #EF4444): Validation errors, danger states.
-- **Info** (`{colors.info}` — #3871C2): Informational states, info messages (uses brand blue).
+- **Info** (`{colors.info}` — #7352FA): Informational states, info messages (uses brand blue).
 
 ## Typography
 
@@ -692,15 +692,15 @@ When photography is used (rare — mostly testimonials), avatars crop to perfect
 
 | Name | Width | Key Changes |
 |---|---|---|
-| Mobile | < 768px | Hamburger nav; hero h1 64→32px; hero-illustration-card stacks below content; feature grids 1-up; connector tiles 2-up; pricing 1-up; footer 4 cols → 1 |
+| Mobile | < 768px | Compact header actions; workspace tabs replace the desktop rail; feature and room grids become 1-up; auth focuses on the form; toolbars scroll horizontally |
 | Tablet | 768–1024px | Top nav stays horizontal but tightens; feature cards 2-up; connector tiles 3-up; pricing 2-up |
 | Desktop | 1024–1440px | Full top-nav with all menu items; 3-up feature cards; 4-up or 6-up connector tiles; 3-up pricing tiers |
 | Wide | > 1440px | Same as desktop with more outer breathing room; max content width caps at 1200px |
 
 ### Touch Targets
-- `{component.button-primary}` at minimum 40 × 40px.
-- `{component.button-icon-circular}` at exactly 36 × 36 — slightly under WCAG 44 but visually centered.
-- `{component.text-input}` height is 40px.
+- Mobile buttons, icon controls, and navigation links use a minimum 44 × 44px target.
+- Mobile text inputs and selects render at 16px or larger to avoid automatic viewport zoom.
+- Compact desktop controls may remain smaller when their surrounding target is not used on touch layouts.
 - Connector tile entire card area is tappable; effective tap area >> 44px.
 
 ### Collapsing Strategy
@@ -709,6 +709,8 @@ When photography is used (rare — mostly testimonials), avatars crop to perfect
 - Feature grids reduce columns rather than scaling cards down.
 - Pricing tier cards collapse 4 → 2 → 1; featured-tier dark surface stays visually distinct at every breakpoint.
 - Code-window cards retain code legibility at every breakpoint by allowing horizontal scroll within the card rather than wrapping code lines.
+- PDF, editor, and whiteboard toolbars keep their controls at full size and scroll horizontally on narrow screens.
+- Headers and full-height workspaces account for device safe areas and dynamic viewport height.
 
 ### Image Behavior
 - Code blocks inside dark mockups stay at fixed font-size; horizontal scroll on mobile rather than wrapping.

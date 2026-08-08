@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 interface QollabBrandLogoProps {
   priority?: boolean;
 }
@@ -7,18 +5,11 @@ interface QollabBrandLogoProps {
 export function QollabBrandLogo({
   priority = true,
 }: QollabBrandLogoProps): React.ReactElement {
+  void priority;
+
   return (
     <span className="brand-logo">
-      <Image
-        alt=""
-        aria-hidden="true"
-        className="brand-logo__image"
-        height={49}
-        priority={priority}
-        sizes="160px"
-        src="/brand/qollab-logo-lockup.png"
-        width={160}
-      />
+      <span aria-hidden="true" className="brand-logo__image" />
       <span className="sr-only">Qollab</span>
     </span>
   );

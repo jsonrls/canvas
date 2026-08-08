@@ -2,24 +2,21 @@
 
 import {
   ArrowRight,
-  BookMarked,
   CalendarDays,
-  ChevronRight,
   Clock3,
   DoorOpen,
   Globe2,
-  LayoutGrid,
   LibraryBig,
   LoaderCircle,
-  List,
+  LogOut,
   LockKeyhole,
   Plus,
-  Search,
   Settings2,
-  UsersRound,
+  TriangleAlert,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useCallback, useSyncExternalStore } from "react";
+import { useActionState, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -28,9 +25,11 @@ import {
   leaveRoomAction,
 } from "@/app/rooms/actions";
 import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import type { RoomDirectory, RoomSummary } from "@/lib/rooms/repository";
+
+import styles from "./rooms-dashboard.module.css";
 
 interface RoomsDashboardProps {
   directory: RoomDirectory;
@@ -38,131 +37,8 @@ interface RoomsDashboardProps {
   userId: string;
 }
 
-type RoomLayout = "grid" | "list";
-
-const JOINED_ROOM_LAYOUT_KEY = "qollab:rooms-layout:joined:v1";
-const PUBLIC_ROOM_LAYOUT_KEY = "qollab:rooms-layout:public:v1";
-const DEFAULT_ROOM_LAYOUT: RoomLayout = "grid";
-const roomLayoutMemory = new Map<string, RoomLayout>();
-const roomLayoutListeners = new Map<string, Set<() => void>>();
-let isStorageListenerActive = false;
-
 async function prepareRoomHomeSignOut(): Promise<void> {
   await Promise.resolve();
-}
-
-function isRoomLayout(value: string | null): value is RoomLayout {
-  return value === "grid" || value === "list";
-}
-
-function getDefaultRoomLayout(): RoomLayout {
-  return DEFAULT_ROOM_LAYOUT;
-}
-
-function readStoredRoomLayout(storageKey: string): RoomLayout {
-  const cachedLayout = roomLayoutMemory.get(storageKey);
-
-  if (cachedLayout) {
-    return cachedLayout;
-  }
-
-  try {
-    const storedLayout = window.localStorage.getItem(storageKey);
-
-    if (isRoomLayout(storedLayout)) {
-      roomLayoutMemory.set(storageKey, storedLayout);
-      return storedLayout;
-    }
-  } catch {
-    // Storage can be unavailable in private browsing or restricted contexts.
-  }
-
-  return DEFAULT_ROOM_LAYOUT;
-}
-
-function notifyRoomLayoutListeners(storageKey: string): void {
-  roomLayoutListeners.get(storageKey)?.forEach((listener) => listener());
-}
-
-function handleRoomLayoutStorage(event: StorageEvent): void {
-  if (event.key === null) {
-    roomLayoutMemory.clear();
-    roomLayoutListeners.forEach((listeners) => {
-      listeners.forEach((listener) => listener());
-    });
-    return;
-  }
-
-  if (!roomLayoutListeners.has(event.key)) {
-    return;
-  }
-
-  roomLayoutMemory.delete(event.key);
-  notifyRoomLayoutListeners(event.key);
-}
-
-function subscribeToRoomLayout(
-  storageKey: string,
-  listener: () => void,
-): () => void {
-  const listeners = roomLayoutListeners.get(storageKey) ?? new Set();
-  listeners.add(listener);
-  roomLayoutListeners.set(storageKey, listeners);
-
-  if (!isStorageListenerActive) {
-    window.addEventListener("storage", handleRoomLayoutStorage);
-    isStorageListenerActive = true;
-  }
-
-  return () => {
-    const currentListeners = roomLayoutListeners.get(storageKey);
-    currentListeners?.delete(listener);
-
-    if (currentListeners?.size === 0) {
-      roomLayoutListeners.delete(storageKey);
-    }
-
-    if (roomLayoutListeners.size === 0 && isStorageListenerActive) {
-      window.removeEventListener("storage", handleRoomLayoutStorage);
-      isStorageListenerActive = false;
-    }
-  };
-}
-
-function writeStoredRoomLayout(storageKey: string, layout: RoomLayout): void {
-  roomLayoutMemory.set(storageKey, layout);
-
-  try {
-    window.localStorage.setItem(storageKey, layout);
-  } catch {
-    // Keep the in-memory preference working when storage is unavailable.
-  }
-
-  notifyRoomLayoutListeners(storageKey);
-}
-
-function usePersistedRoomLayout(
-  storageKey: string,
-): [RoomLayout, (layout: RoomLayout) => void] {
-  const subscribe = useCallback(
-    (listener: () => void) => subscribeToRoomLayout(storageKey, listener),
-    [storageKey],
-  );
-  const getSnapshot = useCallback(
-    () => readStoredRoomLayout(storageKey),
-    [storageKey],
-  );
-  const layout = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getDefaultRoomLayout,
-  );
-  const setLayout = useCallback(
-    (nextLayout: RoomLayout) => writeStoredRoomLayout(storageKey, nextLayout),
-    [storageKey],
-  );
-
-  return [layout, setLayout];
 }
 
 function formatUpdatedAt(value: string): string {
@@ -214,45 +90,14 @@ function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
   const Icon = isPublic ? Globe2 : LockKeyhole;
 
   return (
-    <span className="room-visibility-badge">
-      <Icon aria-hidden="true" size={14} />
+    <span
+      className={`${styles.badge} ${
+        isPublic ? styles.badgeOpen : styles.badgePrivate
+      }`}
+    >
+      <Icon aria-hidden="true" size={13} />
       {isPublic ? "Open" : "Private"}
     </span>
-  );
-}
-
-function RoomViewToggle({
-  label,
-  onChange,
-  value,
-}: {
-  label: string;
-  onChange: (layout: RoomLayout) => void;
-  value: RoomLayout;
-}): React.ReactElement {
-  return (
-    <div className="room-view-toggle" role="group" aria-label={`${label} view`}>
-      <button
-        aria-label={`Show ${label} as cards`}
-        aria-pressed={value === "grid"}
-        onClick={() => onChange("grid")}
-        title="Card view"
-        type="button"
-      >
-        <LayoutGrid aria-hidden="true" size={16} />
-        <span>Cards</span>
-      </button>
-      <button
-        aria-label={`Show ${label} as a list`}
-        aria-pressed={value === "list"}
-        onClick={() => onChange("list")}
-        title="List view"
-        type="button"
-      >
-        <List aria-hidden="true" size={17} />
-        <span>List</span>
-      </button>
-    </div>
   );
 }
 
@@ -263,7 +108,7 @@ function JoinRoomForm({ room }: { room: RoomSummary }) {
   );
 
   return (
-    <form action={action} className="room-card-action-form">
+    <form action={action} className={styles.roomActionForm}>
       {state.status === "error" ? (
         <p
           className="room-inline-message room-inline-message--error"
@@ -273,7 +118,7 @@ function JoinRoomForm({ room }: { room: RoomSummary }) {
         </p>
       ) : null}
       <PendingButton
-        className="room-card-primary-action"
+        className={styles.roomPrimaryAction}
         pendingLabel="Joining…"
       >
         <DoorOpen aria-hidden="true" size={16} />
@@ -288,60 +133,128 @@ function LeaveRoomForm({ room }: { room: RoomSummary }) {
     leaveRoomAction.bind(null, room.slug),
     INITIAL_ROOM_ACTION_STATE,
   );
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+
+  const openLeaveDialog = (): void => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    window.requestAnimationFrame(() => {
+      dialog
+        ?.querySelector<HTMLButtonElement>("[data-leave-dialog-cancel]")
+        ?.focus();
+    });
+  };
+
+  const closeLeaveDialog = (): void => {
+    dialogRef.current?.close();
+  };
 
   return (
-    <form
-      action={action}
-      className="room-card-action-form"
-      onSubmit={(event) => {
-        if (!window.confirm(`Leave “${room.name}”?`)) {
-          event.preventDefault();
-        }
-      }}
-    >
-      {state.status === "error" ? (
-        <p
-          className="room-inline-message room-inline-message--error"
-          role="alert"
+    <>
+      <div className={styles.roomActionForm}>
+        <button
+          className={styles.roomSecondaryAction}
+          onClick={openLeaveDialog}
+          ref={triggerRef}
+          type="button"
         >
-          {state.message}
-        </p>
-      ) : null}
-      <PendingButton className="room-card-link-action" pendingLabel="Leaving…">
-        Leave
-      </PendingButton>
-    </form>
+          Leave
+        </button>
+      </div>
+
+      <dialog
+        aria-describedby={descriptionId}
+        aria-labelledby={titleId}
+        className={styles.leaveDialog}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            closeLeaveDialog();
+          }
+        }}
+        onClose={() => triggerRef.current?.focus()}
+        ref={dialogRef}
+      >
+        <div className={styles.leaveDialogPanel}>
+          <span className={styles.leaveDialogIcon} aria-hidden="true">
+            <TriangleAlert size={20} />
+          </span>
+          <div className={styles.leaveDialogCopy}>
+            <p>Room membership</p>
+            <h2 id={titleId}>Leave “{room.name}”?</h2>
+            <p id={descriptionId}>
+              You’ll lose access to this room and its shared study materials.
+              You can return if the room is public or you’re invited again.
+            </p>
+          </div>
+
+          <form action={action} className={styles.leaveDialogForm}>
+            {state.status === "error" ? (
+              <p
+                className="room-inline-message room-inline-message--error"
+                role="alert"
+              >
+                {state.message}
+              </p>
+            ) : null}
+            <div className={styles.leaveDialogActions}>
+              <button
+                className={styles.leaveDialogCancel}
+                data-leave-dialog-cancel
+                onClick={closeLeaveDialog}
+                type="button"
+              >
+                Keep room
+              </button>
+              <PendingButton
+                className={styles.leaveDialogConfirm}
+                pendingLabel="Leaving…"
+              >
+                <LogOut aria-hidden="true" size={16} />
+                Leave room
+              </PendingButton>
+            </div>
+          </form>
+        </div>
+      </dialog>
+    </>
   );
 }
 
-function JoinedRoomCard({ room }: { room: RoomSummary }) {
+function JoinedRoomRow({ room }: { room: RoomSummary }) {
+  const roleClassName =
+    room.role === "owner"
+      ? styles.badgeOwner
+      : room.role === "viewer"
+        ? styles.badgeViewer
+        : styles.badgeEditor;
+
   return (
-    <article className="room-directory-card room-directory-card--joined">
-      <div className="room-card-topline">
-        <div className="room-card-monogram" aria-hidden="true">
-          {getRoomInitials(room.name)}
+    <article className={styles.roomRow}>
+      <div className={styles.roomMonogram} aria-hidden="true">
+        {getRoomInitials(room.name)}
+      </div>
+      <div className={styles.roomDetails}>
+        <div className={styles.roomTitleLine}>
+          <h2>{room.name}</h2>
+          <VisibilityBadge isPublic={room.isPublic} />
         </div>
-        <span className={`room-role-badge room-role-badge--${room.role}`}>
-          {room.role}
-        </span>
+        <div className={styles.roomMeta}>
+          <span className={`${styles.badge} ${roleClassName}`}>
+            {room.role}
+          </span>
+          <span className={styles.roomUpdated}>
+            <Clock3 aria-hidden="true" size={13} />
+            {formatUpdatedAt(room.updatedAt)}
+          </span>
+        </div>
       </div>
-      <div className="room-card-copy">
-        <VisibilityBadge isPublic={room.isPublic} />
-        <h3>{room.name}</h3>
-        <p>Notes, study tools, and your group’s ideas—all in one place.</p>
-        <span className="room-card-updated">
-          <Clock3 aria-hidden="true" size={13} />
-          {formatUpdatedAt(room.updatedAt)}
-        </span>
-      </div>
-      <div className="room-card-actions">
-        <Link className="room-card-primary-action" href={`/rooms/${room.slug}`}>
-          Continue
-          <ArrowRight aria-hidden="true" size={16} />
-        </Link>
+      <div className={styles.roomActions}>
         {room.role === "owner" ? (
           <Link
-            className="room-card-link-action"
+            className={styles.roomSecondaryAction}
             href={`/rooms/${room.slug}/settings`}
           >
             <Settings2 aria-hidden="true" size={15} />
@@ -350,24 +263,27 @@ function JoinedRoomCard({ room }: { room: RoomSummary }) {
         ) : (
           <LeaveRoomForm room={room} />
         )}
+        <Link className={styles.roomPrimaryAction} href={`/rooms/${room.slug}`}>
+          Open room
+          <ArrowRight aria-hidden="true" size={16} />
+        </Link>
       </div>
     </article>
   );
 }
 
-function PublicRoomCard({ room }: { room: RoomSummary }) {
+function PublicRoomRow({ room }: { room: RoomSummary }) {
   return (
-    <article className="room-directory-card room-directory-card--public">
-      <div className="room-card-topline">
-        <div className="room-card-monogram" aria-hidden="true">
-          {getRoomInitials(room.name)}
-        </div>
-        <VisibilityBadge isPublic />
+    <article className={`${styles.roomRow} ${styles.roomRowPublic}`}>
+      <div className={styles.roomMonogram} aria-hidden="true">
+        {getRoomInitials(room.name)}
       </div>
-      <div className="room-card-copy">
-        <h3>{room.name}</h3>
-        <p>A public study table with shared notes and live collaboration.</p>
-        <span className="room-card-updated">
+      <div className={styles.roomDetails}>
+        <div className={styles.roomTitleLine}>
+          <h2>{room.name}</h2>
+          <VisibilityBadge isPublic />
+        </div>
+        <span className={styles.roomUpdated}>
           <CalendarDays aria-hidden="true" size={13} />
           {formatUpdatedAt(room.updatedAt)}
         </span>
@@ -386,270 +302,207 @@ export function RoomsDashboard({
     createRoomAction,
     INITIAL_ROOM_ACTION_STATE,
   );
-  const [joinedLayout, setJoinedLayout] = usePersistedRoomLayout(
-    JOINED_ROOM_LAYOUT_KEY,
-  );
-  const [publicLayout, setPublicLayout] = usePersistedRoomLayout(
-    PUBLIC_ROOM_LAYOUT_KEY,
-  );
-  const displayInitial = displayName.trim().charAt(0).toUpperCase() || "Q";
-  const firstName = displayName.trim().split(/\s+/)[0] || "there";
+  const createDialogRef = useRef<HTMLDialogElement>(null);
+  const roomCount = directory.joinedRooms.length;
+
+  const openCreateDialog = (): void => {
+    const dialog = createDialogRef.current;
+    dialog?.showModal();
+    dialog?.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+  };
+
+  const closeCreateDialog = (): void => {
+    createDialogRef.current?.close();
+  };
 
   return (
-    <main className="rooms-home-shell">
-      <header className="rooms-home-header">
-        <div className="rooms-home-header__inner">
-          <div className="rooms-home-brand">
+    <main className={styles.shell}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <div className={styles.brandGroup}>
             <Link
-              className="brand-lockup"
+              className={styles.brand}
               href="/rooms"
               aria-label="Qollab rooms"
             >
               <QollabBrandLogo />
             </Link>
-            <span className="rooms-home-brand__section">Study rooms</span>
           </div>
-          <div className="rooms-home-user">
-            <span className="rooms-user-avatar" aria-hidden="true">
-              {displayInitial}
-            </span>
-            <span className="rooms-user-copy">
-              <small>Signed in as</small>
-              <strong>{displayName}</strong>
-            </span>
-            <SignOutButton
-              beforeSignOut={prepareRoomHomeSignOut}
-              userId={userId}
-            />
+          <div className={styles.headerActions}>
+            <button
+              className={styles.newRoomButton}
+              onClick={openCreateDialog}
+              type="button"
+            >
+              <Plus aria-hidden="true" size={16} />
+              <span>New room</span>
+            </button>
+            <div className={styles.account}>
+              <SidebarAccountMenu
+                appearance="header"
+                beforeSignOut={prepareRoomHomeSignOut}
+                displayName={displayName}
+                userId={userId}
+              />
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="rooms-home-content">
-        <section
-          className="rooms-welcome"
-          aria-labelledby="rooms-welcome-title"
-        >
-          <div className="rooms-welcome__copy">
-            <p className="rooms-welcome__eyebrow">
-              <span aria-hidden="true" />
-              Your shared study space
-            </p>
-            <h1 id="rooms-welcome-title">
-              Make today&apos;s study time <em>count</em>, {firstName}.
-            </h1>
+      <div className={styles.content}>
+        <section className={styles.roomsSection} aria-labelledby="rooms-title">
+          <header className={styles.pageHeading}>
+            <div>
+              <p className={styles.eyebrow}>Workspace</p>
+              <h1 id="rooms-title">Your rooms</h1>
+            </div>
             <p>
-              Pick up where your group left off, or start a room for the next
-              idea worth working through together.
+              {roomCount} {roomCount === 1 ? "room" : "rooms"}
             </p>
-          </div>
-          <dl className="rooms-welcome__stats">
-            <div>
-              <dt>On your desk</dt>
-              <dd>{directory.joinedRooms.length}</dd>
-              <span>active rooms</span>
+          </header>
+
+          {roomCount > 0 ? (
+            <div className={styles.roomList}>
+              {directory.joinedRooms.map((room) => (
+                <JoinedRoomRow key={room.id} room={room} />
+              ))}
             </div>
-            <div>
-              <dt>Open to explore</dt>
-              <dd>{directory.publicRooms.length}</dd>
-              <span>community rooms</span>
+          ) : (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyStateIcon}>
+                <LibraryBig aria-hidden="true" size={25} />
+              </span>
+              <div>
+                <h2>No rooms yet</h2>
+                <p>Create a room to begin studying with your group.</p>
+              </div>
+              <button
+                className={styles.emptyAction}
+                onClick={openCreateDialog}
+                type="button"
+              >
+                Create a room
+              </button>
             </div>
-          </dl>
-          <div className="rooms-welcome__motif" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
+          )}
         </section>
 
-        <div className="rooms-home-layout">
-          <div className="rooms-directory-column">
-            <section
-              className="room-list-section"
-              aria-labelledby="joined-rooms-title"
-            >
-              <div className="room-list-heading">
-                <div className="room-list-title">
-                  <span className="room-list-icon room-list-icon--blue">
-                    <BookMarked aria-hidden="true" size={18} />
-                  </span>
-                  <div>
-                    <p className="eyebrow">Your study desk</p>
-                    <h2 id="joined-rooms-title">Continue studying</h2>
-                  </div>
-                </div>
-                <div className="room-list-heading__actions">
-                  <span className="room-list-count">
-                    {directory.joinedRooms.length}
-                    <span className="sr-only">
-                      {directory.joinedRooms.length === 1 ? " room" : " rooms"}
-                    </span>
-                  </span>
-                  <RoomViewToggle
-                    label="your rooms"
-                    onChange={setJoinedLayout}
-                    value={joinedLayout}
-                  />
-                </div>
-              </div>
-
-              {directory.joinedRooms.length > 0 ? (
-                <div
-                  className={`room-card-grid room-card-grid--${joinedLayout}`}
-                >
-                  {directory.joinedRooms.map((room) => (
-                    <JoinedRoomCard key={room.id} room={room} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rooms-empty-state">
-                  <span className="rooms-empty-state__icon">
-                    <LibraryBig aria-hidden="true" size={25} />
-                  </span>
-                  <div>
-                    <h3>Your study desk is clear</h3>
-                    <p>
-                      Create your first room and give your ideas a place to
-                      gather.
-                    </p>
-                  </div>
-                  <ChevronRight aria-hidden="true" size={20} />
-                </div>
-              )}
-            </section>
-
-            <section
-              className="room-list-section room-list-section--discover"
-              aria-labelledby="public-rooms-title"
-            >
-              <div className="room-list-heading">
-                <div className="room-list-title">
-                  <span className="room-list-icon room-list-icon--coral">
-                    <UsersRound aria-hidden="true" size={18} />
-                  </span>
-                  <div>
-                    <p className="eyebrow">The community shelf</p>
-                    <h2 id="public-rooms-title">Discover open rooms</h2>
-                  </div>
-                </div>
-                <div className="room-list-heading__actions">
-                  <span className="room-list-count">
-                    {directory.publicRooms.length}
-                    <span className="sr-only">
-                      {directory.publicRooms.length === 1 ? " room" : " rooms"}
-                    </span>
-                  </span>
-                  <RoomViewToggle
-                    label="public rooms"
-                    onChange={setPublicLayout}
-                    value={publicLayout}
-                  />
-                </div>
-              </div>
-
-              {directory.publicRooms.length > 0 ? (
-                <div
-                  className={`room-card-grid room-card-grid--${publicLayout}`}
-                >
-                  {directory.publicRooms.map((room) => (
-                    <PublicRoomCard key={room.id} room={room} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rooms-empty-state rooms-empty-state--compact">
-                  <Search aria-hidden="true" size={21} />
-                  <div>
-                    <h3>The shelf is quiet</h3>
-                    <p>No other public rooms are available right now.</p>
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-
-          <aside
-            className="create-room-panel"
-            aria-labelledby="create-room-title"
+        {directory.publicRooms.length > 0 ? (
+          <section
+            className={`${styles.roomsSection} ${styles.openRoomsSection}`}
+            aria-labelledby="open-rooms-title"
           >
-            <div className="create-room-panel__heading">
-              <div className="create-room-icon" aria-hidden="true">
-                <Plus size={20} />
+            <header className={styles.secondaryHeading}>
+              <div>
+                <p className={styles.eyebrow}>Available to join</p>
+                <h2 id="open-rooms-title">Open rooms</h2>
               </div>
-              <span>01 / New room</span>
+              <p>{directory.publicRooms.length}</p>
+            </header>
+            <div className={styles.roomList}>
+              {directory.publicRooms.map((room) => (
+                <PublicRoomRow key={room.id} room={room} />
+              ))}
             </div>
-            <p className="eyebrow">Start something together</p>
-            <h2 id="create-room-title">Set a new table.</h2>
-            <p>
-              Open a focused space for notes, ideas, and the people learning
-              alongside you.
-            </p>
-
-            <form action={createAction} className="create-room-form">
-              <label htmlFor="room-name">What are you studying?</label>
-              <input
-                id="room-name"
-                name="name"
-                type="text"
-                maxLength={120}
-                placeholder="e.g. Cardiovascular pharmacology"
-                required
-              />
-
-              <fieldset>
-                <legend>Choose who can find it</legend>
-                <div className="visibility-option-grid">
-                  <label className="visibility-option">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="private"
-                      defaultChecked
-                    />
-                    <span className="visibility-option__icon">
-                      <LockKeyhole aria-hidden="true" size={17} />
-                    </span>
-                    <span>
-                      <strong>Private</strong>
-                      <small>Invite only</small>
-                    </span>
-                  </label>
-                  <label className="visibility-option">
-                    <input type="radio" name="visibility" value="public" />
-                    <span className="visibility-option__icon">
-                      <Globe2 aria-hidden="true" size={17} />
-                    </span>
-                    <span>
-                      <strong>Public</strong>
-                      <small>Anyone can join</small>
-                    </span>
-                  </label>
-                </div>
-              </fieldset>
-
-              {createState.message ? (
-                <p
-                  className={`room-inline-message room-inline-message--${createState.status}`}
-                  role={createState.status === "error" ? "alert" : "status"}
-                >
-                  {createState.message}
-                </p>
-              ) : null}
-
-              <PendingButton
-                className="create-room-submit"
-                pendingLabel="Creating room…"
-              >
-                Create study room
-                <ArrowRight aria-hidden="true" size={17} />
-              </PendingButton>
-            </form>
-            <p className="create-room-footnote">
-              <LockKeyhole aria-hidden="true" size={12} />
-              You can change access anytime
-            </p>
-          </aside>
-        </div>
+          </section>
+        ) : null}
       </div>
+
+      <dialog
+        aria-labelledby="create-room-title"
+        className={styles.createDialog}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            closeCreateDialog();
+          }
+        }}
+        ref={createDialogRef}
+      >
+        <div className={styles.dialogPanel}>
+          <header className={styles.dialogHeading}>
+            <div>
+              <p className={styles.eyebrow}>New workspace</p>
+              <h2 id="create-room-title">Create a room</h2>
+            </div>
+            <button
+              aria-label="Close create room dialog"
+              className={styles.dialogClose}
+              onClick={closeCreateDialog}
+              type="button"
+            >
+              <X aria-hidden="true" size={18} />
+            </button>
+          </header>
+          <p className={styles.dialogIntro}>
+            Give your group a focused place for notes, files, and live study
+            sessions.
+          </p>
+
+          <form action={createAction} className={styles.createForm}>
+            <label htmlFor="room-name">Room name</label>
+            <input
+              id="room-name"
+              maxLength={120}
+              name="name"
+              placeholder="e.g. Cardiovascular pharmacology"
+              required
+              type="text"
+            />
+
+            <fieldset>
+              <legend>Access</legend>
+              <div className={styles.visibilityGrid}>
+                <label className={styles.visibilityOption}>
+                  <input
+                    defaultChecked
+                    name="visibility"
+                    type="radio"
+                    value="private"
+                  />
+                  <span className={styles.visibilityIcon}>
+                    <LockKeyhole aria-hidden="true" size={17} />
+                  </span>
+                  <span>
+                    <strong>Private</strong>
+                    <small>Invite only</small>
+                  </span>
+                </label>
+                <label className={styles.visibilityOption}>
+                  <input name="visibility" type="radio" value="public" />
+                  <span className={styles.visibilityIcon}>
+                    <Globe2 aria-hidden="true" size={17} />
+                  </span>
+                  <span>
+                    <strong>Public</strong>
+                    <small>Anyone can join</small>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            {createState.message ? (
+              <p
+                className={`room-inline-message room-inline-message--${createState.status}`}
+                role={createState.status === "error" ? "alert" : "status"}
+              >
+                {createState.message}
+              </p>
+            ) : null}
+
+            <PendingButton
+              className={styles.createSubmit}
+              pendingLabel="Creating room…"
+            >
+              Create room
+              <ArrowRight aria-hidden="true" size={17} />
+            </PendingButton>
+          </form>
+          <p className={styles.createFootnote}>
+            <LockKeyhole aria-hidden="true" size={12} />
+            You can change access anytime
+          </p>
+        </div>
+      </dialog>
     </main>
   );
 }

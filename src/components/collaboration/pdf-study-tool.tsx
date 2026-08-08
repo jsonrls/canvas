@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Hand,
   Highlighter,
   MessageSquare,
   Minus,
@@ -23,6 +24,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { useRouter } from "next/navigation";
 import * as Y from "yjs";
 
+import { MobileToolsMenu } from "@/components/collaboration/mobile-tools-menu";
 import { useCollaborativeTool } from "@/hooks/use-collaborative-tool";
 import {
   clampUnit,
@@ -87,6 +89,14 @@ const TOOL_LABELS: Array<{
   { icon: StickyNote, label: "Sticky note", type: "sticky" },
   { icon: MessageSquare, label: "Page comment", type: "comment" },
 ];
+const MOBILE_PRIMARY_PDF_TOOLS = new Set<PdfAnnotationType>([
+  "highlight",
+  "draw",
+]);
+
+function annotationUsesComments(type: PdfAnnotationType): boolean {
+  return type === "sticky" || type === "comment";
+}
 
 function isRoomPdfAsset(value: unknown): value is RoomPdfAsset {
   return Boolean(
@@ -149,7 +159,7 @@ export default function PdfStudyTool({
   const [bookmarkedPages, setBookmarkedPages] = useState<Set<number>>(
     new Set(),
   );
-  const [commentsOpen, setCommentsOpen] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [draft, setDraft] = useState<DraftMark | null>(null);
   const [fileMessage, setFileMessage] = useState("");
   const [isRefreshingAsset, setIsRefreshingAsset] = useState(
@@ -162,6 +172,7 @@ export default function PdfStudyTool({
   const [replies, setReplies] = useState<PdfReply[]>([]);
   const [replyText, setReplyText] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [scrollMode, setScrollMode] = useState(true);
   const [selectedTool, setSelectedTool] =
     useState<PdfAnnotationType>("highlight");
   const [textDraft, setTextDraft] = useState("");
@@ -268,7 +279,12 @@ export default function PdfStudyTool({
     if (!host) return;
 
     const updateWidth = (): void => {
-      setPageWidth(Math.max(280, Math.min(820, host.clientWidth - 24)));
+      const horizontalInset = window.matchMedia("(max-width: 760px)").matches
+        ? 0
+        : 24;
+      setPageWidth(
+        Math.max(280, Math.min(820, host.clientWidth - horizontalInset)),
+      );
     };
     const observer = new ResizeObserver(updateWidth);
     observer.observe(host);
@@ -349,6 +365,7 @@ export default function PdfStudyTool({
     setSelectedId(annotation.id);
     setTextDraft(annotation.text);
     setReplyText("");
+    setCommentsOpen(annotationUsesComments(annotation.type));
   }, []);
 
   const transact = useCallback(
@@ -384,7 +401,7 @@ export default function PdfStudyTool({
       const annotation: PdfAnnotation = {
         authorId: currentUser.id,
         authorName: currentUser.displayName,
-        color: collaboration.connection?.user.color ?? "#3871c2",
+        color: collaboration.connection?.user.color ?? "#7352FA",
         createdAt: new Date().toISOString(),
         height:
           type === "sticky" || type === "comment"
@@ -409,6 +426,7 @@ export default function PdfStudyTool({
       setSelectedId(id);
       setTextDraft("");
       setReplyText("");
+      setCommentsOpen(annotationUsesComments(type));
     },
     [collaboration.connection, currentUser, page, revision, transact],
   );
@@ -416,7 +434,7 @@ export default function PdfStudyTool({
   const handlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>,
   ): void => {
-    if (!canEdit || !revision || event.button !== 0) return;
+    if (scrollMode || !canEdit || !revision || event.button !== 0) return;
     const point = getPoint(event);
 
     if (selectedTool === "sticky" || selectedTool === "comment") {
@@ -593,7 +611,7 @@ export default function PdfStudyTool({
 
   return (
     <section
-      className="study-tool study-tool--visual"
+      className="study-tool study-tool--visual study-tool--pdf"
       aria-label="PDF annotation workspace"
     >
       <div className="study-tool__heading">
@@ -666,49 +684,18 @@ export default function PdfStudyTool({
         >
           <div className="pdf-canvas-column">
             <div className="pdf-toolbar" aria-label="PDF annotation tools">
-              {TOOL_LABELS.map(({ icon: Icon, label, type }) => (
-                <button
-                  aria-pressed={selectedTool === type}
-                  className={selectedTool === type ? "is-active" : ""}
-                  disabled={!canEdit}
-                  key={type}
-                  onClick={() => setSelectedTool(type)}
-                  title={label}
-                  type="button"
-                >
-                  <Icon aria-hidden="true" size={16} />
-                  <span>{label}</span>
-                </button>
-              ))}
               <button
-                aria-pressed={bookmarkedPages.has(page)}
-                className={bookmarkedPages.has(page) ? "is-active" : ""}
-                disabled={!canEdit}
-                onClick={toggleBookmark}
-                title="Bookmark page"
+                aria-pressed={scrollMode}
+                className={`pdf-toolbar__mobile-primary${scrollMode ? " is-active" : ""}`}
+                onClick={() => {
+                  setDraft(null);
+                  setScrollMode(true);
+                }}
+                title="Scroll PDF"
                 type="button"
               >
-                <Bookmark aria-hidden="true" size={16} />
-                <span>Bookmark</span>
-              </button>
-              <button
-                aria-label="Zoom out"
-                disabled={zoom <= 0.75}
-                onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
-                title="Zoom out"
-                type="button"
-              >
-                <ZoomOut aria-hidden="true" size={16} />
-              </button>
-              <span className="pdf-zoom-value">{Math.round(zoom * 100)}%</span>
-              <button
-                aria-label="Zoom in"
-                disabled={zoom >= 1.75}
-                onClick={() => setZoom((value) => Math.min(1.75, value + 0.25))}
-                title="Zoom in"
-                type="button"
-              >
-                <ZoomIn aria-hidden="true" size={16} />
+                <Hand aria-hidden="true" size={16} />
+                <span>Scroll</span>
               </button>
               <button
                 aria-controls="pdf-comments-panel"
@@ -718,7 +705,7 @@ export default function PdfStudyTool({
                     ? "Hide comments and notes"
                     : "Show comments and notes"
                 }
-                className="pdf-comments-toggle"
+                className="pdf-comments-toggle pdf-toolbar__mobile-primary"
                 onClick={() => setCommentsOpen((isOpen) => !isOpen)}
                 title={
                   commentsOpen
@@ -732,7 +719,177 @@ export default function PdfStudyTool({
                 ) : (
                   <PanelRightOpen aria-hidden="true" size={18} />
                 )}
+                <span className="pdf-comments-toggle__label">
+                  Notes &amp; comments
+                </span>
               </button>
+              {TOOL_LABELS.map(({ icon: Icon, label, type }) => (
+                <button
+                  aria-pressed={!scrollMode && selectedTool === type}
+                  className={`${MOBILE_PRIMARY_PDF_TOOLS.has(type) ? "pdf-toolbar__mobile-primary" : "pdf-toolbar__mobile-secondary"}${!scrollMode && selectedTool === type ? " is-active" : ""}`}
+                  disabled={!canEdit}
+                  key={type}
+                  onClick={() => {
+                    setScrollMode(false);
+                    setSelectedTool(type);
+                    if (!annotationUsesComments(type)) {
+                      setCommentsOpen(false);
+                    }
+                  }}
+                  title={label}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" size={16} />
+                  <span>{label}</span>
+                </button>
+              ))}
+              <button
+                aria-pressed={bookmarkedPages.has(page)}
+                className={`pdf-toolbar__mobile-secondary${bookmarkedPages.has(page) ? " is-active" : ""}`}
+                disabled={!canEdit}
+                onClick={toggleBookmark}
+                title="Bookmark page"
+                type="button"
+              >
+                <Bookmark aria-hidden="true" size={16} />
+                <span>Bookmark</span>
+              </button>
+              <button
+                aria-label="Zoom out"
+                className="pdf-toolbar__mobile-secondary"
+                disabled={zoom <= 0.75}
+                onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+                title="Zoom out"
+                type="button"
+              >
+                <ZoomOut aria-hidden="true" size={16} />
+              </button>
+              <span className="pdf-zoom-value pdf-toolbar__mobile-secondary">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                aria-label="Zoom in"
+                className="pdf-toolbar__mobile-secondary"
+                disabled={zoom >= 1.75}
+                onClick={() => setZoom((value) => Math.min(1.75, value + 0.25))}
+                title="Zoom in"
+                type="button"
+              >
+                <ZoomIn aria-hidden="true" size={16} />
+              </button>
+              <MobileToolsMenu
+                active={
+                  (!scrollMode &&
+                    !MOBILE_PRIMARY_PDF_TOOLS.has(selectedTool)) ||
+                  bookmarkedPages.has(page) ||
+                  zoom !== 1
+                }
+                description="Annotate, bookmark, or adjust the current PDF page."
+                title="More PDF tools"
+              >
+                {(close) => (
+                  <div className="mobile-tools-dialog__grid">
+                    {TOOL_LABELS.filter(
+                      ({ type }) => !MOBILE_PRIMARY_PDF_TOOLS.has(type),
+                    ).map(({ icon: Icon, label, type }) => (
+                      <button
+                        aria-pressed={!scrollMode && selectedTool === type}
+                        className={`mobile-tool-action${!scrollMode && selectedTool === type ? " is-active" : ""}`}
+                        disabled={!canEdit}
+                        key={type}
+                        onClick={() => {
+                          setScrollMode(false);
+                          setSelectedTool(type);
+                          if (!annotationUsesComments(type)) {
+                            setCommentsOpen(false);
+                          }
+                          close();
+                        }}
+                        type="button"
+                      >
+                        <Icon aria-hidden="true" size={18} />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                    <button
+                      aria-pressed={bookmarkedPages.has(page)}
+                      className={`mobile-tool-action${bookmarkedPages.has(page) ? " is-active" : ""}`}
+                      disabled={!canEdit}
+                      onClick={() => {
+                        toggleBookmark();
+                        close();
+                      }}
+                      type="button"
+                    >
+                      <Bookmark aria-hidden="true" size={18} />
+                      <span>
+                        {bookmarkedPages.has(page)
+                          ? "Remove bookmark"
+                          : "Bookmark page"}
+                      </span>
+                    </button>
+                    <div className="mobile-tools-dialog__control mobile-tools-dialog__control--wide">
+                      <span>Page zoom</span>
+                      <div className="mobile-tools-dialog__stepper">
+                        <button
+                          aria-label="Zoom out"
+                          disabled={zoom <= 0.75}
+                          onClick={() =>
+                            setZoom((value) => Math.max(0.75, value - 0.25))
+                          }
+                          type="button"
+                        >
+                          <ZoomOut aria-hidden="true" size={18} />
+                        </button>
+                        <strong>{Math.round(zoom * 100)}%</strong>
+                        <button
+                          aria-label="Zoom in"
+                          disabled={zoom >= 1.75}
+                          onClick={() =>
+                            setZoom((value) => Math.min(1.75, value + 0.25))
+                          }
+                          type="button"
+                        >
+                          <ZoomIn aria-hidden="true" size={18} />
+                        </button>
+                      </div>
+                    </div>
+                    {asset && !isRefreshingAsset ? (
+                      <a
+                        className="mobile-tool-action"
+                        download={asset.fileName}
+                        href={asset.signedUrl}
+                        onClick={close}
+                      >
+                        <Download aria-hidden="true" size={18} />
+                        <span>Download PDF</span>
+                      </a>
+                    ) : null}
+                    {canManageAsset ? (
+                      <button
+                        className="mobile-tool-action"
+                        disabled={isUploading}
+                        onClick={() => {
+                          fileInputRef.current?.click();
+                          close();
+                        }}
+                        type="button"
+                      >
+                        {isUploading ? (
+                          <RefreshCw
+                            className="spin"
+                            aria-hidden="true"
+                            size={18}
+                          />
+                        ) : (
+                          <Upload aria-hidden="true" size={18} />
+                        )}
+                        <span>{asset ? "Replace PDF" : "Upload PDF"}</span>
+                      </button>
+                    ) : null}
+                  </div>
+                )}
+              </MobileToolsMenu>
               <div className="pdf-toolbar__meta" role="status">
                 <span
                   className={`connection-badge connection-badge--${collaboration.status}`}
@@ -781,7 +938,7 @@ export default function PdfStudyTool({
                     width={pageWidth * zoom}
                   />
                   <div
-                    className={`pdf-annotation-layer pdf-annotation-layer--${selectedTool}`}
+                    className={`pdf-annotation-layer pdf-annotation-layer--${scrollMode ? "scroll" : selectedTool}`}
                     onPointerCancel={finishDraft}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
@@ -896,7 +1053,17 @@ export default function PdfStudyTool({
                   <p className="sidebar-label">Page {page}</p>
                   <h2>Comments & notes</h2>
                 </div>
-                <span>{pageComments.length}</span>
+                <div className="pdf-comments__heading-actions">
+                  <span>{pageComments.length}</span>
+                  <button
+                    aria-label="Close comments and notes"
+                    className="pdf-comments__close"
+                    onClick={() => setCommentsOpen(false)}
+                    type="button"
+                  >
+                    <PanelRightClose aria-hidden="true" size={18} />
+                  </button>
+                </div>
               </div>
               {bookmarkedPages.size ? (
                 <div className="pdf-bookmarks">

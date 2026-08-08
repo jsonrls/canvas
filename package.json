@@ -18,6 +18,7 @@
     "verify:offline-sync": "node --env-file=.env --import tsx scripts/verify-offline-sync.ts",
     "verify:conflict-review": "node --import tsx scripts/verify-conflict-review.ts",
     "verify:password-reset": "node --import tsx scripts/verify-password-reset.ts",
+    "verify:account-profile": "node --import tsx scripts/verify-account-profile.ts",
     "verify:phase-3": "node --import tsx scripts/verify-phase-3.ts",
     "verify:phase-3-storage": "node --env-file=.env scripts/verify-phase-3-storage.mjs",
     "verify:phase-4": "node --import tsx scripts/verify-phase-4.ts",

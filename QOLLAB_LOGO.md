@@ -37,7 +37,7 @@ Violet combines the calm reliability of blue with the imagination and energy ass
 - Trust and focus
 - A modern digital experience
 
-The primary brand violet is **Qollab Violet (`#6D50F7`)**, supported by **Deep Violet (`#4B2BBF`)** and **Soft Violet (`#EEE9FF`)**. The subtle tonal movement in the logo adds depth while preserving its minimalist character.
+The primary brand color is **Qollab Violet (`#7352FA`)**, supported by **Soft Violet (`#EEE9FF`)**. In the application, the logo is rendered as a solid Qollab Violet mark for a consistent brand signature.
 
 ### Wordmark
 

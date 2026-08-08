@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import { getAuthenticatedContext } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Study together, without losing the thread",
@@ -64,7 +65,9 @@ const HOW_STEPS = [
   },
 ] as const;
 
-export default function HomePage(): React.ReactElement {
+export default async function HomePage(): Promise<React.ReactElement> {
+  const isAuthenticated = (await getAuthenticatedContext()) !== null;
+
   return (
     <div className="landing-page">
       <header className="landing-header">
@@ -81,11 +84,14 @@ export default function HomePage(): React.ReactElement {
           <a href="#how">How it works</a>
         </nav>
         <div className="landing-header__actions">
-          <Link className="landing-link-button" href="/login">
-            Sign in
+          <Link
+            className="landing-link-button"
+            href={isAuthenticated ? "/profile" : "/login"}
+          >
+            {isAuthenticated ? "Profile" : "Sign in"}
           </Link>
           <Link className="landing-primary-button" href="/rooms">
-            Open Qollab
+            {isAuthenticated ? "Your rooms" : "Open Qollab"}
             <ArrowRight aria-hidden="true" size={17} />
           </Link>
         </div>

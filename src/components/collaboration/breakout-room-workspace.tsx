@@ -7,7 +7,6 @@ import {
   Copy,
   DoorOpen,
   FileText,
-  House,
   MessageCircleQuestion,
   PanelsTopLeft,
   Radio,
@@ -20,7 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import { BreakoutQaPanel } from "@/components/collaboration/breakout-qa-panel";
 import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
@@ -71,14 +70,7 @@ const WhiteboardStudyTool = dynamic(
   },
 );
 
-const USER_COLORS = [
-  "#3871c2",
-  "#f04623",
-  "#9c614f",
-  "#7c5bb3",
-  "#16866d",
-  "#d98b22",
-];
+const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
 async function prepareBreakoutSignOut(): Promise<void> {
   await Promise.resolve();
@@ -312,7 +304,7 @@ export function BreakoutRoomWorkspace({
   };
 
   return (
-    <main className="breakout-workspace">
+    <main className={`breakout-workspace breakout-workspace--${activeTool}`}>
       <header className="room-header breakout-workspace__header">
         <div className="brand-lockup">
           <Link
@@ -330,12 +322,24 @@ export function BreakoutRoomWorkspace({
 
         <div className="header-actions">
           <Link
-            className="icon-button"
+            className="breakout-workspace__back"
             href={`/rooms/${breakout.parentRoomSlug}`}
             aria-label={`Back to ${breakout.parentRoomName}`}
           >
-            <House aria-hidden="true" size={18} />
+            <ArrowLeft aria-hidden="true" size={17} />
+            <span>Back to room</span>
           </Link>
+          <div className="breakout-workspace__header-collaboration">
+            {breakout.role === "viewer" ? (
+              <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
+            ) : (
+              <ViewerCollaborationToggle
+                enabled={viewerCanCollaborate}
+                onEnabledChange={setViewerCanCollaborate}
+                roomSlug={breakout.parentRoomSlug}
+              />
+            )}
+          </div>
           <div
             className="participant-stack"
             aria-label={`${participants.length} active participants`}
@@ -355,10 +359,6 @@ export function BreakoutRoomWorkspace({
             <UsersRound aria-hidden="true" size={14} />
             {breakout.role}
           </span>
-          <SignOutButton
-            beforeSignOut={prepareBreakoutSignOut}
-            userId={currentUser.id}
-          />
         </div>
       </header>
 
@@ -399,26 +399,7 @@ export function BreakoutRoomWorkspace({
           <PanelsTopLeft aria-hidden="true" size={17} />
           Board
         </button>
-        <button
-          aria-pressed={qaOpen}
-          onClick={() => setQaOpen(true)}
-          type="button"
-        >
-          <MessageCircleQuestion aria-hidden="true" size={17} />
-          Q&amp;A
-        </button>
       </nav>
-      <div className="mobile-collaboration-control breakout-workspace__mobile-collaboration">
-        {breakout.role === "viewer" ? (
-          <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
-        ) : (
-          <ViewerCollaborationToggle
-            enabled={viewerCanCollaborate}
-            onEnabledChange={setViewerCanCollaborate}
-            roomSlug={breakout.parentRoomSlug}
-          />
-        )}
-      </div>
 
       <div
         className={`breakout-workspace__body${qaOpen ? " breakout-workspace__body--qa-open" : ""}`}
@@ -493,34 +474,14 @@ export function BreakoutRoomWorkspace({
             </nav>
           </div>
 
-          <div className="sidebar-section">
-            <p className="sidebar-label">Collaboration</p>
-            {breakout.role === "viewer" ? (
-              <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
-            ) : (
-              <ViewerCollaborationToggle
-                enabled={viewerCanCollaborate}
-                onEnabledChange={setViewerCanCollaborate}
-                roomSlug={breakout.parentRoomSlug}
-              />
-            )}
-          </div>
-
           <div className="sidebar-footer">
-            <div
-              className="current-user"
-              style={
-                {
-                  "--user-color": connection?.user.color,
-                } as React.CSSProperties
-              }
-            >
-              <span>{connection?.user.name.charAt(0) ?? "?"}</span>
-              <div>
-                <strong>{connection?.user.name ?? "Joining…"}</strong>
-                <small>You · {breakout.role}</small>
-              </div>
-            </div>
+            <SidebarAccountMenu
+              beforeSignOut={prepareBreakoutSignOut}
+              displayName={connection?.user.name ?? currentUser.displayName}
+              role={breakout.role}
+              userColor={connection?.user.color}
+              userId={currentUser.id}
+            />
           </div>
         </aside>
 
@@ -641,6 +602,17 @@ export function BreakoutRoomWorkspace({
               : null
           }
         />
+        <button
+          aria-controls="breakout-qa-panel"
+          aria-expanded={qaOpen}
+          aria-label="Open Q and A"
+          className="breakout-qa-toggle"
+          onClick={() => setQaOpen(true)}
+          type="button"
+        >
+          <MessageCircleQuestion aria-hidden="true" size={18} />
+          <span>Ask Q&amp;A</span>
+        </button>
       </div>
     </main>
   );

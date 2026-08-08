@@ -28,7 +28,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { createVersionAction } from "@/app/rooms/[roomId]/actions";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import {
@@ -142,14 +142,7 @@ const USER_NAMES = [
   "Kai",
   "Ari",
 ];
-const USER_COLORS = [
-  "#3871c2",
-  "#f04623",
-  "#9c614f",
-  "#7c5bb3",
-  "#16866d",
-  "#d98b22",
-];
+const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
 function createStudyUser(clientId: number, displayName: string): StudyUser {
   return {
@@ -214,7 +207,7 @@ export function CollaborativeRoom({
   const [showFollowPrompt, setShowFollowPrompt] = useState(false);
   const [assistantSourceText, setAssistantSourceText] = useState("");
   const [isVersionHistoryCollapsed, setIsVersionHistoryCollapsed] =
-    useState(false);
+    useState(true);
   const [connection, setConnection] = useState<CollaborationConnection | null>(
     null,
   );
@@ -878,7 +871,7 @@ export function CollaborativeRoom({
 
   return (
     <main
-      className="room-shell"
+      className={`room-shell room-shell--${activeTool}`}
       onPointerMove={(event) => {
         if (isPresenting) {
           updateCursor(
@@ -897,25 +890,11 @@ export function CollaborativeRoom({
           >
             <QollabBrandLogo />
           </Link>
-          <span className="brand-divider" aria-hidden="true" />
-          <label className="room-switcher" aria-label="Switch study room">
-            <select
-              value={roomId}
-              onChange={(event) => router.push(`/rooms/${event.target.value}`)}
-            >
-              {availableRooms.map((room) => (
-                <option value={room.slug} key={room.slug}>
-                  {room.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown aria-hidden="true" size={15} />
-          </label>
         </div>
 
         <div className="header-actions">
           <Link
-            className="icon-button mobile-only"
+            className="icon-button mobile-only room-directory-shortcut"
             href="/rooms"
             aria-label="All study rooms"
           >
@@ -996,7 +975,11 @@ export function CollaborativeRoom({
             </button>
           )}
           {currentUserRole === "owner" ? (
-            <Link className="invite-button" href={`/rooms/${roomId}/settings`}>
+            <Link
+              aria-label="Manage room"
+              className="invite-button"
+              href={`/rooms/${roomId}/settings`}
+            >
               <UsersRound aria-hidden="true" size={16} />
               Manage
             </Link>
@@ -1010,10 +993,6 @@ export function CollaborativeRoom({
               {currentUserRole}
             </span>
           )}
-          <SignOutButton
-            beforeSignOut={prepareForSignOut}
-            userId={currentUser.id}
-          />
         </div>
       </header>
 
@@ -1071,20 +1050,32 @@ export function CollaborativeRoom({
           id="room-menu-sidebar"
           aria-label="Study room navigation"
         >
-          <div className="sidebar-section">
-            <p className="sidebar-label">Study rooms</p>
-            <nav className="sidebar-nav">
-              {availableRooms.map((room) => (
-                <Link
-                  className={`sidebar-link${room.slug === roomId ? " sidebar-link--active" : ""}`}
-                  href={`/rooms/${room.slug}`}
-                  key={room.slug}
-                >
-                  <BookOpenText aria-hidden="true" size={17} />
-                  {room.name}
-                </Link>
-              ))}
-            </nav>
+          <div className="sidebar-room-switcher">
+            <div className="sidebar-room-switcher__label">
+              <BookOpenText aria-hidden="true" size={14} />
+              <span>Current room</span>
+            </div>
+            <label
+              className="sidebar-room-select"
+              aria-label="Switch study room"
+            >
+              <select
+                value={roomId}
+                onChange={(event) =>
+                  router.push(`/rooms/${event.target.value}`)
+                }
+              >
+                {availableRooms.map((room) => (
+                  <option value={room.slug} key={room.slug}>
+                    {room.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown aria-hidden="true" size={16} />
+            </label>
+            <p className="sidebar-room-switcher__hint">
+              Switch between your study spaces
+            </p>
           </div>
 
           <div className="sidebar-section">
@@ -1149,20 +1140,13 @@ export function CollaborativeRoom({
           </div>
 
           <div className="sidebar-footer">
-            <div
-              className="current-user"
-              style={
-                {
-                  "--user-color": connection?.user.color,
-                } as React.CSSProperties
-              }
-            >
-              <span>{connection?.user.name.charAt(0) ?? "?"}</span>
-              <div>
-                <strong>{connection?.user.name ?? "Joining…"}</strong>
-                <small>You · {currentUserRole}</small>
-              </div>
-            </div>
+            <SidebarAccountMenu
+              beforeSignOut={prepareForSignOut}
+              displayName={connection?.user.name ?? currentUser.displayName}
+              role={currentUserRole}
+              userColor={connection?.user.color}
+              userId={currentUser.id}
+            />
           </div>
         </aside>
 
@@ -1256,7 +1240,7 @@ export function CollaborativeRoom({
           </section>
         ) : (
           <section
-            className={`study-tool-workspace${activeTool === "pdf" || activeTool === "whiteboard" ? " study-tool-workspace--visual" : ""}`}
+            className={`study-tool-workspace${activeTool === "pdf" || activeTool === "whiteboard" ? " study-tool-workspace--visual" : ""}${activeTool === "pdf" ? " study-tool-workspace--pdf" : ""}`}
           >
             {activeTool === "pdf" ? (
               <PdfStudyTool

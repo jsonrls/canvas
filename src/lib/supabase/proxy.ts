@@ -5,7 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getSupabaseServerConfig } from "@/lib/supabase/config";
 
-const PROTECTED_PATHS = ["/rooms"];
+const PROTECTED_PATHS = ["/profile", "/rooms", "/settings"];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PATHS.some(

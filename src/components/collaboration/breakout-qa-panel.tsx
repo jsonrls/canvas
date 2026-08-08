@@ -166,7 +166,11 @@ export function BreakoutQaPanel({
   };
 
   return (
-    <aside className="breakout-qa" aria-label="Breakout room Q and A">
+    <aside
+      className="breakout-qa"
+      id="breakout-qa-panel"
+      aria-label="Breakout room Q and A"
+    >
       <header className="breakout-qa__header">
         <div>
           <span className="breakout-qa__eyebrow">

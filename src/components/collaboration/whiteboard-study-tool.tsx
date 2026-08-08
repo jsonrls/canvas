@@ -23,6 +23,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Y from "yjs";
 
+import { MobileToolsMenu } from "@/components/collaboration/mobile-tools-menu";
 import { useCollaborativeTool } from "@/hooks/use-collaborative-tool";
 import {
   cameraViewBox,
@@ -130,6 +131,11 @@ const TOOLS: Array<{
   { icon: Type, label: "Text", tool: "text" },
   { icon: ImagePlus, label: "Image", tool: "image" },
 ];
+const MOBILE_PRIMARY_WHITEBOARD_TOOLS = new Set<WhiteboardTool>([
+  "select",
+  "draw",
+  "text",
+]);
 const SAFE_IMAGE_TYPES = new Set([
   "image/gif",
   "image/jpeg",
@@ -139,6 +145,56 @@ const SAFE_IMAGE_TYPES = new Set([
 const HANDLE_SIZE = 12;
 const LASER_TRAIL_LENGTH = 16;
 const LASER_IDLE_TIMEOUT_MS = 650;
+const AUTOMATIC_FIT_MAX_ZOOM = 1.5;
+const AUTO_FIT_PADDING = 80;
+
+function fitCameraToElements(
+  elements: WhiteboardElement[],
+  viewport: ViewportSize,
+  maxZoom = MAX_ZOOM,
+): WhiteboardCamera {
+  if (elements.length === 0) return createInitialCamera(viewport);
+
+  const bounds = elements.reduce(
+    (current, element) => {
+      const next = getElementBounds(element);
+      return {
+        minX: Math.min(current.minX, next.x),
+        minY: Math.min(current.minY, next.y),
+        maxX: Math.max(current.maxX, next.x + next.width),
+        maxY: Math.max(current.maxY, next.y + next.height),
+      };
+    },
+    { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
+  );
+  const contentWidth = Math.max(
+    1,
+    bounds.maxX - bounds.minX + AUTO_FIT_PADDING * 2,
+  );
+  const contentHeight = Math.max(
+    1,
+    bounds.maxY - bounds.minY + AUTO_FIT_PADDING * 2,
+  );
+  const zoom = Math.max(
+    MIN_ZOOM,
+    Math.min(
+      maxZoom,
+      viewport.width / contentWidth,
+      viewport.height / contentHeight,
+    ),
+  );
+  const viewWidth = viewport.width / zoom;
+  const viewHeight = viewport.height / zoom;
+
+  return clampCamera(
+    {
+      x: (bounds.minX + bounds.maxX - viewWidth) / 2,
+      y: (bounds.minY + bounds.maxY - viewHeight) / 2,
+      zoom,
+    },
+    viewport,
+  );
+}
 
 function getBoardPoint(
   camera: WhiteboardCamera,
@@ -551,7 +607,7 @@ export default function WhiteboardStudyTool({
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [drawingColor, setDrawingColor] = useState("#3871c2");
+  const [drawingColor, setDrawingColor] = useState("#7352FA");
   const [collaboratorNames, setCollaboratorNames] = useState<
     Record<string, string>
   >({
@@ -571,6 +627,10 @@ export default function WhiteboardStudyTool({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasMeasuredViewportRef = useRef(false);
+  const hasSettledInitialCameraRef = useRef(false);
+  const hasInteractedWithBoardRef = useRef(false);
+  const previousViewportRef = useRef<ViewportSize | null>(null);
   const collaboration = useCollaborativeTool({
     breakoutCode,
     canEdit,
@@ -659,25 +719,84 @@ export default function WhiteboardStudyTool({
   }, [collaboration.connection]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateViewport = (width: number, height: number): void => {
+      if (width <= 0 || height <= 0) return;
+      hasMeasuredViewportRef.current = true;
+      setViewport((current) =>
+        Math.abs(current.width - width) < 0.5 &&
+        Math.abs(current.height - height) < 0.5
+          ? current
+          : { width, height },
+      );
+    };
+
+    const initialBounds = container.getBoundingClientRect();
+    updateViewport(initialBounds.width, initialBounds.height);
+
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setViewport({ width, height });
+        updateViewport(width, height);
       }
     });
-    resizeObserver.observe(containerRef.current);
+    resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Initialize camera on mount
   useEffect(() => {
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setViewport({ width, height });
-      setCamera(createInitialCamera({ width, height }));
+    if (!hasMeasuredViewportRef.current) return;
+
+    const previousViewport = previousViewportRef.current;
+    const viewportChanged = Boolean(
+      previousViewport &&
+      (Math.abs(previousViewport.width - viewport.width) >= 0.5 ||
+        Math.abs(previousViewport.height - viewport.height) >= 0.5),
+    );
+    let nextCamera: WhiteboardCamera | null = null;
+    let settlesInitialCamera = false;
+
+    if (!hasSettledInitialCameraRef.current) {
+      if (elements.length > 0) {
+        if (!hasInteractedWithBoardRef.current) {
+          nextCamera = fitCameraToElements(
+            elements,
+            viewport,
+            AUTOMATIC_FIT_MAX_ZOOM,
+          );
+          settlesInitialCamera = true;
+        } else {
+          hasSettledInitialCameraRef.current = true;
+        }
+      } else if (collaboration.status === "synced") {
+        nextCamera = createInitialCamera(viewport);
+        settlesInitialCamera = true;
+      }
+    } else if (viewportChanged) {
+      nextCamera =
+        elements.length > 0
+          ? fitCameraToElements(elements, viewport, AUTOMATIC_FIT_MAX_ZOOM)
+          : createInitialCamera(viewport);
     }
-  }, []);
+
+    if (!nextCamera) {
+      previousViewportRef.current = viewport;
+      return;
+    }
+
+    const cameraForViewport = nextCamera;
+    const frame = requestAnimationFrame(() => {
+      setCamera(cameraForViewport);
+      previousViewportRef.current = viewport;
+      if (settlesInitialCamera) {
+        hasSettledInitialCameraRef.current = true;
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [collaboration.status, elements, viewport]);
 
   // Spacebar key tracking for panning
   useEffect(() => {
@@ -831,6 +950,7 @@ export default function WhiteboardStudyTool({
     event: React.PointerEvent<SVGSVGElement>,
   ): void => {
     if (!svgRef.current) return;
+    hasInteractedWithBoardRef.current = true;
 
     // Middle mouse or space+click for panning
     if (event.button === 1 || (event.button === 0 && isSpacePressed)) {
@@ -1106,40 +1226,7 @@ export default function WhiteboardStudyTool({
   };
 
   const handleAutoFit = (): void => {
-    if (elements.length === 0) {
-      handleResetView();
-      return;
-    }
-    const bounds = elements.reduce(
-      (current, element) => {
-        const next = getElementBounds(element);
-        return {
-          minX: Math.min(current.minX, next.x),
-          minY: Math.min(current.minY, next.y),
-          maxX: Math.max(current.maxX, next.x + next.width),
-          maxY: Math.max(current.maxY, next.y + next.height),
-        };
-      },
-      { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
-    );
-    const padding = 120;
-    const contentWidth = Math.max(1, bounds.maxX - bounds.minX + padding * 2);
-    const contentHeight = Math.max(1, bounds.maxY - bounds.minY + padding * 2);
-    const zoom = Math.min(
-      MAX_ZOOM,
-      viewport.width / contentWidth,
-      viewport.height / contentHeight,
-    );
-    setCamera(
-      clampCamera(
-        {
-          x: bounds.minX - padding,
-          y: bounds.minY - padding,
-          zoom,
-        },
-        viewport,
-      ),
-    );
+    setCamera(fitCameraToElements(elements, viewport));
   };
 
   const handleUndo = (): void => {
@@ -1345,7 +1432,7 @@ export default function WhiteboardStudyTool({
         upsertElement({
           authorId: currentUser.id,
           authorName: currentUser.displayName || "Study partner",
-          color: "#245ea8",
+          color: "#7352FA",
           createdAt: new Date().toISOString(),
           height: textHeight,
           id,
@@ -1411,7 +1498,7 @@ export default function WhiteboardStudyTool({
     ? {
         authorId: currentUser.id,
         authorName: currentUser.displayName || "Study partner",
-        color: collaboration.connection?.user.color ?? "#3871c2",
+        color: collaboration.connection?.user.color ?? "#7352FA",
         createdAt: "",
         height:
           draft.type === "line" || draft.type === "arrow"
@@ -1614,7 +1701,7 @@ export default function WhiteboardStudyTool({
                 key={handle}
                 onPointerDown={(event) => beginResize(event, element, handle)}
                 rx={2}
-                stroke="#3871c2"
+                stroke="#7352FA"
                 strokeWidth={2}
                 style={{ cursor: handleCursor(handle) }}
                 width={HANDLE_SIZE}
@@ -1707,6 +1794,7 @@ export default function WhiteboardStudyTool({
 
       <div className="whiteboard-toolbar" aria-label="Whiteboard tools">
         <button
+          className="whiteboard-toolbar__mobile-primary"
           disabled={!canUndo || !canEdit}
           onClick={handleUndo}
           title="Undo"
@@ -1716,6 +1804,7 @@ export default function WhiteboardStudyTool({
           <span>Undo</span>
         </button>
         <button
+          className="whiteboard-toolbar__mobile-primary"
           disabled={!canRedo || !canEdit}
           onClick={handleRedo}
           title="Redo"
@@ -1727,7 +1816,7 @@ export default function WhiteboardStudyTool({
         {TOOLS.map(({ icon: Icon, label, tool: nextTool }) => (
           <button
             aria-pressed={tool === nextTool}
-            className={tool === nextTool ? "is-active" : ""}
+            className={`${MOBILE_PRIMARY_WHITEBOARD_TOOLS.has(nextTool) ? "whiteboard-toolbar__mobile-primary" : "whiteboard-toolbar__mobile-secondary"}${tool === nextTool ? " is-active" : ""}`}
             disabled={!canEdit}
             key={nextTool}
             onClick={() => {
@@ -1743,7 +1832,7 @@ export default function WhiteboardStudyTool({
         ))}
         <button
           aria-pressed={laserEnabled}
-          className={`whiteboard-laser-toggle${laserEnabled ? " is-active" : ""}`}
+          className={`whiteboard-laser-toggle whiteboard-toolbar__mobile-secondary${laserEnabled ? " is-active" : ""}`}
           disabled={!canEdit}
           onClick={() => setLaserEnabled((enabled) => !enabled)}
           title={
@@ -1762,7 +1851,7 @@ export default function WhiteboardStudyTool({
         </button>
         <button
           aria-busy={aiAnswerLoading}
-          className="whiteboard-ai-answer"
+          className="whiteboard-ai-answer whiteboard-toolbar__mobile-secondary"
           disabled={!canEdit || aiAnswerLoading || elements.length === 0}
           onClick={() => void answerWhiteboardQuestion()}
           title="AI answer"
@@ -1781,7 +1870,10 @@ export default function WhiteboardStudyTool({
           }}
           type="file"
         />
-        <label className="whiteboard-color-picker" title="Drawing color">
+        <label
+          className="whiteboard-color-picker whiteboard-toolbar__mobile-secondary"
+          title="Drawing color"
+        >
           <span>Color</span>
           <input
             aria-label="Drawing color"
@@ -1791,7 +1883,7 @@ export default function WhiteboardStudyTool({
             value={drawingColor}
           />
         </label>
-        <div className="whiteboard-toolbar__zoom">
+        <div className="whiteboard-toolbar__zoom whiteboard-toolbar__mobile-secondary">
           <button
             disabled={camera.zoom <= MIN_ZOOM}
             onClick={handleZoomOut}
@@ -1816,6 +1908,141 @@ export default function WhiteboardStudyTool({
             <Maximize2 aria-hidden="true" size={17} />
           </button>
         </div>
+        <MobileToolsMenu
+          active={
+            !MOBILE_PRIMARY_WHITEBOARD_TOOLS.has(tool) ||
+            laserEnabled ||
+            camera.zoom !== 1
+          }
+          description="Add shapes and media, change the view, or manage the board."
+          title="More whiteboard tools"
+        >
+          {(close) => (
+            <div className="mobile-tools-dialog__grid">
+              {TOOLS.filter(
+                ({ tool: nextTool }) =>
+                  !MOBILE_PRIMARY_WHITEBOARD_TOOLS.has(nextTool),
+              ).map(({ icon: Icon, label, tool: nextTool }) => (
+                <button
+                  aria-pressed={tool === nextTool}
+                  className={`mobile-tool-action${tool === nextTool ? " is-active" : ""}`}
+                  disabled={!canEdit}
+                  key={nextTool}
+                  onClick={() => {
+                    if (nextTool === "image") {
+                      imageInputRef.current?.click();
+                    } else {
+                      setTool(nextTool);
+                    }
+                    close();
+                  }}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" size={18} />
+                  <span>{label}</span>
+                </button>
+              ))}
+              <button
+                aria-pressed={laserEnabled}
+                className={`mobile-tool-action${laserEnabled ? " is-active" : ""}`}
+                disabled={!canEdit}
+                onClick={() => {
+                  setLaserEnabled((enabled) => !enabled);
+                  close();
+                }}
+                type="button"
+              >
+                <Radio aria-hidden="true" size={18} />
+                <span>{laserEnabled ? "Turn laser off" : "Laser pointer"}</span>
+              </button>
+              <button
+                aria-busy={aiAnswerLoading}
+                className="mobile-tool-action"
+                disabled={!canEdit || aiAnswerLoading || elements.length === 0}
+                onClick={() => {
+                  void answerWhiteboardQuestion();
+                  close();
+                }}
+                type="button"
+              >
+                <Sparkles aria-hidden="true" size={18} />
+                <span>{aiAnswerLoading ? "Answering…" : "AI answer"}</span>
+              </button>
+              <label className="mobile-tools-dialog__control">
+                <span>Drawing color</span>
+                <input
+                  aria-label="Drawing color"
+                  disabled={!canEdit}
+                  onChange={(event) => setDrawingColor(event.target.value)}
+                  type="color"
+                  value={drawingColor}
+                />
+              </label>
+              <div className="mobile-tools-dialog__control mobile-tools-dialog__control--wide mobile-tools-dialog__control--canvas">
+                <span>Canvas view</span>
+                <div className="mobile-tools-dialog__stepper mobile-tools-dialog__stepper--wide">
+                  <button
+                    aria-label="Zoom out"
+                    disabled={camera.zoom <= MIN_ZOOM}
+                    onClick={handleZoomOut}
+                    type="button"
+                  >
+                    <Minus aria-hidden="true" size={18} />
+                  </button>
+                  <strong>{Math.round(camera.zoom * 100)}%</strong>
+                  <button
+                    aria-label="Zoom in"
+                    disabled={camera.zoom >= MAX_ZOOM}
+                    onClick={handleZoomIn}
+                    type="button"
+                  >
+                    <Plus aria-hidden="true" size={18} />
+                  </button>
+                  <button
+                    aria-label="Reset view"
+                    onClick={handleResetView}
+                    type="button"
+                  >
+                    <RefreshCw aria-hidden="true" size={18} />
+                  </button>
+                  <button
+                    aria-label="Auto-fit whiteboard"
+                    onClick={handleAutoFit}
+                    type="button"
+                  >
+                    <Maximize2 aria-hidden="true" size={18} />
+                  </button>
+                </div>
+              </div>
+              {canEdit && selectedElement ? (
+                <button
+                  className="mobile-tool-action mobile-tool-action--danger"
+                  onClick={() => {
+                    deleteSelected();
+                    close();
+                  }}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={18} />
+                  <span>Delete selected</span>
+                </button>
+              ) : null}
+              {canEdit && elements.length > 0 ? (
+                <button
+                  className="mobile-tool-action mobile-tool-action--danger"
+                  onClick={() => {
+                    clearAllDrawings();
+                    close();
+                  }}
+                  type="button"
+                >
+                  <Eraser aria-hidden="true" size={18} />
+                  <span>Clear board</span>
+                </button>
+              ) : null}
+            </div>
+          )}
+        </MobileToolsMenu>
         <div className="whiteboard-toolbar__meta" role="status">
           <span
             className={`connection-badge connection-badge--${collaboration.status}`}

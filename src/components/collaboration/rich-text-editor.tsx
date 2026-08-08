@@ -25,6 +25,7 @@ import { Fragment, forwardRef, useEffect, useImperativeHandle } from "react";
 import type { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
+import { MobileToolsMenu } from "@/components/collaboration/mobile-tools-menu";
 import type { EditorDraft } from "@/lib/collaboration/conflict-review";
 import type { EditorSnapshot } from "@/lib/version-history/types";
 
@@ -157,6 +158,8 @@ const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
   ],
 ];
 
+const MOBILE_PRIMARY_NOTE_ACTIONS = new Set(["Undo", "Redo", "Bold", "Italic"]);
+
 function FontSizeControl({
   editable,
   fontSize,
@@ -222,23 +225,39 @@ function EditorToolbar({
 }): React.ReactElement {
   const toolbarState = useEditorState({
     editor,
-    selector: ({ editor: currentEditor }) => ({
-      documentSize: currentEditor.state.doc.content.size,
-      wordCount: currentEditor.getText().trim()
-        ? currentEditor.getText().trim().split(/\s+/u).length
-        : 0,
-      fontSize: Number.parseInt(
-        currentEditor.getAttributes("fontSize").size ?? "11",
-        10,
-      ),
-    }),
+    selector: ({ editor: currentEditor }) => {
+      if (currentEditor.isDestroyed || !currentEditor.schema) {
+        return {
+          documentSize: 0,
+          fontSize: 11,
+          wordCount: 0,
+        };
+      }
+
+      const editorText = currentEditor.getText().trim();
+
+      return {
+        documentSize: currentEditor.state.doc.content.size,
+        wordCount: editorText ? editorText.split(/\s+/u).length : 0,
+        fontSize: Number.parseInt(
+          currentEditor.getAttributes("fontSize").size ?? "11",
+          10,
+        ),
+      };
+    },
   });
+
+  const editorReady = !editor.isDestroyed && Boolean(editor.schema);
 
   const fontSize = Number.isFinite(toolbarState.fontSize)
     ? toolbarState.fontSize
     : 11;
 
   const applyFontSize = (nextSize: number) => {
+    if (!editorReady) {
+      return;
+    }
+
     const clampedSize = Math.min(72, Math.max(8, nextSize));
     editor
       .chain()
@@ -247,6 +266,46 @@ function EditorToolbar({
       .run();
   };
 
+  const renderAction = (
+    action: ToolbarAction,
+    options?: { close?: () => void; dialog?: boolean; mobile?: boolean },
+  ): React.ReactElement => {
+    const Icon = action.icon;
+    const isActive = editorReady ? (action.isActive?.(editor) ?? false) : false;
+    const isDisabled =
+      !editable || !editorReady || (action.isDisabled?.(editor) ?? false);
+
+    return (
+      <button
+        aria-label={action.label}
+        aria-pressed={action.isActive ? isActive : undefined}
+        className={`toolbar-button${isActive ? " toolbar-button--active" : ""}${options?.mobile ? " mobile-editor-action" : ""}${options?.dialog ? " mobile-tool-action" : ""}`}
+        disabled={isDisabled}
+        key={action.label}
+        onClick={() => {
+          if (!editorReady) return;
+          action.run(editor);
+          options?.close?.();
+        }}
+        title={action.label}
+        type="button"
+      >
+        <Icon aria-hidden="true" size={17} strokeWidth={1.9} />
+        {options?.dialog ? <span>{action.label}</span> : null}
+      </button>
+    );
+  };
+
+  const mobilePrimaryActions = TOOLBAR_GROUPS.flat().filter((action) =>
+    MOBILE_PRIMARY_NOTE_ACTIONS.has(action.label),
+  );
+  const mobileSecondaryActions = TOOLBAR_GROUPS.flat().filter(
+    (action) => !MOBILE_PRIMARY_NOTE_ACTIONS.has(action.label),
+  );
+  const mobileSecondaryActionActive =
+    editorReady &&
+    mobileSecondaryActions.some((action) => action.isActive?.(editor) ?? false);
+
   return (
     <div className="editor-toolbar" role="toolbar" aria-label="Text formatting">
       <div className="toolbar-actions">
@@ -254,35 +313,42 @@ function EditorToolbar({
           <Fragment key={groupIndex}>
             {groupIndex === 1 ? (
               <FontSizeControl
-                editable={editable}
+                editable={editable && editorReady}
                 fontSize={fontSize}
                 applyFontSize={applyFontSize}
               />
             ) : null}
             <div className="toolbar-group">
-              {group.map((action) => {
-                const Icon = action.icon;
-                const isActive = action.isActive?.(editor) ?? false;
-                const isDisabled = action.isDisabled?.(editor) ?? false;
-
-                return (
-                  <button
-                    type="button"
-                    className={`toolbar-button${isActive ? " toolbar-button--active" : ""}`}
-                    key={action.label}
-                    aria-label={action.label}
-                    aria-pressed={action.isActive ? isActive : undefined}
-                    disabled={isDisabled}
-                    onClick={() => action.run(editor)}
-                    title={action.label}
-                  >
-                    <Icon aria-hidden="true" size={17} strokeWidth={1.9} />
-                  </button>
-                );
-              })}
+              {group.map((action) => renderAction(action))}
             </div>
           </Fragment>
         ))}
+      </div>
+      <div className="mobile-editor-actions">
+        {mobilePrimaryActions.map((action) =>
+          renderAction(action, { mobile: true }),
+        )}
+        <MobileToolsMenu
+          active={mobileSecondaryActionActive || fontSize !== 11}
+          description="Choose additional formatting for your shared notes."
+          title="More note tools"
+        >
+          {(close) => (
+            <div className="mobile-tools-dialog__grid">
+              <div className="mobile-tools-dialog__control mobile-tools-dialog__control--wide">
+                <span>Text size</span>
+                <FontSizeControl
+                  editable={editable && editorReady}
+                  fontSize={fontSize}
+                  applyFontSize={applyFontSize}
+                />
+              </div>
+              {mobileSecondaryActions.map((action) =>
+                renderAction(action, { close, dialog: true }),
+              )}
+            </div>
+          )}
+        </MobileToolsMenu>
       </div>
       {syncLabel ? (
         <span
@@ -413,7 +479,7 @@ export const RichTextEditor = forwardRef<
           Viewer access · editing controls are disabled
         </div>
       )}
-      <EditorContent editor={editor} />
+      <EditorContent className="editor-scroll-region" editor={editor} />
       <footer className="editor-footer">
         {editable ? (
           <>

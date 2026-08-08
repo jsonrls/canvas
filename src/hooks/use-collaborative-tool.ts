@@ -58,14 +58,7 @@ interface UseCollaborativeToolResult {
   status: ToolSyncStatus;
 }
 
-const USER_COLORS = [
-  "#3871c2",
-  "#f04623",
-  "#9c614f",
-  "#7c5bb3",
-  "#16866d",
-  "#d98b22",
-];
+const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
 function applySnapshot(document: Y.Doc, snapshot: string | null): string {
   if (!snapshot) {

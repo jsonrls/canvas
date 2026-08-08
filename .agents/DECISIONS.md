@@ -608,11 +608,11 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 
 **Primary Colors (from BoardPrep logo):**
 
-- **Brand Blue**: #3871C2 (RGB 56, 113, 194) - Main brand color
+- **Brand Blue**: #7352FA (RGB 115, 82, 250) - Main brand color
 - **Golden Yellow**: #FEBD59 (RGB 254, 189, 89) - Warm accent
 - **Red-Orange**: #F04623 (RGB 240, 70, 35) - Energetic accent
-- **Light Blue**: #86CEE7 (RGB 134, 206, 231) - Soft accent
-- **Medium Blue**: #69ABDF (RGB 105, 171, 223) - Supporting blue
+- **Light Blue**: #7352FA (RGB 115, 82, 250) - Soft accent
+- **Medium Blue**: #7352FA (RGB 115, 82, 250) - Supporting blue
 
 **Supporting Colors:**
 
@@ -627,7 +627,7 @@ Adopt the exact color palette from the BoardPrep logo, featuring brand blue as t
 - **Success**: #10B981 (emerald-500)
 - **Warning**: #F59E0B (amber-500)
 - **Error**: #EF4444 (red-500)
-- **Info**: #3871C2 (brand blue)
+- **Info**: #7352FA (brand blue)
 
 ### Alternatives Considered
 
@@ -676,11 +676,11 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          blue: "#3871C2",
+          blue: "#7352FA",
           golden: "#FEBD59",
           "red-orange": "#F04623",
-          "light-blue": "#86CEE7",
-          "medium-blue": "#69ABDF",
+          "light-blue": "#7352FA",
+          "medium-blue": "#7352FA",
           "soft-pink": "#EFC2BC",
           tan: "#CC9E8F",
           brown: "#9C614F",
@@ -693,7 +693,7 @@ module.exports = {
       },
       backgroundImage: {
         "brand-gradient":
-          "linear-gradient(135deg, #3871C2, #69ABDF, #86CEE7, #FEBD59, #F04623)",
+          "linear-gradient(135deg, #7352FA, #7352FA, #7352FA, #FEBD59, #F04623)",
         "brand-gradient-subtle":
           "linear-gradient(135deg, rgba(56,113,194,0.1), rgba(105,171,223,0.1), rgba(134,206,231,0.1))",
       },

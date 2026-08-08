@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { ProfileDomainError } from "@/lib/profiles/model";
+
 interface ProfileRow {
   avatar_path: string | null;
   display_name: string;
@@ -59,4 +61,31 @@ export async function getProfileDisplayNames(
   return new Map(
     (data ?? []).map((profile) => [profile.id, profile.display_name]),
   );
+}
+
+export async function updateProfileDisplayName(
+  client: SupabaseClient,
+  userId: string,
+  displayName: string,
+): Promise<Profile> {
+  const { data, error } = await client
+    .from("profiles")
+    .update({ display_name: displayName })
+    .eq("id", userId)
+    .select("id, display_name, avatar_path")
+    .single();
+
+  if (error || !data) {
+    throw new ProfileDomainError(
+      "Your profile could not be saved. Check your connection and try again.",
+    );
+  }
+
+  const profile = data as ProfileRow;
+
+  return {
+    avatarPath: profile.avatar_path,
+    displayName: profile.display_name,
+    id: profile.id,
+  };
 }
