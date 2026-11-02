@@ -43,7 +43,7 @@ Replace slug-driven implicit room creation with an explicit, secure room lifecyc
 
 | Task     | Description                                                                                                                                                         | Completed | Date       |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------- |
-| TASK-001 | Audit the roadmap, current room flow, design system, Supabase changelog/docs, repository skills, and prior mistakes; create this implementation plan.               | ✅        | 2026-07-17 |
+| TASK-001 | Audit the roadmap, current room flow, design system, Supabase changelog/docs, and repository skills; create this implementation plan.                               | ✅        | 2026-07-17 |
 | TASK-002 | Generate a Supabase migration through the CLI for atomic room creation, owner-safe membership policies, explicit function grants, and required indexes/constraints. | ✅        | 2026-07-17 |
 | TASK-003 | Apply the migration to the configured database through the verified explicit pooler target, update migration history, and run focused SQL assertions.               | ✅        | 2026-07-17 |
 

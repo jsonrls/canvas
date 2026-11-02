@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 
 import { WebSocketServer } from "ws";
+import { shutdownCollaboration } from "./collaboration-shutdown.mjs";
 
 import {
   attachDocumentConnection,
@@ -8,6 +9,7 @@ import {
   authorizeCollaborationRequest,
   flushCollaborationDocuments,
   prepareCollaborationConnection,
+  stopCollaborationUpdates,
 } from "./yjs-runtime.mjs";
 
 const host = process.env.YJS_HOST ?? process.env.HOST ?? "127.0.0.1";
@@ -27,7 +29,16 @@ function rejectUpgrade(socket, statusCode, statusText) {
   socket.destroy();
 }
 
+let isShuttingDown = false;
+const upgrades = new Set();
+const upgradeSockets = new Set();
+
 const server = createServer((request, response) => {
+  if (isShuttingDown) {
+    response.writeHead(503);
+    response.end();
+    return;
+  }
   if (request.method === "GET" && request.url === "/health") {
     response.writeHead(200, {
       "Cache-Control": "no-store",
@@ -46,8 +57,14 @@ const websocketServer = new WebSocketServer({
 });
 
 server.on("upgrade", (request, socket, head) => {
-  void authorizeCollaborationRequest(request)
+  if (isShuttingDown) {
+    rejectUpgrade(socket, 503, "Service Unavailable");
+    return;
+  }
+  upgradeSockets.add(socket);
+  const upgrade = authorizeCollaborationRequest(request)
     .then(async (authorization) => {
+      if (isShuttingDown || socket.destroyed) return;
       if ("error" in authorization) {
         rejectUpgrade(socket, authorization.status, authorization.error);
         return;
@@ -60,6 +77,7 @@ server.on("upgrade", (request, socket, head) => {
         return;
       }
 
+      if (isShuttingDown || socket.destroyed) return;
       websocketServer.handleUpgrade(request, socket, head, (websocket) => {
         if (authorization.channel === "presence") {
           attachPresenceConnection(websocket, authorization);
@@ -69,23 +87,57 @@ server.on("upgrade", (request, socket, head) => {
         attachDocumentConnection(websocket, request, authorization);
       });
     })
-    .catch(() => rejectUpgrade(socket, 500, "Internal Server Error"));
+    .catch(() => {
+      if (!socket.destroyed)
+        rejectUpgrade(socket, 500, "Internal Server Error");
+    })
+    .finally(() => {
+      upgrades.delete(upgrade);
+      upgradeSockets.delete(socket);
+    });
+  upgrades.add(upgrade);
 });
 
 server.listen(port, host, () => {
-  console.log(`Qollab Yjs server listening on ws://${host}:${port}.`);
+  console.log(
+    JSON.stringify({
+      event: "collaboration_listening",
+      message: "Qollab Yjs server listening",
+      port,
+    }),
+  );
 });
-
-let isShuttingDown = false;
 
 async function shutdown() {
   if (isShuttingDown) return;
   isShuttingDown = true;
-
-  websocketServer.clients.forEach((client) => client.close(1001));
-  await flushCollaborationDocuments();
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 3_000).unref();
+  const exitCode = await shutdownCollaboration({
+    stopAccepting: () => {
+      server.close();
+      stopCollaborationUpdates();
+      upgradeSockets.forEach((socket) => socket.destroy());
+    },
+    drain: async () => {
+      // Termination stops further protocol writes before the final flush.
+      await Promise.all(
+        [...websocketServer.clients].map(
+          (client) =>
+            new Promise((resolve) => {
+              if (client.readyState === 3) {
+                resolve();
+                return;
+              }
+              client.once("close", resolve);
+              client.terminate();
+            }),
+        ),
+      );
+      await Promise.all([...upgrades]);
+    },
+    flush: flushCollaborationDocuments,
+    log: (record) => console.log(JSON.stringify(record)),
+  });
+  process.exit(exitCode);
 }
 
 process.on("SIGINT", () => void shutdown());

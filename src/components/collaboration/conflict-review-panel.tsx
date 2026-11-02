@@ -1,19 +1,20 @@
 "use client";
 
+import { ButtonControl } from "@/components/ui/button";
 import {
   Check,
   GitCompareArrows,
-  LoaderCircle,
   RotateCcw,
   ShieldCheck,
   Sparkles,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useRef, useState } from "react";
 
 import {
   createDraftExcerpt,
   type ConflictReview,
 } from "@/lib/collaboration/conflict-review";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
 
 export interface ConflictResolutionResult {
   message: string;
@@ -146,33 +147,37 @@ export function ConflictReviewPanel({
             </p>
           </div>
           <div className="conflict-confirmation__actions">
-            <button
+            <ButtonControl
+              variant="secondary"
               type="button"
               className="conflict-button conflict-button--quiet"
               disabled={isPending}
               onClick={cancelConfirmation}
             >
               Cancel
-            </button>
-            <button
+            </ButtonControl>
+            <ButtonControl
+              variant="destructive"
               ref={confirmButtonRef}
               type="button"
               className="conflict-button conflict-button--danger"
+              aria-busy={isPending}
               disabled={!canUseOfflineDraft || isPending}
               onClick={() => void restoreOfflineDraft()}
             >
               {isPending ? (
-                <LoaderCircle className="spin" aria-hidden="true" size={15} />
+                <LoadingIndicator size="icon" />
               ) : (
                 <ShieldCheck aria-hidden="true" size={15} />
               )}
               {isPending ? "Saving checkpoint…" : "Save merge & use draft"}
-            </button>
+            </ButtonControl>
           </div>
         </div>
       ) : (
         <div className="conflict-review__actions">
-          <button
+          <ButtonControl
+            variant="primary"
             type="button"
             className="conflict-button conflict-button--primary"
             disabled={isPending}
@@ -180,8 +185,9 @@ export function ConflictReviewPanel({
           >
             <Check aria-hidden="true" size={15} />
             Keep merged note
-          </button>
-          <button
+          </ButtonControl>
+          <ButtonControl
+            variant="secondary"
             ref={restoreButtonRef}
             type="button"
             className="conflict-button conflict-button--quiet"
@@ -190,7 +196,7 @@ export function ConflictReviewPanel({
           >
             <RotateCcw aria-hidden="true" size={15} />
             Use my offline draft
-          </button>
+          </ButtonControl>
         </div>
       )}
 

@@ -8,11 +8,13 @@ out/
 # Tests and tooling
 coverage/
 *.tsbuildinfo
+capacity-results/
+supabase/.temp/
+supabase/.branches/
 
 # Local environment values
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 # OS and editor files

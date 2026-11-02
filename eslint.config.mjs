@@ -9,6 +9,7 @@ export default defineConfig([
     ".next/**",
     "node_modules/**",
     "coverage/**",
+    "theme/generated/**",
     "next-env.d.ts",
   ]),
 ]);

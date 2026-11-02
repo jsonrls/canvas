@@ -16,6 +16,7 @@ const BREAKOUT_CODE_PATTERN = /^[A-Z0-9]{8}$/;
 interface BreakoutRoomRow {
   code: string;
   created_at: string;
+  description: string;
   id: string;
   name: string;
   room_id: string;
@@ -34,6 +35,7 @@ interface BreakoutDocumentRow {
 export interface BreakoutRoomSummary {
   code: string;
   createdAt: string;
+  description: string;
   id: string;
   name: string;
 }
@@ -41,6 +43,7 @@ export interface BreakoutRoomSummary {
 export interface BreakoutRoomDirectoryItem {
   code?: string;
   createdAt: string;
+  description: string;
   id: string;
   isJoined: boolean;
   name: string;
@@ -49,6 +52,7 @@ export interface BreakoutRoomDirectoryItem {
 interface BreakoutRoomDirectoryRpcRow {
   breakout_room_code: string | null;
   breakout_room_created_at: string;
+  breakout_room_description: string;
   breakout_room_id: string;
   breakout_room_name: string;
   is_joined: boolean;
@@ -93,6 +97,24 @@ export function normalizeBreakoutRoomName(
   return normalized;
 }
 
+export function normalizeBreakoutRoomDescription(
+  value: FormDataEntryValue | null,
+): string {
+  if (typeof value !== "string") {
+    throw new RoomDomainError("Enter a breakout room description.");
+  }
+
+  const normalized = value.trim().replace(/\s+/g, " ");
+
+  if (normalized.length < 1 || normalized.length > 240) {
+    throw new RoomDomainError(
+      "Breakout room descriptions must be between 1 and 240 characters.",
+    );
+  }
+
+  return normalized;
+}
+
 export function normalizeBreakoutRoomCode(
   value: FormDataEntryValue | string | null,
 ): string {
@@ -113,6 +135,7 @@ function toSummary(row: BreakoutRoomRow): BreakoutRoomSummary {
   return {
     code: row.code,
     createdAt: row.created_at,
+    description: row.description,
     id: row.id,
     name: row.name,
   };
@@ -133,6 +156,7 @@ export async function listBreakoutRooms(
   return ((data ?? []) as BreakoutRoomDirectoryRpcRow[]).map((row) => ({
     ...(row.breakout_room_code ? { code: row.breakout_room_code } : undefined),
     createdAt: row.breakout_room_created_at,
+    description: row.breakout_room_description,
     id: row.breakout_room_id,
     isJoined: row.is_joined,
     name: row.breakout_room_name,
@@ -187,8 +211,10 @@ export async function createBreakoutRoom(
   client: SupabaseClient,
   roomId: string,
   name: string,
+  description: string,
 ): Promise<BreakoutRoomSummary> {
   const { data, error } = await client.rpc("create_breakout_room", {
+    input_description: description,
     input_name: name,
     input_room_id: roomId,
   });
@@ -211,6 +237,7 @@ export async function createBreakoutRoom(
   return {
     code: created.breakout_room_code,
     createdAt: new Date().toISOString(),
+    description,
     id: created.breakout_room_id,
     name,
   };
@@ -237,7 +264,7 @@ export async function getBreakoutRoomWorkspace(
       .single(),
     client
       .from("breakout_rooms")
-      .select("id, room_id, name, code, created_at")
+      .select("id, room_id, name, description, code, created_at")
       .eq("room_id", access.id)
       .eq("code", normalizedCode)
       .maybeSingle(),

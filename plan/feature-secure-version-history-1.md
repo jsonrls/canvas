@@ -77,7 +77,7 @@ Implement the next unchecked Phase 2 roadmap capability as one secure vertical s
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------- |
 | TASK-012 | Add automated schema-policy inspection and authenticated Yjs restart-persistence/version-history integration verification with temporary test data cleanup.       | ✅        | 2026-07-17 |
 | TASK-013 | Run formatting, ESLint, sequential production build/typecheck, dependency audit, database advisors or equivalent policy inspection, and application smoke checks. | ✅        | 2026-07-17 |
-| TASK-014 | Mark Version history complete only after verification; update README, API documentation, changelog, plan status, knowledge records, and session footer.           | ✅        | 2026-07-17 |
+| TASK-014 | Mark Version history complete only after verification; update README, API documentation, changelog, and plan status.                                              | ✅        | 2026-07-17 |
 
 ## 3. Alternatives
 
@@ -103,7 +103,7 @@ Implement the next unchecked Phase 2 roadmap capability as one secure vertical s
 - **FILE-005**: `src/lib/version-history/*`, `src/app/rooms/[roomId]/actions.ts` — protected data access and mutations.
 - **FILE-006**: `src/components/collaboration/collaborative-room.tsx`, `rich-text-editor.tsx`, `version-history-panel.tsx`, `src/app/globals.css` — tokenized collaboration and history UI.
 - **FILE-007**: `scripts/verify-version-history.mjs`, `scripts/verify-schema.mjs` — authenticated persistence, restore-data, and policy verification.
-- **FILE-008**: `.agents/ROADMAP.md`, `.agents/API.md`, `.agents/CHANGELOG.md`, `README.md`, this plan, change logs, and mistake knowledge files — verified documentation and audit trail.
+- **FILE-008**: `.agents/ROADMAP.md`, `.agents/API.md`, `.agents/CHANGELOG.md`, `README.md`, and this plan — verified documentation and project history.
 
 ## 6. Testing
 

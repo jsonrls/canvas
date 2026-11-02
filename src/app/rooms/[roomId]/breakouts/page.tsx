@@ -6,7 +6,6 @@ import {
   listBreakoutRooms,
   type BreakoutRoomDirectoryItem,
 } from "@/lib/breakout-rooms/repository";
-import { getProfile } from "@/lib/profiles/repository";
 import {
   getRoomMemberAccess,
   RoomDomainError,
@@ -50,7 +49,6 @@ export default async function BreakoutDirectoryPage({
 
   let directory: {
     breakoutRooms: BreakoutRoomDirectoryItem[];
-    displayName: string;
     parentRoomName: string;
     parentRoomSlug: string;
     role: RoomRole;
@@ -62,10 +60,9 @@ export default async function BreakoutDirectoryPage({
       roomId,
       context.userId,
     );
-    const [roomResult, breakoutRooms, profile] = await Promise.all([
+    const [roomResult, breakoutRooms] = await Promise.all([
       context.client.from("rooms").select("name").eq("id", access.id).single(),
       listBreakoutRooms(context.client, access.id),
-      getProfile(context.client, context.userId),
     ]);
 
     if (roomResult.error || !roomResult.data) {
@@ -74,7 +71,6 @@ export default async function BreakoutDirectoryPage({
 
     directory = {
       breakoutRooms,
-      displayName: profile.displayName,
       parentRoomName: roomResult.data.name,
       parentRoomSlug: access.slug,
       role: access.role,
@@ -90,10 +86,6 @@ export default async function BreakoutDirectoryPage({
   return (
     <BreakoutRoomDirectory
       breakoutRooms={directory.breakoutRooms}
-      currentUser={{
-        displayName: directory.displayName,
-        id: context.userId,
-      }}
       parentRoomName={directory.parentRoomName}
       parentRoomSlug={directory.parentRoomSlug}
       role={directory.role}

@@ -21,9 +21,7 @@ export interface PresenceAuthorization {
 }
 
 export type CollaborationAuthorization =
-  | CollaborationError
-  | DocumentAuthorization
-  | PresenceAuthorization;
+  CollaborationError | DocumentAuthorization | PresenceAuthorization;
 
 export function authorizeCollaborationRequest(
   request: Request | IncomingMessage,
@@ -41,5 +39,6 @@ export function attachPresenceConnection(
   websocket: WebSocket,
   authorization: PresenceAuthorization,
 ): void;
+export function stopCollaborationUpdates(): void;
 export function flushCollaborationDocuments(): Promise<void>;
 export const docs: Map<string, { destroy(): void }>;

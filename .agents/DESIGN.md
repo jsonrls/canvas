@@ -1,740 +1,605 @@
 ---
-version: alpha
-name: BoardPrep-design-system
-description: A vibrant, modern educational platform featuring a color system derived from the BoardPrep logo. The system uses brand blue as the primary color with golden yellow, red-orange, and supporting blue tones to create an energetic and engaging learning environment. The design balances modern aesthetics with educational functionality, using the brand palette for CTAs and highlights while maintaining readability with supporting neutral tones.
-
-colors:
-  brand-blue: "#7352FA"
-  golden-yellow: "#FEBD59"
-  red-orange: "#F04623"
-  light-blue: "#7352FA"
-  medium-blue: "#7352FA"
-  soft-pink: "#EFC2BC"
-  tan: "#CC9E8F"
-  brown: "#9C614F"
-  charcoal: "#393536"
-  white: "#FFFFFF"
-  success: "#10B981"
-  warning: "#F59E0B"
-  error: "#EF4444"
-  info: "#7352FA"
-
-typography:
-  display-xl:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 64px
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: -0.02em
-  display-lg:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 48px
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: -0.02em
-  display-md:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 36px
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: -0.01em
-  display-sm:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 28px
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: 0
-  title-lg:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 22px
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: 0
-  title-md:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 18px
-    fontWeight: 600
-    lineHeight: 1.5
-    letterSpacing: 0
-  title-sm:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 16px
-    fontWeight: 600
-    lineHeight: 1.5
-    letterSpacing: 0
-  body-md:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: 0
-  body-sm:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: 0
-  caption:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 13px
-    fontWeight: 500
-    lineHeight: 1.5
-    letterSpacing: 0
-  caption-uppercase:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 12px
-    fontWeight: 600
-    lineHeight: 1.5
-    letterSpacing: 0.1em
-  code:
-    fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: 0
-  button:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 14px
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: 0
-  nav-link:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: 14px
-    fontWeight: 500
-    lineHeight: 1.5
-    letterSpacing: 0
-
-rounded:
-  xs: 4px
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
-  pill: 9999px
-  full: 9999px
-
-spacing:
-  xxs: 4px
-  xs: 8px
-  sm: 12px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  xxl: 48px
-  section: 96px
-
-components:
-  button-primary:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
-    typography: "{typography.button}"
-    rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
-  button-primary-hover:
-    backgroundColor: "{colors.medium-blue}"
-    textColor: "#ffffff"
-    rounded: "{rounded.md}"
-  button-accent:
-    backgroundColor: "{colors.golden-yellow}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.button}"
-    rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
-  button-accent-hover:
-    backgroundColor: "{colors.red-orange}"
-    textColor: "#ffffff"
-    rounded: "{rounded.md}"
-  button-secondary:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.button}"
-    rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
-    border: "1px solid #E2E8F0"
-  button-secondary-on-dark:
-    backgroundColor: "rgba(255,255,255,0.1)"
-    textColor: "#ffffff"
-    typography: "{typography.button}"
-    rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
-  button-text-link:
-    backgroundColor: transparent
-    textColor: "{colors.brand-blue}"
-    typography: "{typography.button}"
-  button-icon-circular:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    rounded: "{rounded.full}"
-    size: 36px
-    border: "1px solid #E2E8F0"
-  text-link:
-    backgroundColor: transparent
-    textColor: "{colors.brand-blue}"
-    typography: "{typography.body-md}"
-  top-nav:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.nav-link}"
-    height: 64px
-    border: "1px solid #E2E8F0"
-  hero-band:
-    backgroundColor: "brand-gradient"
-    textColor: "#ffffff"
-    typography: "{typography.display-xl}"
-    padding: 96px
-  hero-illustration-card:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    rounded: "{rounded.xl}"
-    border: "1px solid #E2E8F0"
-  feature-card:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-    border: "1px solid #E2E8F0"
-    shadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-  product-mockup-card-dark:
-    backgroundColor: "{colors.charcoal}"
-    textColor: "#ffffff"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  code-window-card:
-    backgroundColor: "{colors.charcoal}"
-    textColor: "#ffffff"
-    typography: "{typography.code}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  model-comparison-card:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-    border: "1px solid #E2E8F0"
-  pricing-tier-card:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.title-lg}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-    border: "1px solid #E2E8F0"
-  pricing-tier-card-featured:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
-    typography: "{typography.title-lg}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  callout-card-brand:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  callout-card-accent:
-    backgroundColor: "{colors.golden-yellow}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  connector-tile:
-    backgroundColor: "{colors.white}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.title-sm}"
-    rounded: "{rounded.lg}"
-    padding: 20px
-    border: "1px solid #E2E8F0"
-  text-input:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.md}"
-    padding: 10px 14px
-    height: 40px
-    border: "1px solid #E2E8F0"
-  text-input-focused:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.charcoal}"
-    rounded: "{rounded.md}"
-    border: "2px solid {colors.brand-blue}"
-  cookie-consent-card:
-    backgroundColor: "{colors.charcoal}"
-    textColor: "#ffffff"
-    typography: "{typography.body-sm}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  category-tab:
-    backgroundColor: transparent
-    textColor: "{colors.medium-blue}"
-    typography: "{typography.nav-link}"
-    padding: 8px 14px
-    rounded: "{rounded.md}"
-  category-tab-active:
-    backgroundColor: "{colors.soft-pink}"
-    textColor: "{colors.brand-blue}"
-    typography: "{typography.nav-link}"
-    rounded: "{rounded.md}"
-  badge-pill:
-    backgroundColor: "{colors.soft-pink}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.pill}"
-    padding: 4px 12px
-  badge-brand:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
-    typography: "{typography.caption-uppercase}"
-    rounded: "{rounded.pill}"
-    padding: 4px 12px
-  badge-accent:
-    backgroundColor: "{colors.golden-yellow}"
-    textColor: "{colors.charcoal}"
-    typography: "{typography.caption-uppercase}"
-    rounded: "{rounded.pill}"
-    padding: 4px 12px
-  cta-band-brand:
-    backgroundColor: "{colors.brand-blue}"
-    textColor: "#ffffff"
-    typography: "{typography.display-sm}"
-    rounded: "{rounded.lg}"
-    padding: 64px
-  cta-band-gradient:
-    backgroundColor: "brand-gradient"
-    textColor: "#ffffff"
-    typography: "{typography.display-sm}"
-    rounded: "{rounded.lg}"
-    padding: 64px
-  cta-band-dark:
-    backgroundColor: "{colors.charcoal}"
-    textColor: "#ffffff"
-    typography: "{typography.display-sm}"
-    rounded: "{rounded.lg}"
-    padding: 64px
-  footer:
-    backgroundColor: "{colors.charcoal}"
-    textColor: "#ffffff"
-    typography: "{typography.body-sm}"
-    padding: 64px
+name: Qollab Halid/Astryx design system
+version: 1.2
+status: approved foundation
+last_updated: 2026-10-09
 ---
 
-## Technology Stack
+# Qollab design system
 
-This design system is implemented using **shadcn/ui** components built on **Tailwind CSS**. The design tokens and component specifications are mapped to Tailwind utility classes and shadcn component variants.
+## Current redesign direction (2026-10-09)
 
-### Tailwind CSS Configuration
-The design system colors, typography, spacing, and border radius tokens are configured in the Tailwind config:
+The user requested an app redesign with anti-slop applied during the work.
+The current direction is a study commons: blue ink, readable margins, concrete
+study language, and flat controls. This section supersedes the older marketing
+composition, auth surface treatment, and eight-icon homepage specification
+below; those describe the previous design rather than current acceptance.
 
-```javascript
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        'brand-blue': '#7352FA',
-        'golden-yellow': '#FEBD59',
-        'red-orange': '#F04623',
-        'light-blue': '#7352FA',
-        'medium-blue': '#7352FA',
-        'soft-pink': '#EFC2BC',
-        tan: '#CC9E8F',
-        brown: '#9C614F',
-        charcoal: '#393536',
-        white: '#FFFFFF',
-        success: '#10B981',
-        warning: '#F59E0B',
-        error: '#EF4444',
-        info: '#7352FA',
-      },
-      fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
-      },
-      spacing: {
-        xxs: '4px',
-        xs: '8px',
-        sm: '12px',
-        md: '16px',
-        lg: '24px',
-        xl: '32px',
-        xxl: '48px',
-        section: '96px',
-      },
-      borderRadius: {
-        xs: '4px',
-        sm: '6px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
-        pill: '9999px',
-        full: '9999px',
-      },
-      backgroundImage: {
-        'brand-gradient': 'linear-gradient(135deg, #7352FA, #7352FA, #7352FA, #FEBD59, #F04623)',
-        'brand-gradient-subtle': 'linear-gradient(135deg, rgba(56,113,194,0.1), rgba(105,171,223,0.1), rgba(134,206,231,0.1))',
-      },
-    },
-  },
-}
+Marketing dials: ENERGY 2 / RHYTHM 3 / MOTION 1. Workspace dials:
+ENERGY 1 / RHYTHM 2 / MOTION 1. Preserve Inter Tight, JetBrains Mono,
+Qollab Blue, Soft Blue, logo geometry, light-only presentation, and existing
+workflow and permission contracts.
+
+- Homepage: asymmetric headline/artwork opening at desktop, compact purpose
+  statement at `#why`, a reading margin and ruled tool index at `#workspace`,
+  two entry paths at `#how`, compact closing action, and one footer row.
+  Shared notes lead the tool index; PDF and whiteboard follow; a Soft Blue
+  study-pack section describes the actual assistant without implying chat.
+- At tablet widths the opening and tool index stack. On phones use 16px gutters,
+  smaller display type, and visible entry actions; section destinations remain
+  reachable through the page and footer. Artwork keeps its intrinsic ratio.
+- Room directory: Study commons identity, Your study rooms title, one Create
+  room action, joined/public collections as comparable rows, factual access
+  and role labels, actual timestamps/counts, and specific empty-state copy.
+- Workspace: compact room identity, selected tool and real access/sync state.
+  Keep the 256px default navigation, 56px toolbar, and responsive context
+  presentation. No new decorative panels or controls.
+- Authentication: open 440px form on white, practical titles, desktop study
+  companion hidden below 1024px. Preserve all labels, validation, password
+  controls, redirects, recovery semantics, and pending behavior.
+- Account: 640px reading/form measure with Profile/Settings navigation. Live
+  initial-based profile preview uses real identity without a verification
+  badge. Fields, help, validation, save, and privacy use Astryx primitives.
+- Loading: stable existing logo, spinner, and truthful contextual text.
+  Errors: plain recovery copy with working retry and rooms navigation, without
+  an unsupported promise that local data is safe.
+
+Decision reasons (anti-slop R-31): blue maintains brand recognition and marks
+action; Inter Tight supports dense reading; mono distinguishes codes; shared
+margins give the surfaces a recognizable alignment; unequal section spacing
+expresses hierarchy; record rows support comparison; tool icons identify
+actual operations; the existing artwork illustrates shared study rather than
+customer endorsement; flat buttons keep study content foremost; stronger
+control borders and focus outlines help users locate interactive elements.
+Semantic status colors communicate real state, supplemented by text.
+
+The theme source owns all colors. Controls use
+`--color-border-emphasized` (`#828691` light, `#9696A3` dark) and the
+`border-border-strong` Tailwind bridge. Buttons are flat with 6px radii,
+white secondary surfaces, and visible hover/pressed/focus feedback.
+Do not add generic metrics, testimonials, generated avatars, fake product
+screenshots, decorative grids, or a theme toggle without a product reason.
+
+Acceptance requires source and behavior checks plus rendered desktop, tablet,
+390px, and 320px review. Record control outcomes, contrast calculations,
+focus and overflow evidence, and limitations. Synthetic preview data is labeled
+and temporary; never present its expected unauthenticated network errors as a
+live collaboration result. The orchestrator runs the anti-slop Delivery Gate.
+
+This is the canonical visual and component contract for Qollab. It translates
+the [Halid documentation reference](https://unslop.site/site/docs-article-halid)
+into a flat, content-first study workspace built with Astryx. The execution
+contract is [design-halid-astryx-redesign-1.md](../plan/design-halid-astryx-redesign-1.md).
+
+The redesign is presentational. Preserve routes, authorization, Server Actions,
+repositories, Yjs documents, offline recovery, presenter behavior, study-tool
+data, and API contracts.
+
+## Brand
+
+Qollab brings questions, ideas, and people into one shared space. The logo's
+interlocking loops represent equal collaborators; its negative space forms a Q
+and speech bubble; the central dot is their shared focus. Rounded geometry keeps
+the identity precise but approachable.
+
+- Qollab Blue `#2563EB` is the primary brand color.
+- Soft Blue `#EAF2FF` is the selected and supporting brand surface.
+- Use the full lockup in marketing, authentication, and roomy headers at about
+  160 × 49px or larger.
+- Use the symbol in compact navigation, favicons, app icons, and avatars.
+- Preserve logo proportions and clear space. Do not redraw, rotate, outline,
+  shadow, or place it over a busy image. The approved blue refresh replaces
+  only the violet accent with Qollab Blue in every logo variant; preserve all
+  path geometry, proportions, neutral ink, and clear space. No other recoloring.
+- Give an icon-only brand link an accessible name such as “Qollab rooms.” Treat
+  the image as decorative when the link already names the destination.
+
+The source of truth for logo meaning, assets, and usage is
+[QOLLAB_LOGO.md](../QOLLAB_LOGO.md).
+
+## Visual principles
+
+1. Content leads. Use a persistent navigation rail, readable center canvas, and
+   a context rail only when it contains useful secondary information.
+2. Structural surfaces are flat. White rails and canvases use 1px dividers, not
+   decorative shadows, blur, gradients, or a global graph-paper texture.
+3. Qollab Blue is scarce and functional: primary actions, focus, links,
+   selected icons, and active indicators.
+4. Group with spacing, `Section`, and `Divider` before escalating to `Card`.
+5. Dense records are rows. Rooms, breakouts, members, versions, comments, and
+   saved guides use `List`/`ListItem` or `Table`.
+6. One region has one lead and at most one primary action. Put secondary actions
+   in a compact `Toolbar`, `OverflowList`, or `MoreMenu`.
+7. PDF and whiteboard are full-bleed tool canvases. Notes, forms, and AI reading
+   content remain capped.
+8. Version 1 is light-only. Complete dark tokens are maintained for future use,
+   but this migration does not add a theme toggle.
+
+## Theme contract
+
+`theme/qollab-workshop.ts` extends Astryx `neutralTheme`. Keep the runtime name
+and generated filenames `qollab-workshop`. Brand and semantic color belong in
+that theme; never override `--color-*` in `:root`.
+
+| Astryx token                  | Light       | Dark        | Role                                 |
+| ----------------------------- | ----------- | ----------- | ------------------------------------ |
+| `--color-accent`              | `#2563EB`   | `#93C5FD`   | Primary action, focus, selected icon |
+| `--color-accent-muted`        | `#EAF2FF`   | `#172D50`   | Selection and blue callout           |
+| `--color-on-accent`           | `#FFFFFF`   | `#171717`   | Content on accent fills              |
+| `--color-text-accent`         | `#1D4ED8`   | `#BFDBFE`   | Small linked text                    |
+| `--color-background-body`     | `#F3F2EF`   | `#111116`   | Restrained outer canvas              |
+| `--color-background-surface`  | `#FFFFFF`   | `#19191F`   | Main canvas and rails                |
+| `--color-background-card`     | `#FFFFFF`   | `#1F1F25`   | Standalone widgets only              |
+| `--color-background-popover`  | `#FFFFFF`   | `#27272D`   | Menus and overlays                   |
+| `--color-background-muted`    | `#F5F5F7`   | `#222228`   | Recessed controls and sections       |
+| `--color-background-inverted` | `#0F0F14`   | `#F3F2F7`   | Inverted surface                     |
+| `--color-text-primary`        | `#0F0F14`   | `#F3F2F7`   | Main ink                             |
+| `--color-text-secondary`      | `#4A4A56`   | `#BCBBC4`   | Supporting copy                      |
+| `--color-text-disabled`       | `#747480`   | `#7D7C87`   | Disabled content                     |
+| `--color-icon-primary`        | `#0F0F14`   | `#F3F2F7`   | Primary icon                         |
+| `--color-icon-secondary`      | `#4A4A56`   | `#BCBBC4`   | Secondary icon                       |
+| `--color-icon-accent`         | `#2563EB`   | `#93C5FD`   | Active icon                          |
+| `--color-border`              | `#ECEBEF`   | `#34323C`   | Default divider                      |
+| `--color-border-emphasized`   | `#828691`   | `#9696A3`   | Input or strong boundary             |
+| `--color-neutral`             | `#2563EB14` | `#93C5FD24` | Selected/pressed neutral mix         |
+| `--color-overlay-hover`       | `#0F0F1408` | `#FFFFFF0A` | Hover feedback                       |
+| `--color-overlay-pressed`     | `#2563EB14` | `#93C5FD20` | Pressed feedback                     |
+| `--color-skeleton`            | `#E5E4E9`   | `#3B3944`   | Loading skeleton                     |
+| `--color-track`               | `#D8D6DE`   | `#4B4954`   | Slider and progress track            |
+| `--color-success`             | `#207A55`   | `#8FD9B0`   | Success state                        |
+| `--color-success-muted`       | `#E7F6EE`   | `#2B6A4A4D` | Success support                      |
+| `--color-warning`             | `#9A6A1A`   | `#EAB85B`   | Warning state                        |
+| `--color-warning-muted`       | `#FFF8E6`   | `#D6923440` | Warning callout                      |
+| `--color-error`               | `#B53C36`   | `#FF9B90`   | Error/destructive state              |
+| `--color-error-muted`         | `#F4D9D4`   | `#B94A414D` | Error callout                        |
+
+Selected-row text stays primary ink on Soft Blue, with a blue icon or 2px
+indicator. Qollab Blue is for actions and icon emphasis; use text-accent for
+small linked text. White on Qollab Blue is approximately 5.17:1; text-accent on
+Soft Blue is approximately 5.95:1. These calculated palette checks do not
+replace verification of actual rendered states, opacity, and focus visibility.
+
+### Type, shape, elevation, and motion
+
+- Body and headings: Inter Tight, loaded through `next/font/google`.
+- Code, keyboard hints, and breakout codes: JetBrains Mono, also through
+  `next/font/google`.
+- Scale: 14px base, 1.2 ratio, semibold headings.
+- Editorial page title: 36px, weight 600, line-height 1.1.
+- Rich prose: 14px base with 1.6–1.65 line-height.
+- Supporting labels use color and weight before a smaller size.
+- Radius config: base 3, multiplier 1. Elements resolve to 6px and containers
+  to 9px. Override page and chat radii to 12px.
+- Motion: 110ms fast and 220ms medium. Honor reduced motion.
+- Persistent rails, headers, editors, and panels have no shadow. Low elevation
+  is reserved for PDF pages, popovers, dialogs, and transient overlays.
+- Use a 4px spacing scale through Astryx spacing props. Raw pixels are reserved
+  for structural region budgets, not interior spacing.
+
+## Application frame
+
+Authenticated screens use:
+
+```tsx
+<AppShell variant="section" height="fill" contentPadding={0}>
+  <Layout>{/* one page layout */}</Layout>
+</AppShell>
 ```
 
-### shadcn/ui Integration
-The design system components are implemented using shadcn/ui primitives with custom styling:
-
-- **Buttons**: Extended shadcn Button component with coral primary variant
-- **Cards**: Custom Card components with cream/dark surface variants
-- **Inputs**: Textarea and Input components with hairline borders
-- **Navigation**: Custom navigation components using shadcn primitives
-- **Badges**: Badge components with pill and coral variants
-- **Tabs**: Tab components with category-tab styling
-
-### Component Mapping
-
-| Design Token | Tailwind Class | shadcn Component |
-|-------------|---------------|------------------|
-| `{colors.brand-blue}` | `bg-brand-blue` | Button variant |
-| `brand-gradient` | `bg-brand-gradient` | Primary buttons, hero sections |
-| `{colors.white}` | `bg-white` | Card background |
-| `{colors.charcoal}` | `bg-charcoal` | Dark card variant |
-| `{rounded.md}` | `rounded-md` | Button, Input |
-| `{rounded.lg}` | `rounded-lg` | Card components |
-| `{spacing.xl}` | `p-8` | Card padding |
-| `{spacing.section}` | `py-24` | Section spacing |
-
-### Utility Class Patterns
-
-**Background Colors:**
-- White background: `bg-white`
-- Charcoal background: `bg-charcoal`
-- Soft pink accent: `bg-soft-pink`
-- Brand blue: `bg-brand-blue`
-- Golden yellow accent: `bg-golden-yellow`
-- Brand gradient: `bg-brand-gradient`
-- Subtle gradient: `bg-brand-gradient-subtle`
-
-**Text Colors:**
-- Charcoal text: `text-charcoal`
-- Brand blue text: `text-brand-blue`
-- Golden yellow text: `text-golden-yellow`
-- White on dark: `text-white`
-
-**Typography:**
-- Display xl: `text-6xl font-bold tracking-tight`
-- Display lg: `text-5xl font-bold tracking-tight`
-- Title md: `text-lg font-semibold`
-- Body md: `text-base font-normal`
-
-### Custom shadcn Variants
-
-Extended shadcn components with design system variants:
-
-```javascript
-// components/ui/button.tsx
-const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md font-semibold transition-colors",
-  {
-    variants: {
-      variant: {
-        primary: "bg-brand-blue text-white hover:bg-medium-blue",
-        secondary: "bg-white text-charcoal border border-gray-200 hover:bg-soft-pink",
-        "secondary-on-dark": "bg-white/10 text-white hover:bg-white/20",
-        ghost: "text-brand-blue hover:bg-brand-gradient-subtle",
-        accent: "bg-golden-yellow text-charcoal hover:bg-red-orange",
-      },
-    },
-  }
-)
-```
-
-## Overview
-
-BoardPrep is a vibrant, modern educational platform featuring a color system derived from the official BoardPrep logo. The base atmosphere uses a **white background** (`{colors.white}` — #FFFFFF) with **brand blue** as the primary color and supporting golden yellow, red-orange, and blue tones for accents. Headlines use **Inter** at weight 600-700 for a clean, modern feel that appeals to students and educators. The combination creates an energetic and engaging learning environment.
-
-Brand voltage comes from the **brand blue** (`{colors.brand-blue}` — #7352FA) as the primary color, complemented by **golden yellow** (`{colors.golden-yellow}` — #FEBD59) for warmth and **red-orange** (`{colors.red-orange}` — #F04623) for energy. Supporting colors include light blue, medium blue, soft pink, tan, brown, and charcoal for depth and variety. These colors are used on primary CTAs, hero sections, featured cards, and accent elements while maintaining excellent readability.
-
-The system has three surface modes that alternate page-by-page:
-1. **White background** (`{colors.white}`) — default body floor
-2. **Soft pink accents** (`{colors.soft-pink}`) — section dividers and highlights
-3. **Charcoal surfaces** (`{colors.charcoal}`) — code editor mockups, featured sections, footer
-
-The charcoal surfaces provide contrast and depth, making the brand blue and golden yellow accents pop while maintaining excellent readability for educational content.
-
-**Key Characteristics:**
-- White background (`{colors.white}` — #FFFFFF) with charcoal text (`{colors.charcoal}` — #393536). Clean, modern base.
-- Brand blue primary CTA (`{colors.brand-blue}` — #7352FA) featuring the logo's main color. Used for primary buttons, links, and key interactive elements.
-- Golden yellow accents (`{colors.golden-yellow}` — #FEBD59) for warmth and highlights. Red-orange (`{colors.red-orange}` — #F04623) for energetic CTAs.
-- Inter sans-serif headlines at weight 600-700 for a modern, approachable feel. Pairs with Inter body for consistency.
-- Charcoal mockup cards (`{colors.charcoal}` — #393536) carrying code blocks, terminal panels, and collaboration interfaces — excellent contrast for brand blue accents.
-- White feature cards with subtle borders — clean, professional appearance for educational content.
-- Soft pink and tan accents provide warmth and variety without overwhelming the brand blue primary.
-- Border radius is hierarchical: `{rounded.md}` (8px) for buttons + inputs, `{rounded.lg}` (12px) for content + product cards, `{rounded.xl}` (16px) for hero containers, `{rounded.pill}` for badges.
-- Section rhythm `{spacing.section}` (96px) — modern-SaaS standard. Internal card padding stays generous at `{spacing.xl}` (32px).
-
-## Colors
-
-### Brand & Accent
-- **Brand Blue** (`{colors.brand-blue}` — #7352FA): Main brand color from the logo. Used for primary buttons, links, and key interactive elements.
-- **Golden Yellow** (`{colors.golden-yellow}` — #FEBD59): Warm accent from the logo. Used for highlights, featured elements, and warmth.
-- **Red-Orange** (`{colors.red-orange}` — #F04623): Energetic accent from the logo. Used for attention-grabbing CTAs and energy.
-- **Light Blue** (`{colors.light-blue}` — #7352FA): Soft accent from the logo. Used for secondary highlights and variety.
-- **Medium Blue** (`{colors.medium-blue}` — #7352FA): Supporting blue from the logo. Used for secondary UI elements and depth.
-- **Brand Gradient**: Linear gradient (135deg) combining brand blue, medium blue, light blue, golden yellow, and red-orange. Used for hero sections and featured elements.
-
-### Surface
-- **White** (`{colors.white}` — #FFFFFF): The default page floor. Pure white for maximum contrast and professional appearance.
-- **Soft Pink** (`{colors.soft-pink}` — #EFC2BC): Section dividers, subtle highlights, and warm accents.
-- **Charcoal** (`{colors.charcoal}` — #393536): Code editor mockups, featured sections, footer. The dominant dark surface.
-- **Tan** (`{colors.tan}` — #CC9E8F): Earth tone accent for variety and warmth.
-- **Brown** (`{colors.brown}` — #9C614F): Deep accent for emphasis and hierarchy.
-
-### Text
-- **Charcoal** (`{colors.charcoal}` — #393536): All headlines and primary text. Deep charcoal for excellent readability on white backgrounds.
-- **White** (`{colors.white}` — #FFFFFF): Text on dark surfaces and brand blue backgrounds. Maximum contrast for readability.
-
-### Semantic
-- **Success** (`{colors.success}` — #10B981): Green status dots, "available" indicators, success states.
-- **Warning** (`{colors.warning}` — #F59E0B): Warning callouts, caution states.
-- **Error** (`{colors.error}` — #EF4444): Validation errors, danger states.
-- **Info** (`{colors.info}` — #7352FA): Informational states, info messages (uses brand blue).
-
-## Typography
-
-### Font Family
-The system uses **Inter** as the primary typeface for headlines, body, navigation, and UI labels. **JetBrains Mono** handles code blocks. The fallback stack uses `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif` for maximum compatibility.
-
-The typography system is modern and consistent:
-- Inter (weight 600-700 for display, 400-600 for body) → h1, h2, h3, body, navigation, buttons
-- JetBrains Mono → all code blocks and terminal text
-
-### Hierarchy
-
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xl}` | 64px | 400 | 1.05 | -1.5px | Homepage h1 ("Meet your thinking partner") — Copernicus serif |
-| `{typography.display-lg}` | 48px | 400 | 1.1 | -1px | Section heads — Copernicus |
-| `{typography.display-md}` | 36px | 400 | 1.15 | -0.5px | Sub-section heads, model names — Copernicus |
-| `{typography.display-sm}` | 28px | 400 | 1.2 | -0.3px | Pricing tier names, callout headlines — Copernicus |
-| `{typography.title-lg}` | 22px | 500 | 1.3 | 0 | Pricing plan size labels — StyreneB |
-| `{typography.title-md}` | 18px | 500 | 1.4 | 0 | Feature card titles, intro paragraphs |
-| `{typography.title-sm}` | 16px | 500 | 1.4 | 0 | Connector tile titles, list labels |
-| `{typography.body-md}` | 16px | 400 | 1.55 | 0 | Default running-text — StyreneB |
-| `{typography.body-sm}` | 14px | 400 | 1.55 | 0 | Footer body, fine-print |
-| `{typography.caption}` | 13px | 500 | 1.4 | 0 | Badge labels, captions |
-| `{typography.caption-uppercase}` | 12px | 500 | 1.4 | 1.5px | Category tags, "NEW" badges |
-| `{typography.code}` | 14px | 400 | 1.6 | 0 | Code blocks — JetBrains Mono |
-| `{typography.button}` | 14px | 500 | 1.0 | 0 | Standard button labels |
-| `{typography.nav-link}` | 14px | 500 | 1.4 | 0 | Top-nav menu items |
-
-### Principles
-Display sizes use weight 400 (regular), never bold. Negative letter-spacing (-0.3 to -1.5px) is essential — Copernicus without it reads as off-brand. The serif character is what gives Anthropic its literary, considered voice; switching to a sans-serif display would make Claude feel like every other AI tool.
-
-Body type stays at weight 400 for paragraphs, weight 500 for labels and emphasized phrases. The sans body is humanist (StyreneB) — never geometric. Inter is an acceptable substitute because of its similar humanist proportions; Helvetica or Arial would be too neutral and break the warm-editorial feel.
-
-### Note on Font Substitutes
-If Copernicus / Tiempos Headline is unavailable, **Cormorant Garamond** at weight 500 with -0.02em letter-spacing is the closest open-source approximation. **EB Garamond** is a fallback. For StyreneB, **Inter** is the closest match — both are humanist sans designed for screen reading. **Söhne** is another close alternative if licensed.
-
-## Layout
-
-### Spacing System
-- **Base unit:** 4px.
-- **Tokens:** `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 96px.
-- **Section padding:** `{spacing.section}` (96px) — modern-SaaS rhythm.
-- **Card internal padding:** `{spacing.xl}` (32px) for feature cards, pricing tier cards, model comparison cards; `{spacing.lg}` (24px) for code-window cards and connector tiles.
-- **Callout / CTA bands:** `{spacing.xxl}` (48px) inside coral callout cards; 64px inside the larger dark CTA band.
-
-### Grid & Container
-- **Max content width:** ~1200px centered.
-- **Editorial body:** Single 12-column grid; hero often uses 6/6 split (h1 left, illustration right).
-- **Feature card grids:** 3-up at desktop, 2-up at tablet, 1-up at mobile.
-- **Connector tile grids:** 4-up or 6-up at desktop, 2-up at tablet, 1-up at mobile.
-- **Pricing grid:** 3-up at desktop (Free / Pro / Team / Enterprise often), 1-up at mobile.
-
-### Whitespace Philosophy
-The cream canvas + serif display + generous internal padding create an editorial pacing — Claude reads like a long-form magazine column rather than a marketing template. Whitespace between bands stays uniform at 96px; whitespace inside cards is generous (32px), letting type breathe.
-
-## Elevation & Depth
-
-| Level | Treatment | Use |
-|---|---|---|
-| Flat | No shadow, no border | Body sections, top nav, hero bands |
-| Soft hairline | 1px `{colors.hairline}` border | Inputs, sub-nav, occasionally on cards |
-| Cream card | `{colors.surface-card}` background — no shadow | Feature cards, content cards |
-| Dark surface card | `{colors.surface-dark}` background — no shadow | Code editor mockups, model showcase cards |
-| Subtle drop shadow | Faint shadow at low alpha | Hover-elevated states (the system uses `0 1px 3px rgba(20,20,19,0.08)` rarely) |
-
-The elevation philosophy is **color-block first, shadow rare**. Most depth comes from the cream-vs-dark surface contrast. Shadows are minimal. The dark surface mockups have their own internal product chrome (code editor scrollbars, line numbers, syntax highlighting) which adds detail without needing external shadows.
-
-### Decorative Depth
-- The Anthropic spike-mark glyph (4-spoke radial asterisk) appears as a small black mark in the brand wordmark and inline as a content marker.
-- Code editor mockups carry their own internal depth: syntax-highlighted text in muted blues / oranges / grays, line numbers in `{colors.muted-soft}`, status bars at the bottom in `{colors.surface-dark-elevated}`.
-- Some hero illustrations use simple line-art with coral and dark-navy strokes on cream — minimal, hand-drawn-feeling, never photorealistic.
-
-## Shapes
-
-### Border Radius Scale
-
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.xs}` | 4px | Reserved for badge accents and tiny dropdowns |
-| `{rounded.sm}` | 6px | Small inline buttons, dropdown items |
-| `{rounded.md}` | 8px | Standard CTA buttons, text inputs, category tabs |
-| `{rounded.lg}` | 12px | Content cards (feature, pricing, code-window, model-comparison) |
-| `{rounded.xl}` | 16px | Hero illustration container, the larger marquee components |
-| `{rounded.pill}` | 9999px | Badge pills, "NEW" tags |
-| `{rounded.full}` | 9999px / 50% | Avatar substitutes, icon buttons |
-
-### Photography & Illustrations
-Claude's hero rarely uses photography. Instead it uses:
-- Simple line-art illustrations with coral + dark-navy strokes on the cream canvas
-- Code editor mockups (the dominant "hero" treatment on developer-focused pages)
-- Terminal output mockups with monospace text on dark
-- Model comparison cards (Opus / Sonnet / Haiku) with abstract geometric thumbnails
-
-When photography is used (rare — mostly testimonials), avatars crop to perfect circles at 40px diameter.
-
-## Components
-
-### Top Navigation
-
-**`top-nav`** — Cream nav bar pinned to the top of every page. 64px tall, `{colors.canvas}` background. Carries the Anthropic spike-mark + "Claude" wordmark at left, primary horizontal menu (Product, Solutions, Use Cases, Pricing, Research, Company) center-left, right-side cluster with "Sign in" text-link, "Try Claude" `{component.button-primary}` (coral). Menu items in `{typography.nav-link}` (StyreneB 14px / 500).
-
-### Buttons
-
-**`button-primary`** — The signature coral CTA. Background `{colors.primary}` (#cc785c), text `{colors.on-primary}` (white), type `{typography.button}` (StyreneB 14px / 500), padding 12px × 20px, height 40px, rounded `{rounded.md}` (8px). Active state `button-primary-active` darkens to `{colors.primary-active}` (#a9583e).
-
-**`button-secondary`** — Cream button with hairline outline. Background `{colors.canvas}`, text `{colors.ink}`, 1px hairline border, same padding + height + radius as primary.
-
-**`button-secondary-on-dark`** — Used over `{colors.surface-dark}` cards. Background `{colors.surface-dark-elevated}` (#252320), text `{colors.on-dark}`. Stays dark — the system never inverts to a light secondary on dark surfaces.
-
-**`button-text-link`** — Inline text button, no background. Used for "Sign in" in the top nav and inline CTA links.
-
-**`button-icon-circular`** — 36px circular icon button. Background `{colors.canvas}`, hairline border, ink-color icon. Used for carousel arrows, share, "view more".
-
-**`text-link`** — Inline body links in `{colors.primary}` (the coral). Underlined on press; the coral inline link is one of the system's most distinctive small details.
-
-### Cards & Containers
-
-**`hero-band`** — Cream-canvas hero with a 6-6 grid: h1 + sub-headline + button row on the left, hero illustration card or product mockup card on the right. Vertical padding `{spacing.section}` (96px).
-
-**`hero-illustration-card`** — A larger card holding the hero's right-side artifact — sometimes a coral-stroke line illustration on cream background, sometimes a dark code editor mockup. Background `{colors.canvas}` or `{colors.surface-dark}` depending on context, rounded `{rounded.xl}` (16px).
-
-**`feature-card`** — Used in 3-up feature grids. Background `{colors.surface-card}` (#efe9de — slightly darker cream), rounded `{rounded.lg}` (12px), internal padding `{spacing.xl}` (32px). Carries a small icon at top, an `{typography.title-md}` headline, and a body description in `{typography.body-md}`.
-
-**`product-mockup-card-dark`** — Dark navy card showing actual Claude product chrome (chat interface, code editor, agent controls). Background `{colors.surface-dark}`, rounded `{rounded.lg}`, internal padding `{spacing.xl}` (32px). Carries text labels in `{colors.on-dark}` and product UI fragments below.
-
-**`code-window-card`** — A specialized dark card showing a code editor with line numbers, syntax-highlighted code in `{typography.code}` (JetBrains Mono), and sometimes a "Run" button or terminal output panel below. Background `{colors.surface-dark}` with `{colors.surface-dark-soft}` for the inner code block, rounded `{rounded.lg}`, padding `{spacing.lg}` (24px). The signature visual element of Claude Code product pages.
-
-**`model-comparison-card`** — Used on the homepage's "Which problem are you up against?" section comparing Opus / Sonnet / Haiku. Background `{colors.canvas}` with hairline border, rounded `{rounded.lg}`, internal padding `{spacing.xl}` (32px). Carries the model name, a short capability blurb, and a `{component.text-link}` to learn more.
-
-**`pricing-tier-card`** — Standard tier card. Background `{colors.canvas}` with hairline border, rounded `{rounded.lg}`, padding `{spacing.xl}` (32px). Carries the plan name in `{typography.title-lg}` (StyreneB), price in `{typography.display-sm}` (Copernicus serif!), feature checklist in `{typography.body-md}`, and a `{component.button-primary}` at the bottom.
-
-**`pricing-tier-card-featured`** — The featured tier (typically "Pro" or "Team"). Background flips to `{colors.surface-dark}`, text inverts to `{colors.on-dark}`. The dark surface IS the featured-tier signal.
-
-**`callout-card-coral`** — A full-bleed coral card carrying a major call-to-action. Background `{colors.primary}` (#cc785c), text `{colors.on-primary}` (white), rounded `{rounded.lg}`, padding `{spacing.xxl}` (48px). The coral surface IS the voltage; the CTA inside uses an inverted button style (cream/canvas button on coral).
-
-**`connector-tile`** — Used on the connectors page's integration grid. Background `{colors.canvas}` with hairline border, rounded `{rounded.lg}`, padding 20px. Each tile carries a logo at top, a `{typography.title-sm}` connector name, and a short description.
-
-### Inputs & Forms
-
-**`text-input`** — Standard text input. Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-md}`, rounded `{rounded.md}` (8px), padding 10px × 14px, height 40px. 1px hairline border in `{colors.hairline}`.
-
-**`text-input-focused`** — Focus state. Border thickens or shifts to `{colors.primary}` (coral) for emphasis. Carries a 3px coral-at-15%-alpha outer ring.
-
-**`cookie-consent-card`** — Bottom-right floating dark cookie banner. Background `{colors.surface-dark}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, padding `{spacing.lg}` (24px). One of the few places dark surface appears at small scale on cream pages.
-
-### Tags / Badges
-
-**`badge-pill`** — Small pill label used for category tags. Background `{colors.surface-card}`, text `{colors.ink}`, type `{typography.caption}` (13px / 500), rounded `{rounded.pill}`, padding 4px × 12px.
-
-**`badge-coral`** — Coral-fill badge for "NEW", "BETA", featured highlights. Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.caption-uppercase}` (12px / 500 / 1.5px tracking), rounded `{rounded.pill}`, padding 4px × 12px.
-
-### Tab / Filter
-
-**`category-tab`** + **`category-tab-active`** — Used in sub-nav rows on solutions / connectors pages. Inactive: transparent background, `{colors.muted}` text. Active: `{colors.surface-card}` background, `{colors.ink}` text. Padding 8px × 14px, rounded `{rounded.md}`.
-
-### CTA / Footer
-
-**`cta-band-coral`** — A pre-footer "Try Claude" CTA card. Full-width coral fill, white type, rounded `{rounded.lg}`, padding 64px. Carries an h2 in `{typography.display-sm}` (still serif!), a sub-line, and a cream-button CTA.
-
-**`cta-band-dark`** — Alternative pre-footer band on developer-focused pages. Background `{colors.surface-dark}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, padding 64px. Often pairs with a code-window card.
-
-**`footer`** — Dark navy footer that closes every page. Background `{colors.surface-dark}` (#181715), text `{colors.on-dark-soft}`. 4-column link list at desktop covering Product / Company / Resources / Legal. Vertical padding 64px. The Anthropic spike-mark + "Anthropic" wordmark sits at the top in `{colors.on-dark}`. The footer never inverts.
-
-## Do's and Don'ts
-
-### Do
-- Anchor every page on the cream canvas. Pure white reads as "any other AI tool"; the warm tint is the brand differentiator.
-- Use Copernicus serif for every display headline. Pair with StyreneB sans body. Negative letter-spacing on display sizes is non-negotiable.
-- Reserve `{colors.primary}` (coral) for primary CTAs and full-bleed `{component.callout-card-coral}` moments. Don't paint accent moments coral elsewhere.
-- Use `{component.product-mockup-card-dark}` and `{component.code-window-card}` to show actual Claude product chrome. Don't paint marketing illustrations of code when you can show real code.
-- Pair `{component.feature-card}` (cream) with `{component.product-mockup-card-dark}` (navy) in alternating bands. The cream-to-dark rhythm is the brand's pacing mechanism.
-- Use the Anthropic spike-mark glyph as the brand wordmark prefix. Never invert the mark to white-on-dark within the wordmark itself.
-- Apply `{spacing.section}` (96px) between major bands.
-
-### Don't
-- Don't use cool grays or pure white for canvas. Cream is the brand.
-- Don't bold serif display weight. Copernicus at 700 reads as bombastic; the system stays at 400.
-- Don't use cool blue or saturated cyan as a brand accent. The coral is the brand voltage.
-- Don't put coral everywhere. The coral is scarce on individual elements and generous only on full-bleed coral callout cards.
-- Don't use Inter for display headlines. The serif character is the brand voice.
-- Don't repeat the same surface mode in two consecutive bands. The pacing alternates: cream → cream-card → dark-mockup → cream → coral-callout → dark-footer.
-- Don't add hover state styling beyond what the system already encodes — primary darkens on press; nothing else changes.
-
-## Responsive Behavior
-
-### Breakpoints
-
-| Name | Width | Key Changes |
-|---|---|---|
-| Mobile | < 768px | Compact header actions; workspace tabs replace the desktop rail; feature and room grids become 1-up; auth focuses on the form; toolbars scroll horizontally |
-| Tablet | 768–1024px | Top nav stays horizontal but tightens; feature cards 2-up; connector tiles 3-up; pricing 2-up |
-| Desktop | 1024–1440px | Full top-nav with all menu items; 3-up feature cards; 4-up or 6-up connector tiles; 3-up pricing tiers |
-| Wide | > 1440px | Same as desktop with more outer breathing room; max content width caps at 1200px |
-
-### Touch Targets
-- Mobile buttons, icon controls, and navigation links use a minimum 44 × 44px target.
-- Mobile text inputs and selects render at 16px or larger to avoid automatic viewport zoom.
-- Compact desktop controls may remain smaller when their surrounding target is not used on touch layouts.
-- Connector tile entire card area is tappable; effective tap area >> 44px.
-
-### Collapsing Strategy
-- Top nav collapses to hamburger at < 768px; menu opens as a full-screen cream sheet.
-- Hero band's 6-6 grid collapses to single-column on mobile — h1 + sub-head + buttons first, then the illustration / mockup card below.
-- Feature grids reduce columns rather than scaling cards down.
-- Pricing tier cards collapse 4 → 2 → 1; featured-tier dark surface stays visually distinct at every breakpoint.
-- Code-window cards retain code legibility at every breakpoint by allowing horizontal scroll within the card rather than wrapping code lines.
-- PDF, editor, and whiteboard toolbars keep their controls at full size and scroll horizontally on narrow screens.
-- Headers and full-height workspaces account for device safe areas and dynamic viewport height.
-
-### Image Behavior
-- Code blocks inside dark mockups stay at fixed font-size; horizontal scroll on mobile rather than wrapping.
-- Hero illustrations scale proportionally; line-art strokes thin slightly on mobile.
-- Avatar photos in testimonials crop to circles at every breakpoint.
-
-## Iteration Guide
-
-1. Focus on ONE component at a time. Reference its YAML key (`{component.feature-card}`, `{component.code-window-card}`).
-2. Variants of an existing component (`-active`, `-disabled`, `-focused`) live as separate entries in `components:`.
-3. Use `{token.refs}` everywhere — never inline hex.
-4. Never document hover. Default and Active/Pressed states only.
-5. Display headlines stay Copernicus serif 400 with negative tracking. Body stays StyreneB / Inter 400. The split is unbreakable.
-6. Cream + coral + dark navy is the trinity. Don't introduce a fourth surface tone (no purple cards, no green sections).
-7. When in doubt about emphasis: bigger Copernicus serif before bolder weight.
-8. **Implementation**: Use Tailwind utility classes that map to design tokens. Extend shadcn/ui components with custom variants for this design system.
-9. **Component Development**: Start with shadcn/ui primitives and customize with Tailwind classes to match design specifications.
-10. **Responsive Design**: Use Tailwind's responsive prefixes (`md:`, `lg:`, `xl:`) to implement breakpoint-specific behaviors.
-
-## Known Gaps
-
-- Copernicus and StyreneB are licensed Anthropic typefaces and not available as public web fonts. Substitutes (Tiempos Headline / Cormorant Garamond / EB Garamond for serif; Inter / Söhne for sans) are documented in the typography section.
-- The Anthropic radial-spike-mark is a brand glyph rendered as inline SVG; it's not formalized as a system token here. Treat it as a logo asset.
-- Animation and transition timings (chat message reveal, code block typewriter effect on the homepage, agentic-flow diagram animations) are not in scope.
-- Form validation states beyond `{component.text-input-focused}` are not extracted — error / success states would need a sign-up or feedback flow to confirm.
-- The actual Claude product surface (claude.ai chat interface) shares some tokens with the marketing site but adds many product-specific components (chat bubbles, message tools, file upload chips, conversation history sidebar) that are out of scope for this marketing-surface document.
-- The "agent" / "computer use" demo cards on certain pages display animated Claude controlling a browser — the static screenshot doesn't fully capture the animation chrome.
+- Desktop SideNav: 256px default, 240px minimum, 320px maximum,
+  `autoSaveId="qollab-primary-navigation"`.
+- Application header: 56px, white, shadowless, with a 1px divider. It spans the
+  center and context regions; the SideNav keeps its own Qollab identity.
+- Center: flexible. Notes and AI use a 760px content budget with a 680px reading
+  measure. Settings and account forms cap at 640px. Auth forms follow the 440px shared auth pattern below.
+- Context: one 360px end `LayoutPanel` with a divider. Do not nest a second
+  `Layout` inside it, and do not render an empty panel.
+- PDF and whiteboard set center padding to 0 and fill the available region.
+- The shell must not create horizontal page scrolling.
+
+### Responsive contract
+
+| Width        | Navigation                                 | Context                                                        | Content                                                  |
+| ------------ | ------------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------- |
+| `>1024px`    | Resizable 256px SideNav                    | Persistent 360px LayoutPanel                                   | Flexible center; capped reading measure where applicable |
+| `768–1024px` | Compact/collapsible rail remains available | Same controlled content in `Dialog purpose="info" width={400}` | One primary tool region                                  |
+| `<768px`     | AppShell MobileNav at `md`                 | Same controlled content in `BottomSheet height="tall"`         | One region; 16px inset unless full-bleed                 |
+
+Use `useMediaQuery("(max-width: 1024px)")` for context presentation and
+`mobileNav={{ breakpoint: "md" }}` for primary navigation. Context state must
+live above the responsive presenter so moving between `LayoutPanel`, `Dialog`,
+and `BottomSheet` does not lose drafts or selection.
+
+Preserve dynamic viewport height, safe-area insets, reduced motion, and minimum
+44 × 44px touch targets. Drop a rail rather than compressing all three.
+
+## Component mapping
+
+### Shared buttons
+
+Import app-owned buttons from `@/components/ui/button`. The theme owns their
+flat outline and interaction feedback; do not introduce per-page button colors
+or shadows. Use `Button` for labeled actions and navigation (`href`/`as`),
+`IconButton` for named icon-only actions, and `ButtonControl` when preserving
+native children, form attributes, refs, or specialized control semantics.
+
+- `primary`: flat blue main action.
+- `secondary`: white supporting action with a visible border.
+- `destructive`: flat red destructive confirmation or sign out.
+- `ghost`: transparent utility action with neutral hover feedback.
+- `danger-ghost`: flat red Remove/Delete action.
+- `link`: flat blue navigation action, rendered as an anchor with `href`.
+- Native `custom`: renderer annotations, switches, quiz/flashcard surfaces,
+  or rich interactive rows whose geometry and status colors must remain intact.
+
+Default height is 44px, compact (`sm`) is 36px for dense tools, and large (`lg`)
+is 48px. Preserve mobile touch targets and existing responsive layouts. Presses
+and hover provide color feedback without movement. Labeled
+buttons use explicit `isLoading`; native controls keep their own busy state and
+spinner rather than inferring loading from `disabled` or `aria-busy`.
+
+Run `npm run verify:buttons` for semantic regressions and migration coverage,
+and `npm run theme:check` after changing the shared theme.
+
+| Responsibility           | Astryx primitive                                                     |
+| ------------------------ | -------------------------------------------------------------------- |
+| Application frame        | `AppShell`                                                           |
+| Center/header/context    | `Layout`, `LayoutHeader`, `LayoutContent`, `LayoutPanel`             |
+| Product navigation       | `SideNav`, `SideNavSection`, `SideNavItem`, `MobileNav`              |
+| Simple layout            | `VStack`, `HStack`, `Grid`, `StackItem`, `Center`                    |
+| Interactive tool header  | `Toolbar`, `OverflowList`, `MoreMenu`                                |
+| Route identity           | `Breadcrumbs`, `Heading`, `Text`                                     |
+| Dense records            | `List`, `ListItem`, `Table`                                          |
+| Presence                 | `Avatar`, `AvatarGroup`, `AvatarStatusDot`                           |
+| Live/sync/offline        | `StatusDot` with visible text                                        |
+| Role/access/category     | `Token`                                                              |
+| Counts only              | `Badge`                                                              |
+| Persistent warning/error | `Banner`                                                             |
+| Loading/empty/progress   | `Skeleton`, `Spinner`, `EmptyState`, `ProgressBar`                   |
+| Forms                    | `FormLayout`, `Field`, `TextInput`, `TextArea`, `Selector`, `Switch` |
+| View switching           | `TabList`/`Tab` or `SegmentedControl`                                |
+| Desktop form             | `Dialog purpose="form"`                                              |
+| Tablet information       | `Dialog purpose="info"`                                              |
+| Touch context/form       | `BottomSheet height="tall"`                                          |
+| Destructive decision     | `AlertDialog`                                                        |
+| Brief confirmation       | `useToast()`                                                         |
+
+### Decision rules
+
+- Use `Card` only for a self-contained standalone widget or hard boundary, such
+  as the auth form or an independently movable quick-create surface.
+- Use `Section`, whitespace, and `Divider` for normal page grouping.
+- Repeated records are rows, never one Card per record.
+- Use `Badge` only for a count. It is not status or decoration.
+- Use `StatusDot` with visible text for live, syncing, offline, or error state.
+- Use `Token` for roles, access, versions, and categorical metadata.
+- Use `Banner` for persistent offline, conflict, warning, and error states; use
+  Toast only for a brief confirmation.
+- Interactive rows cannot contain nested interactive controls. When a record
+  needs multiple actions, use a non-interactive `ListItem` with explicit
+  trailing actions.
+- The AI study assistant is a generated study pack, not chat. Use Tabs,
+  Sections, Lists, and Dividers; introduce `ChatLayout` only for a real future
+  conversational view.
+
+## Route patterns
+
+- Marketing follows the current study commons direction above: an asymmetric
+  opening, compact purpose statement, ruled tool index, two session entry
+  paths, and a simple footer. Application density and three-pane layouts do
+  not apply to marketing.
+- Rooms use the shared navigation, row-based joined/open collections, factual
+  metadata, and one create-room dialog.
+- Notes use the capped center document and version-history context. The editor
+  is not wrapped in a raised Card.
+- PDF uses a muted, full-bleed center with a pinned toolbar and annotation
+  context. A PDF page may use low elevation.
+- Whiteboard uses a full-bleed functional canvas. Show only existing contextual
+  controls; do not invent a layers feature.
+- AI uses a 680–720px reading surface, Tabs, Sections, dividers, and row-based
+  saved guides/results.
+- Breakout directories use rows and a 360px create/open panel. Breakout
+  workspaces use Q&A in the context rail on wide screens, not a floating card.
+- Settings and account routes use max-640px forms and divider-led sections.
+
+## Previous marketing homepage: blue collaboration direction
+
+This section is the saved reference for future marketing surfaces. It extends
+this canonical app guide without enlarging authenticated workspace geometry.
+The supplied reference is [reference.png](../artifacts/home-blue/reference.png).
+Its visual hierarchy and rhythm are the reference; its business claims, prices,
+integrations, testimonials, and embedded wording are not Qollab requirements.
+The generated study artwork is
+[home-study-collaboration.png](../public/images/home-study-collaboration.png)
+(1942 × 809). It is illustrative, not a screenshot of the working app.
+
+### Journey and composition
+
+The visitor understands shared study, explores the existing tools, sees how a
+session works, then opens a room. Keep `#why`, `#workspace`, and `#how` as real
+section destinations. Preserve the async server authentication lookup and the
+existing signed-in/signed-out routing for each CTA, profile, and sign-in link.
+
+1. Compact header: Qollab lockup at left, the three section links centrally,
+   account link and primary room action at right. Use a wrapping layout at
+   narrow widths; keep every destination available without shrinking targets.
+2. Centered hero on the body surface: short eyebrow, one prominent two-line
+   heading such as “Where students connect and learn together,” one short
+   supporting paragraph, primary auth-aware room CTA, and a secondary
+   “Explore the workspace” anchor. Follow with the wide study artwork at its
+   natural ratio. Do not layer live text or controls into the artwork.
+3. `#why` on white: left-aligned section heading and short introduction,
+   followed by four feature summaries in a two-column desktop grid. Each has
+   a simple blue icon, short heading, and one or two sentences describing an
+   existing capability. These are editorial features, not dense record cards.
+4. `#workspace` on the body surface: a concise introduction to shared notes,
+   PDF annotation, whiteboard, and AI study aids, plus a verified workspace
+   preview if available. Label illustrative previews accurately. Use compact
+   rows for tool descriptions; avoid duplicating every feature paragraph.
+5. `#how` on white: three numbered steps, “Create the room,” “Build the
+   thread,” and “Return prepared.” Use three columns on desktop and ordered
+   stacked steps on mobile. Keep all copy readable without interaction.
+6. Closing CTA: generous blue accent panel with a centered white heading,
+   concise supporting copy, and a white CTA with blue text. Repeat the primary
+   destination rather than introducing a new onboarding flow.
+7. Dark footer: Qollab identity, a short purpose line, existing navigation and
+   account destinations, and copyright. Use legible inverse text and a
+   high-contrast brand variant. An oversized decorative wordmark is optional.
+
+Do not reproduce the reference's pricing, testimonials, customer percentages,
+integration logos, or invented usage metrics. Do not present illustrative
+student portraits as customers or imply endorsement.
+
+### Type, surfaces, and spacing
+
+- Keep Inter Tight and JetBrains Mono. Marketing display headings use the
+  largest suitable existing display tokens, with balanced line breaks and
+  restrained weight; body copy uses a comfortable existing large body token.
+  Do not change the global 14px base to enlarge one page.
+- Use the shared centered page content width, consistent across header,
+  sections, and footer. Keep hero prose within the existing reading measure.
+- Use Astryx responsive spacing and token-backed utilities: approximately
+  spacing-12 to spacing-20 between desktop section groups, spacing-8 to
+  spacing-12 on mobile; spacing-4 to spacing-6 inside grouped content.
+- White and warm neutral sections alternate quietly. Blue is concentrated in
+  actions, selected states, icons, and the closing CTA. The workspace remains
+  flat; soft shadows belong to artwork or a standalone preview, not every row.
+- Use `VStack`, `HStack`, `Grid`, `Center`, and established frame primitives.
+  Read verified component APIs before choosing props. No new CSS module,
+  hardcoded component colors, arbitrary spacing, or raw div/span layout.
+
+### Responsive, accessibility, and interaction states
+
+- At narrow widths, keep a single content column and token-based page gutters;
+  features and steps stack in reading order. Avoid horizontal scrolling at
+  320px and 200% zoom. Navigation may wrap onto a separate row.
+- Images scale proportionally with explicit intrinsic dimensions. No fixed
+  height crop of the students. Reserve layout space while loading; if an
+  image fails, the surrounding text and navigation still communicate the page.
+- Minimum 44 × 44px targets with separated touch areas. Use real links for
+  navigation and preserve visible keyboard focus in light, blue, and dark
+  regions. Focus rings must contrast with the adjacent surface; white CTA
+  buttons on blue need a visible contrasting focus treatment.
+- One h1, named navigation landmarks, semantic sections, sequential heading
+  levels, and logical keyboard order. Decorative icons and hero artwork have
+  empty alternatives; a meaningful product screenshot has concise descriptive
+  alt text. Provide a visible-on-focus skip link to main content.
+- Hover and pressed feedback must not move layout. Preserve reduced-motion
+  behavior; avoid automatic parallax or motion needed to understand the page.
+- The homepage introduces no submission, destructive, modal, or permission
+  interaction. Auth success determines CTA text and destination server-side;
+  keep existing auth error behavior rather than inventing client session state.
+  Destination pages own loading, empty, disabled, and error recovery states.
+
+### Observable acceptance criteria
+
+Review at desktop and mobile widths: the centered hero leads the page, the
+student artwork is intact, blue is the recognizable accent, section spacing
+has clear hierarchy, and the footer is distinct and legible. Every anchor lands
+at its named section; signed-in and signed-out links retain their destinations.
+Keyboard focus is visible across all surface colors; controls satisfy the
+44px minimum; no horizontal overflow or heading collisions occur. Workspace
+font scale, pane geometry, and semantic status colors remain unchanged.
+
+## Shared authentication pattern
+
+Login, signup, password-reset request, and password-reset completion share
+`AuthShell`. Login/signup reuse `LoginForm`; reset variants retain their existing
+forms and actions. This is a presentational redesign: preserve all routes,
+server validation/security, redirects, `next` handling, field names/IDs,
+autocomplete, length constraints, error text, pending text, and success toasts.
+
+### Composition and visual direction
+
+- Cream body surface, centered frame capped at 1120px, shared blue Qollab logo
+  linked home and a visible “Back home” link. Use `Center`, `VStack`, `HStack`,
+  responsive `Grid`, `Card`, `Heading`, and `Text` according to verified APIs.
+- At desktop widths (1024px and above), the form region comes first, with a
+  white standalone Card capped at 440px. The companion region is editorial,
+  capped around 520px, with “Good company. A clearer way forward.” and concise
+  study copy. Reuse the existing homepage student artwork at its intrinsic
+  1942:809 ratio, with empty alt. Do not present it as a live room, customer
+  endorsement, or verified application screenshot.
+- Below 1024px, hide the decorative companion. Center the form in available
+  width, with token-based gutters and natural vertical scrolling. The heading,
+  fields, submit, recovery links, and account-switch link lead the page. Avoid
+  fixed viewport heights that clip long errors or the software keyboard.
+- Inter Tight, shared neutral surfaces and blue actions; form heading uses a
+  restrained display token, approximately 36px desktop and 30px mobile. Keep
+  supporting copy readable. Card padding uses spacing-6 mobile / spacing-8
+  desktop, fields spacing-5 or spacing-6, and normal shared radii/borders.
+  No decorative shadow or background effects behind the form.
+
+### Forms, interaction, and recovery
+
+- Use `FormLayout` and `Field` for structure. Native inputs within `Field` are
+  permitted when needed to retain IDs, autocomplete, min/max length, hidden
+  redirect fields, and password toggles unavailable in the installed TextInput.
+  Style with semantic token-backed utilities; do not add CSS or layout div/span.
+- Visible labels precede fields. Inputs and buttons are at least 44px high;
+  input text uses the existing 16px token to avoid mobile focus zoom. Primary
+  submit fills the form width. Focus rings contrast on white and cream.
+- The password reveal button sits inside the input border at the trailing edge,
+  with reserved input padding so text never overlaps its 44px target. Keep its current
+  show/hide accessible name, `aria-controls`, and `aria-pressed`. Keep text and
+  toggle hit areas separate. Preserve update-password's shared toggle for both
+  password fields. Forgot-password is a separate readable link row if needed
+  to prevent a label collision on narrow screens.
+- Idle fields use labels and existing help text rather than placeholder-only
+  instructions. Preserve native validation. Errors remain a persistent alert
+  immediately before submit, using `Banner` with error semantics and the
+  existing message. Long messages wrap; they never cover inputs or controls.
+- During submission, preserve disabled submit, `aria-busy`, spinner, and exact
+  pending copy. Do not clear user input, shift the form, or duplicate requests.
+  Preserve existing success toast behavior and redirect outcomes.
+- Signup keeps display name/email/password and existing password help. Password
+  reset request retains its account-neutral email explanation and initial-error
+  handling. Reset completion retains both password fields and existing recovery
+  behavior for invalid/expired sessions. Do not add an account-existence claim,
+  social sign-in provider, terms checkbox, or new authentication step.
+
+### Acceptance and verification
+
+Review all four routes at desktop, 390px, and 320px. The form is the strongest
+interactive region, blue matches the homepage, mobile content fits without
+horizontal overflow, and all labels/help/errors remain readable. Keyboard order
+runs from header links through fields, reveal control, recovery action, submit,
+and account-switch link as applicable. Verify labels, reveal names/state,
+minimum target size, focus contrast, field constraints/autocomplete, pending and
+error feedback, success toast, and unchanged navigation/redirects. Use safe test
+fixtures for form states; do not trigger real account changes merely for a
+visual check. Do not claim accessibility compliance from screenshots alone.
+
+## Icons and state motion
+
+First-party interface icons use the shared MorphIcons layer at
+`src/components/ui/icons.tsx`, backed by the existing Lucide geometry. Preserve
+icon size, stroke, color inheritance, viewBox, and alignment when migrating
+imports. Brand logo artwork is not part of the icon replacement. Static icons
+remain static by default; importing from the shared layer does not require
+animation. The eight homepage icons below are an explicit user-approved
+exception to the entry/hover restrictions in the general policy.
+
+- Morph only meaningful existing state changes within one stable visual slot:
+  password Eye/EyeOff, expanded/collapsed chevrons, Menu/Close, or Play/Pause
+  where those controls already exist. Do not invent new interactions.
+- Use the installed MorphIcons `snappy` spring and `reducedMotion="user"`.
+  Keep the visual response brief and restrained, consistent with the shared
+  110–220ms motion character; spring settling is not a fixed-duration promise.
+  Avoid bouncy overshoot, idle loops, entry animation, and hover-only morphs.
+- Keep the renderer mounted with a stable identity as its target shape changes.
+  Control bounds and neighboring text must not move; do not stack duplicate
+  icons, scale the button, or delay the state update until motion completes.
+  Rapid repeated toggles must resolve to the latest actual control state.
+- Under reduced motion, the shape changes immediately. If an icon pair cannot
+  morph reliably, use immediate replacement rather than a distracting fallback.
+  Loading spinners retain their existing progress semantics; no added idle motion.
+- Preserve accessible control names and `aria-pressed`, `aria-expanded`, and
+  `aria-controls` relationships. Decorative icons are hidden from assistive
+  technology when a surrounding control already supplies its name. Morphing
+  path data never becomes the label or a separate keyboard stop.
+- Preserve 44px target areas, visible focus, current disabled states, and blue
+  theme tokens. Styling belongs to existing component props or token utilities,
+  not additional layout wrappers or icon-specific CSS files.
+
+Acceptance: migrated static icons match their prior geometry and placement;
+stateful icons morph in place only when state changes; keyboard controls and
+names remain correct; rapid toggles reach the final state; reduced-motion users
+receive immediate shape changes; no page layout or route behavior changes.
+Verify actual motion with runtime observation or intermediate path evidence:
+endpoint screenshots alone establish appearance, not animation correctness.
+
+### Previous homepage decorative icon exception
+
+The user explicitly requested animation for all eight homepage feature icons:
+the four `#why` panels and four `#workspace` tool rows. This exception applies
+only to those icons. Keep the original icon at rest and use these installed
+Lucide pairs in both sections:
+
+| Feature        | One animation cycle                    |
+| -------------- | -------------------------------------- |
+| Shared notes   | BookOpenText → BookOpen → BookOpenText |
+| PDF annotation | FileText → FilePenLine → FileText      |
+| Whiteboard     | PenTool → PencilLine → PenTool         |
+| AI assistant   | Bot → BotMessageSquare → Bot           |
+
+- Play one `snappy` out-and-back cycle on the element's first meaningful
+  viewport entry (approximately 35% visible). Touch users receive the same entry
+  animation; the effect is not dependent on hover discovery.
+- Replay on mouse/pen pointer entry anywhere in the existing panel or row.
+  Ignore entry while a cycle is running and enforce a short cooldown (about
+  one second after completion). Do not queue cycles or animate continuously.
+- Return after the outgoing morph settles; prefer completion-driven sequencing
+  where the installed API supports it. Otherwise use a short bounded dwell,
+  tuned for a brief total cycle around 600–900ms without claiming fixed spring
+  duration. The final shape is always the original feature icon.
+- Preserve size, blue color, stroke, alignment, and one mounted renderer slot.
+  Do not animate the panel, background, text, or layout. These morphs illustrate
+  the named feature; they do not imply a saved, active, selected, or loading state.
+- Panels and rows remain noninteractive: no click action, pointer cursor,
+  button role, tabindex, extra keyboard stop, or control-state attributes.
+  Icons remain decorative and hidden from assistive technology; all feature
+  information remains available in the visible heading and description.
+- Preserve `reducedMotion="user"` and suppress decorative animation triggers
+  entirely when the preference is reduce. Keep the original icon, rather than
+  flashing the alternate shape instantly. If the preference changes during a
+  cycle, stop and settle to the original icon. Cancel pending work on unmount.
+
+Verify all eight slots animate and return to their original shape, entry works
+without pointer input, repeated pointer entries do not create loops, reduced
+motion leaves the canonical shape still, and icon/row bounds never shift.
+The general no-entry/hover policy continues to apply elsewhere in the app.
+
+## Renderer and custom-style boundaries
+
+Prefer component props. If a prop cannot express the result, use token-backed
+Tailwind utilities from `tailwind-theme.css`. Do not add raw layout `<div>` or
+`<span>` wrappers, static `style={{...}}` objects, raw hex values, arbitrary
+utilities, `@apply`, or new CSS modules.
+
+Custom CSS is limited to global reset aliases, ProseMirror document semantics,
+PDF/whiteboard renderer mechanics, reduced motion, safe areas, scrollbars, and
+other browser-specific behavior. The only allowed runtime inline-style cases
+are values that cannot be known statically:
+
+- PDF annotation coordinates and dimensions.
+- Presenter pointer coordinates.
+- Whiteboard object, cursor, selection, pan, and zoom geometry.
+- Participant colors and user-selected annotation/drawing colors.
+
+Each exception must be narrowly allowlisted and documented in
+`scripts/verify-design-system.ts`. Static brand values inside a renderer come
+from `useTheme()` or `tokenVar()`, never a hardcoded color. A functional grid
+inside the whiteboard is allowed; a decorative application-wide grid is not.
+
+Keep PDF, whiteboard, and AI dynamically imported. Do not move their libraries
+or high-frequency cursor/canvas state into the shared shell bundle.
+
+## Required discovery workflow
+
+Before changing any Next.js surface, read the relevant installed guide under
+`node_modules/next/dist/docs/`; this repository's Next version may differ from
+general framework knowledge.
+
+Before writing each UI phase:
+
+1. Read `npx astryx docs layout` and settle the frame, region budgets, and
+   breakpoint behavior.
+2. Run `npx astryx build "<idea>"`. This is the required starting point.
+3. Inspect the recommended reference with
+   `npx astryx template <name> --skeleton`.
+4. Run `npx astryx component <Name>` for every component used. If uncertain,
+   use `npx astryx search "<need>"`; do not guess a prop or component.
+5. Consult `npx astryx docs tokens` and component props before adding custom
+   styling.
+
+Run every CLI command as `npx astryx ...`. Astryx reset, core CSS, generated
+theme CSS, and `tailwind-theme.css` are imported exactly once from
+`src/app/globals.css`.
+
+Before finishing a UI change, re-read each touched file and replace static
+layout wrappers, inline styles, raw colors or spacing, arbitrary utilities,
+imported component CSS, and repeated-record Cards with Astryx primitives or
+semantic tokens. Then run the design-system verifier, formatting, theme check,
+Astryx doctor, lint, typecheck, relevant behavior checks, and visual/accessibility
+QA required by the execution plan.

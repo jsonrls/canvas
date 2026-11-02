@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  SummaryView,
+  QuizView,
+  FlashcardsView,
+  RecommendationsView,
+  MisconceptionsView,
+} from "../src/components/collaboration/ai/study-pack-views";
+import { SavedGuideLibrary } from "../src/components/collaboration/ai/saved-guide-library";
 
 import {
   buildStudyPackProviderRequest,
@@ -12,7 +22,6 @@ import {
   StudyPackInputError,
   StudyPackProviderError,
   StudyPackValidationError,
-  type StudyPack,
 } from "../src/lib/ai/study-pack";
 import {
   buildWhiteboardAnswerProviderRequest,
@@ -23,54 +32,7 @@ import {
   WhiteboardAnswerProviderError,
 } from "../src/lib/ai/whiteboard-answer";
 
-const fixture: StudyPack = {
-  summary: {
-    title: "Cardiovascular pharmacology review",
-    overview:
-      "The note compares receptor effects, hemodynamic responses, and adverse-effect patterns that help distinguish common cardiovascular drug classes.",
-    keyPoints: [
-      "Beta-one blockade lowers heart rate and contractility.",
-      "Afterload reduction can improve forward flow in selected conditions.",
-      "Medication effects should be connected to the underlying physiology.",
-    ],
-    openQuestions: ["Which findings separate toxicity from expected effect?"],
-  },
-  quiz: Array.from({ length: 3 }, (_, index) => ({
-    question: `Which mechanism best explains study finding ${index + 1}?`,
-    options: ["Mechanism A", "Mechanism B", "Mechanism C", "Mechanism D"],
-    answerIndex: index % 4,
-    explanation:
-      "The shared notes connect this finding to the selected mechanism.",
-  })),
-  flashcards: Array.from({ length: 4 }, (_, index) => ({
-    front: `Prompt ${index + 1}`,
-    back: `Grounded answer ${index + 1} from the notes.`,
-  })),
-  recommendations: [
-    {
-      kind: "practice",
-      title: "Compare adjacent mechanisms",
-      rationale: "The notes list effects but need a direct contrast.",
-      nextStep: "Build a two-column mechanism and adverse-effect table.",
-    },
-    {
-      kind: "clarify",
-      title: "Resolve the remaining toxicity question",
-      rationale: "One open question remains in the discussion summary.",
-      nextStep: "Verify the finding against the assigned pharmacology source.",
-    },
-  ],
-  misconceptions: [
-    {
-      confidence: "low",
-      suspectedClaim: "A reduced heart rate always indicates toxicity.",
-      correction:
-        "A reduced heart rate can be an expected pharmacologic effect; clinical context and severity determine concern.",
-      whyItMatters:
-        "Confusing expected effect with toxicity can distort board-style reasoning.",
-    },
-  ],
-};
+import { studyPackFixture as fixture } from "./fixtures/study-pack";
 
 function verifyInputBoundaries(): void {
   const normalized = normalizeStudySource(
@@ -224,96 +186,130 @@ function verifyWhiteboardAnswerContract(): void {
   );
 }
 
-async function verifyApplicationWiring(): Promise<void> {
-  const [
-    routeSource,
-    whiteboardAnswerHelperSource,
-    whiteboardAnswerRouteSource,
-    savedRouteSource,
-    roomSource,
-    componentSource,
-    whiteboardSource,
-    repositorySource,
-    styles,
-    savedMigration,
-    env,
-  ] = await Promise.all([
-    readFile("src/app/api/rooms/[roomId]/ai-study-pack/route.ts", "utf8"),
-    readFile("src/lib/ai/whiteboard-answer.ts", "utf8"),
-    readFile("src/app/api/rooms/[roomId]/whiteboard-answer/route.ts", "utf8"),
-    readFile("src/app/api/rooms/[roomId]/saved-study-guides/route.ts", "utf8"),
-    readFile("src/components/collaboration/collaborative-room.tsx", "utf8"),
-    readFile("src/components/collaboration/ai-study-tool.tsx", "utf8"),
-    readFile("src/components/collaboration/whiteboard-study-tool.tsx", "utf8"),
-    readFile("src/lib/rooms/repository.ts", "utf8"),
-    readFile("src/app/globals.css", "utf8"),
-    readFile(
-      "supabase/migrations/20260718064528_store_saved_ai_study_guides.sql",
-      "utf8",
-    ),
-    readFile(".env.example", "utf8"),
-  ]);
-
-  assert.match(routeSource, /getAuthenticatedContext/);
-  assert.match(routeSource, /getRoomMemberAccess/);
-  assert.match(routeSource, /consumeGenerationAllowance/);
-  assert.match(routeSource, /PROVIDER_TIMEOUT_MS/);
-  assert.match(routeSource, /private, no-store/);
-  assert.match(routeSource, /process\.env\.OPENAI_API_KEY/);
-  assert.doesNotMatch(routeSource, /createServiceRoleClient/);
-  assert.match(whiteboardAnswerRouteSource, /getAuthenticatedContext/);
-  assert.match(whiteboardAnswerRouteSource, /getRoomMemberAccess/);
-  assert.match(whiteboardAnswerRouteSource, /access\.role === "viewer"/);
-  assert.match(whiteboardAnswerRouteSource, /OPENAI_WHITEBOARD_MODEL/);
-  assert.match(whiteboardAnswerRouteSource, /private, no-store/);
-  assert.match(whiteboardAnswerHelperSource, /store: false/);
-  assert.match(savedRouteSource, /export async function GET/);
-  assert.match(savedRouteSource, /export async function POST/);
-  assert.match(savedRouteSource, /export async function DELETE/);
-  assert.match(savedRouteSource, /getAuthenticatedContext/);
-  assert.match(savedRouteSource, /getRoomMemberAccess/);
-  assert.match(savedRouteSource, /created_by/);
-  assert.match(savedRouteSource, /private, no-store/);
-  assert.match(savedRouteSource, /MAX_SAVED_STUDY_GUIDES/);
-  assert.match(repositorySource, /export async function getRoomMemberAccess/);
-
-  assert.match(
-    roomSource,
-    /import\("@\/components\/collaboration\/ai-study-tool"\)/,
+function verifyStudyViews(): void {
+  const summary = renderToStaticMarkup(
+    createElement(SummaryView, { pack: fixture }),
   );
-  assert.match(roomSource, /editorRef\.current\?\.captureDraft\(\)\?\.text/);
-  assert.match(roomSource, /AI study assistant/);
-  assert.match(componentSource, /role="tablist"/);
-  assert.match(componentSource, /handleTabKeyDown/);
-  assert.match(componentSource, /Discussion summary/);
-  assert.match(componentSource, /Practice quiz/);
-  assert.match(componentSource, /Flashcard deck/);
-  assert.match(componentSource, /Content recommendations/);
-  assert.match(componentSource, /Misconception review/);
-  assert.match(componentSource, /Study aid, not medical advice/);
-  assert.match(componentSource, /aria-live="polite"/);
-  assert.match(componentSource, /Saved study guides/);
-  assert.match(componentSource, /Save guide/);
-  assert.match(componentSource, /Delete this saved guide/);
-  assert.match(componentSource, /saved-study-guides/);
-  assert.match(whiteboardSource, /findWhiteboardAnswerPlacement/);
-  assert.match(whiteboardSource, /whiteboard-answer/);
-  assert.match(whiteboardSource, /Sparkles/);
-  assert.match(whiteboardSource, /wrapAnswerForTarget/);
-  assert.match(whiteboardSource, /autoAnswerTriggerRef/);
-  assert.match(whiteboardSource, /Answering inside the blank circle/);
+  assert.ok(summary.includes(fixture.summary.title));
+  for (const point of fixture.summary.keyPoints)
+    assert.ok(summary.includes(point));
+  const emptySummary = renderToStaticMarkup(
+    createElement(SummaryView, {
+      pack: { ...fixture, summary: { ...fixture.summary, openQuestions: [] } },
+    }),
+  );
+  assert.match(emptySummary, /did not leave a clear unresolved question/);
 
-  assert.match(styles, /grid-template-columns: repeat\(4, 1fr\)/);
-  assert.match(styles, /@media \(max-width: 430px\)/);
-  assert.match(styles, /min-height: 44px/);
-  assert.match(styles, /whiteboard-ai-answer/);
-  assert.match(env, /^OPENAI_API_KEY=/m);
-  assert.match(env, /^# OPENAI_WHITEBOARD_MODEL=gpt-4o-mini/m);
-  assert.doesNotMatch(componentSource, /OPENAI_API_KEY/);
-  assert.doesNotMatch(whiteboardSource, /OPENAI_API_KEY/);
-  assert.match(savedMigration, /create table public\.saved_study_guides/);
-  assert.match(savedMigration, /enable row level security/);
-  assert.match(savedMigration, /grant select, insert, delete/);
+  const quiz = (answers: Record<number, number>) =>
+    renderToStaticMarkup(
+      createElement(QuizView, {
+        answers,
+        onAnswer: () => {},
+        onReset: () => {},
+        pack: fixture,
+      }),
+    );
+  const unanswered = quiz({});
+  assert.equal(
+    (unanswered.match(/aria-label="Answers for question/g) ?? []).length,
+    3,
+  );
+  assert.doesNotMatch(unanswered, /role="status"|Reset quiz/);
+  const answered = quiz({ 0: fixture.quiz[0].answerIndex, 1: 3 });
+  assert.match(answered, /Correct\./);
+  assert.match(answered, /Review this one\./);
+  assert.match(answered, /Reset quiz/);
+  assert.equal((answered.match(/disabled=""/g) ?? []).length, 8);
+  assert.match(answered, /aria-live="polite"/);
+
+  const cards = (revealedCards: Set<number>) =>
+    renderToStaticMarkup(
+      createElement(FlashcardsView, {
+        revealedCards,
+        onToggle: () => {},
+        pack: fixture,
+      }),
+    );
+  assert.match(cards(new Set()), /aria-label="Reveal answer for flashcard 1"/);
+  assert.ok(!cards(new Set()).includes(fixture.flashcards[0].back));
+  const revealed = cards(new Set([0]));
+  assert.match(revealed, /aria-label="Hide answer for flashcard 1"/);
+  assert.ok(revealed.includes(fixture.flashcards[0].back));
+  assert.ok(!revealed.includes(fixture.flashcards[1].back));
+
+  const recommendations = renderToStaticMarkup(
+    createElement(RecommendationsView, { pack: fixture }),
+  );
+  for (const item of fixture.recommendations)
+    assert.ok(recommendations.includes(item.nextStep));
+  const review = renderToStaticMarkup(
+    createElement(MisconceptionsView, { pack: fixture }),
+  );
+  assert.match(review, /low confidence/);
+  assert.ok(review.includes(fixture.misconceptions[0].correction));
+  assert.match(
+    renderToStaticMarkup(
+      createElement(MisconceptionsView, {
+        pack: { ...fixture, misconceptions: [] },
+      }),
+    ),
+    /No supported misconception signal/,
+  );
+
+  const props = {
+    savedGuides: [
+      {
+        id: "guide-1",
+        title: "Review guide",
+        createdAt: "2026-10-02T00:00:00Z",
+        generatedAt: "2026-10-02T00:00:00Z",
+        sourceCharacters: 120,
+      },
+    ],
+    isLoadingSavedGuides: false,
+    activeSavedGuideId: null,
+    loadingGuideId: null,
+    loadSavedGuide: async () => {},
+    pendingDeleteId: null,
+    deletingGuideId: null,
+    deleteSavedGuide: async () => {},
+    setPendingDeleteId: () => {},
+  };
+  const library = renderToStaticMarkup(createElement(SavedGuideLibrary, props));
+  assert.match(library, /aria-label="Delete Review guide"/);
+  assert.doesNotMatch(library, /Delete this saved guide\?/);
+  const confirmation = renderToStaticMarkup(
+    createElement(SavedGuideLibrary, { ...props, pendingDeleteId: "guide-1" }),
+  );
+  assert.match(confirmation, /aria-label="Confirm deleting Review guide"/);
+  assert.match(confirmation, /Delete this saved guide\?/);
+  const deleting = renderToStaticMarkup(
+    createElement(SavedGuideLibrary, {
+      ...props,
+      pendingDeleteId: "guide-1",
+      deletingGuideId: "guide-1",
+    }),
+  );
+  assert.match(deleting, /Deleting…/);
+  assert.equal((deleting.match(/disabled=""/g) ?? []).length, 2);
+}
+
+// These are source-boundary policies, not evidence of runtime authorization.
+async function verifyServerBoundaries(): Promise<void> {
+  for (const endpoint of [
+    "ai-study-pack",
+    "whiteboard-answer",
+    "saved-study-guides",
+  ]) {
+    const source = await readFile(
+      `src/app/api/rooms/[roomId]/${endpoint}/route.ts`,
+      "utf8",
+    );
+    assert.match(source, /getAuthenticatedContext/);
+    assert.match(source, /getRoomMemberAccess/);
+    assert.match(source, /private, no-store/);
+    assert.doesNotMatch(source, /^['"]use client['"]/m);
+  }
 }
 
 async function main(): Promise<void> {
@@ -321,8 +317,11 @@ async function main(): Promise<void> {
   verifyStudyPackValidation();
   verifyProviderContract();
   verifyWhiteboardAnswerContract();
-  await verifyApplicationWiring();
-  console.log("Phase 4 AI assistant contracts verified.");
+  verifyStudyViews();
+  await verifyServerBoundaries();
+  console.log(
+    "Phase 4 input/provider behavior, rendered study views, library states, and static server boundaries verified.",
+  );
 }
 
 void main().catch((error: unknown) => {

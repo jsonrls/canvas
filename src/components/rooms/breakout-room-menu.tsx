@@ -1,13 +1,13 @@
 "use client";
 
+import { ButtonControl } from "@/components/ui/button";
 import {
   ArrowRight,
   CircleCheck,
   DoorOpen,
-  LoaderCircle,
   Plus,
   Split,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -16,7 +16,12 @@ import {
   createBreakoutRoomAction,
   openBreakoutRoomAction,
 } from "@/app/rooms/[roomId]/breakouts/actions";
-import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
+import {
+  INITIAL_ROOM_ACTION_STATE,
+  type RoomActionState,
+} from "@/app/rooms/action-state";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { useSuccessToast } from "@/components/ui/toast";
 import type { BreakoutRoomDirectoryItem } from "@/lib/breakout-rooms/repository";
 import type { RoomRole } from "@/lib/rooms/repository";
 
@@ -36,30 +41,29 @@ function SubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <button disabled={pending} type="submit">
-      {pending ? (
-        <LoaderCircle className="spin" aria-hidden="true" size={14} />
-      ) : null}
+    <ButtonControl
+      variant="primary"
+      aria-busy={pending}
+      disabled={pending}
+      type="submit"
+    >
+      {pending ? <LoadingIndicator size="icon" /> : null}
       {pending ? pendingLabel : children}
-    </button>
+    </ButtonControl>
   );
 }
 
-function FormMessage({
-  message,
-  status,
-}: {
-  message: string;
-  status: "idle" | "error" | "success";
-}): React.ReactElement | null {
-  if (!message) return null;
+function FormMessage({ state }: { state: RoomActionState }) {
+  useSuccessToast(state);
+
+  if (!state.message || state.status !== "error") return null;
 
   return (
     <p
-      className={`breakout-menu__message breakout-menu__message--${status}`}
-      role={status === "error" ? "alert" : "status"}
+      className="breakout-menu__message breakout-menu__message--error"
+      role="alert"
     >
-      {message}
+      {state.message}
     </p>
   );
 }
@@ -165,7 +169,7 @@ export function BreakoutRoomMenu({
             />
             <SubmitButton pendingLabel="Opening…">Open</SubmitButton>
           </div>
-          <FormMessage {...openState} />
+          <FormMessage state={openState} />
         </form>
 
         {canCreate ? (
@@ -187,7 +191,7 @@ export function BreakoutRoomMenu({
                 Create
               </SubmitButton>
             </div>
-            <FormMessage {...createState} />
+            <FormMessage state={createState} />
           </form>
         ) : (
           <p className="breakout-menu__viewer-note">

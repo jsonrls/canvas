@@ -75,6 +75,21 @@ begin
     raise exception 'The global viewer collaboration switch is missing or unsafe';
   end if;
 
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'rooms'
+      and c.conname = 'rooms_banner_storage_path'
+      and pg_get_constraintdef(c.oid) like '%banner_storage_path%'
+      and pg_get_constraintdef(c.oid) like '%split_part%'
+      and pg_get_constraintdef(c.oid) like '%jpg%'
+  ) then
+    raise exception 'The room icon asset path constraint is missing or incomplete';
+  end if;
+
   if has_table_privilege('authenticated', 'public.rooms', 'INSERT')
     or not has_table_privilege('authenticated', 'public.rooms', 'SELECT')
     or not has_table_privilege('authenticated', 'public.rooms', 'UPDATE')
@@ -183,6 +198,8 @@ begin
         'is_room_owner_user',
         'can_read_room_pdf_object',
         'can_write_room_pdf_object',
+        'can_read_room_banner_object',
+        'can_write_room_banner_object',
         'enforce_saved_study_guide_limit',
         'is_breakout_member',
         'can_edit_breakout',
@@ -194,8 +211,32 @@ begin
       )
       and p.prosecdef
       and p.proconfig = array['search_path=""']
-  ) <> 17 then
+  ) <> 19 then
     raise exception 'Private authorization helpers are not fully hardened';
+  end if;
+
+  if not has_function_privilege(
+      'authenticated',
+      'private.can_read_room_banner_object(text)',
+      'EXECUTE'
+    )
+    or not has_function_privilege(
+      'authenticated',
+      'private.can_write_room_banner_object(text)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'private.can_read_room_banner_object(text)',
+      'EXECUTE'
+    )
+    or has_function_privilege(
+      'anon',
+      'private.can_write_room_banner_object(text)',
+      'EXECUTE'
+    )
+  then
+    raise exception 'Room icon asset helper grants are unsafe';
   end if;
 
   if (
@@ -397,6 +438,20 @@ begin
     raise exception 'Breakout PDF Storage policies are incomplete';
   end if;
 
+  if (
+    select count(*)
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname in (
+        'Accessible rooms can read private banners',
+        'Room owners can upload private banners',
+        'Room owners can delete private banners'
+      )
+  ) <> 3 then
+    raise exception 'Private room-icon Storage policies are incomplete';
+  end if;
+
   if not exists (
     select 1
     from storage.buckets
@@ -406,6 +461,17 @@ begin
       and allowed_mime_types = array['application/pdf']::text[]
   ) then
     raise exception 'The private PDF bucket restrictions are incorrect';
+  end if;
+
+  if not exists (
+    select 1
+    from storage.buckets
+    where id = 'room-banners'
+      and public = false
+      and file_size_limit = 716800
+      and allowed_mime_types = array['image/jpeg']::text[]
+  ) then
+    raise exception 'The private room-icon bucket restrictions are incorrect';
   end if;
 
   if not exists (
@@ -441,7 +507,7 @@ begin
 end
 $$;
 
-select 'Schema verification passed: 9 RLS tables, 22 public policies, 8 private-PDF policies, 25 hardened helpers, global viewer collaboration, persistent breakout memberships, isolated room and breakout study tools, constrained private storage, owner invariants, immutable versions, and profile provisioning.';
+select 'Schema verification passed: 9 RLS tables, 22 public policies, 11 private-storage policies, 27 hardened helpers, compressed room icons, global viewer collaboration, persistent breakout memberships, isolated room and breakout study tools, constrained private storage, owner invariants, immutable versions, and profile provisioning.';
 `;
 const result = spawnSync(
   "psql",

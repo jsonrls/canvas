@@ -129,6 +129,11 @@ public = false
 file_size_limit = "15MiB"
 allowed_mime_types = ["application/pdf"]
 
+[storage.buckets.room-banners]
+public = false
+file_size_limit = "700KiB"
+allowed_mime_types = ["image/jpeg"]
+
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true

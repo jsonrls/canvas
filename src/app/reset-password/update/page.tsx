@@ -21,8 +21,8 @@ export default async function UpdatePasswordPage(): Promise<React.ReactElement> 
   return (
     <AuthShell
       eyebrow="Secure reset link"
-      title="Choose a fresh key."
-      intro="Set a new password for your account. When it is saved, this recovery session will close and you can sign in again."
+      title="Choose a new password"
+      intro="Save your new password, then sign in again to open your rooms."
     >
       <UpdatePasswordForm />
     </AuthShell>

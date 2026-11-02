@@ -67,12 +67,13 @@ assert.doesNotMatch(actions, /^export\s+(?:const|let|var|class|interface)\s/m);
 assert.ok(
   actions.indexOf("auth.getClaims()") < actions.indexOf("auth.updateUser"),
 );
-assert.match(actions, /If a BoardPrep account uses that email/);
+assert.match(actions, /If a Qollab account uses that email/);
 assert.match(requestForm, /autoComplete="email"/);
-assert.match(requestForm, /role=\{status === "error" \? "alert" : "status"\}/);
+assert.match(requestForm, /role="alert"/);
+assert.match(requestForm, /useSuccessToast\(state\)/);
 assert.match(updateForm, /autoComplete="new-password"/);
 assert.match(updateForm, /aria-pressed=\{showPasswords\}/);
-assert.match(updateForm, /disabled=\{pending\}/);
+assert.match(updateForm, /(?:disabled|isDisabled)=\{pending\}/);
 assert.match(callbackRoute, /type === "recovery"/);
 assert.match(callbackRoute, /"invalid_or_expired"/);
 assert.match(loginForm, /href="\/reset-password"/);

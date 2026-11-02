@@ -40,7 +40,7 @@ Implement one production-shaped `/rooms/[roomId]` collaborative notes experience
 
 | Task     | Description                                                                                                                                                                        | Completed | Date       |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------- |
-| TASK-001 | Create this implementation plan and initialize the session change log.                                                                                                             | ✅        | 2026-07-17 |
+| TASK-001 | Create this implementation plan before implementation begins.                                                                                                                      | ✅        | 2026-07-17 |
 | TASK-002 | Replace the minimal package manifest with pinned Next.js, React, TypeScript, Tailwind, Tiptap, Yjs, lint, and verification dependencies with a Yjs 13-compatible WebSocket server. | ✅        | 2026-07-17 |
 | TASK-003 | Create `tsconfig.json`, `next.config.ts`, `postcss.config.mjs`, `eslint.config.mjs`, `next-env.d.ts`, and `.gitignore`.                                                            | ✅        | 2026-07-17 |
 | TASK-004 | Create the App Router root layout, global design tokens, and default entry page.                                                                                                   | ✅        | 2026-07-17 |
@@ -65,7 +65,7 @@ Implement one production-shaped `/rooms/[roomId]` collaborative notes experience
 | TASK-009 | Add a Node-based two-client Yjs synchronization verification script against the local WebSocket server.           | ✅        | 2026-07-17 |
 | TASK-010 | Run ESLint, TypeScript validation, production build, and Yjs synchronization verification; resolve every failure. | ✅        | 2026-07-17 |
 | TASK-011 | Update `.agents/ROADMAP.md` completion states only for behavior verified by this implementation.                  | ✅        | 2026-07-17 |
-| TASK-012 | Update `.agents/CHANGELOG.md`, complete this plan, and finalize `.agents/logs/changes-2026-07-17.txt`.            | ✅        | 2026-07-17 |
+| TASK-012 | Update `.agents/CHANGELOG.md` and complete this plan.                                                             | ✅        | 2026-07-17 |
 
 ## 3. Alternatives
 
@@ -91,8 +91,7 @@ Implement one production-shaped `/rooms/[roomId]` collaborative notes experience
 - **FILE-005**: `src/components/collaboration/collaborative-room.tsx` — collaboration lifecycle and room shell.
 - **FILE-006**: `src/components/collaboration/rich-text-editor.tsx` — editor and toolbar.
 - **FILE-007**: `scripts/verify-yjs.mjs` — protocol-level two-client sync verification.
-- **FILE-008**: `.agents/ROADMAP.md`, `.agents/CHANGELOG.md`, `.agents/logs/changes-2026-07-17.txt` — verified progress and audit trail.
-- **FILE-009**: `.agents/knowledge/mistakes-build.json`, `.agents/knowledge/mistakes-index.json` — required tooling-error learning record.
+- **FILE-008**: `.agents/ROADMAP.md`, `.agents/CHANGELOG.md` — verified progress and project history.
 
 ## 6. Testing
 

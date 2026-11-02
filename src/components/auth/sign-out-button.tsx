@@ -1,9 +1,14 @@
 "use client";
 
-import { LoaderCircle, LogOut } from "lucide-react";
+import { ButtonControl } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { LogOut } from "@/components/ui/icons";
 import { useState, useTransition } from "react";
 
 import { signOut } from "@/app/login/actions";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
 import { clearOfflineDocumentsForUser } from "@/lib/collaboration/offline-document";
 
 interface SignOutButtonProps {
@@ -48,36 +53,54 @@ export function SignOutButton({
   };
 
   return (
-    <div
+    <VStack
+      gap={2}
+      hAlign={isMenuItem ? "stretch" : "start"}
       className={`sign-out-control${isLabeled ? " sign-out-control--labeled" : ""}${isMenuItem ? " sign-out-control--menu" : ""}${isDanger ? " sign-out-control--danger" : ""}`}
     >
-      <button
-        type="button"
-        className={
-          isMenuItem
-            ? "sidebar-account-menu__item sidebar-account-menu__item--danger"
-            : isDanger
-              ? "account-danger-button"
+      {isDanger ? (
+        <Button
+          label={isPending ? pendingLabel : label}
+          variant="destructive"
+          className="min-h-11 bg-error! text-on-error!"
+          aria-busy={isPending}
+          isLoading={isPending}
+          isDisabled={isPending}
+          onClick={handleSignOut}
+        />
+      ) : (
+        <ButtonControl
+          variant="danger-ghost"
+          type="button"
+          className={
+            isMenuItem
+              ? "sidebar-account-menu__item sidebar-account-menu__item--danger"
               : "icon-button"
-        }
-        aria-label={isPending ? pendingLabel : label}
-        aria-busy={isPending}
-        disabled={isPending}
-        onClick={handleSignOut}
-        role={isMenuItem ? "menuitem" : undefined}
-      >
-        {isPending ? (
-          <LoaderCircle className="spin" aria-hidden="true" size={17} />
-        ) : (
-          <LogOut aria-hidden="true" size={17} />
-        )}
-        {isLabeled ? <span>{isPending ? pendingLabel : label}</span> : null}
-      </button>
+          }
+          aria-label={isPending ? pendingLabel : label}
+          aria-busy={isPending}
+          disabled={isPending}
+          onClick={handleSignOut}
+          role={isMenuItem ? "menuitem" : undefined}
+        >
+          {isPending ? (
+            <LoadingIndicator size="icon" />
+          ) : (
+            <LogOut aria-hidden="true" size={17} />
+          )}
+          {isLabeled ? (
+            <Text type="inherit">{isPending ? pendingLabel : label}</Text>
+          ) : null}
+        </ButtonControl>
+      )}
       {error ? (
-        <span className="sign-out-error" role="alert">
+        <Text
+          className={isDanger ? "text-error wrap-anywhere" : "sign-out-error"}
+          role="alert"
+        >
           {error}
-        </span>
+        </Text>
       ) : null}
-    </div>
+    </VStack>
   );
 }

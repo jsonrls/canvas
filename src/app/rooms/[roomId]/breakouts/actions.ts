@@ -7,6 +7,7 @@ import {
   createBreakoutRoom,
   getBreakoutRoomWorkspace,
   normalizeBreakoutRoomCode,
+  normalizeBreakoutRoomDescription,
   normalizeBreakoutRoomName,
 } from "@/lib/breakout-rooms/repository";
 import { getRoomMemberAccess, RoomDomainError } from "@/lib/rooms/repository";
@@ -41,7 +42,15 @@ export async function createBreakoutRoomAction(
       context.userId,
     );
     const name = normalizeBreakoutRoomName(formData.get("name"));
-    const breakout = await createBreakoutRoom(context.client, access.id, name);
+    const description = normalizeBreakoutRoomDescription(
+      formData.get("description") ?? `Focused workspace for ${name}.`,
+    );
+    const breakout = await createBreakoutRoom(
+      context.client,
+      access.id,
+      name,
+      description,
+    );
     code = breakout.code;
     revalidatePath(`/rooms/${parentRoomSlug}`);
     revalidatePath(`/rooms/${parentRoomSlug}/breakouts`);

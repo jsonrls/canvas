@@ -1,379 +1,404 @@
 import type { Metadata } from "next";
-import {
-  ArrowRight,
-  BookOpenText,
-  FileText,
-  History,
-  MessageCircleQuestion,
-  MousePointer2,
-  PenTool,
-  ShieldCheck,
-  Sparkles,
-  UsersRound,
-  Wifi,
-} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import { HomeFeatureIcon } from "@/components/home/home-feature-icon";
+import { Button } from "@/components/ui/button";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Study together, without losing the thread",
+  title: "A shared room for the work of learning",
   description:
-    "Qollab brings shared notes, PDF annotation, whiteboards, and live Q&A into one focused study room.",
+    "Write shared notes, annotate PDFs, and sketch ideas with your study group. Keep the work together in Qollab.",
 };
 
-const WHY_ITEMS = [
+const TOOLS = [
   {
-    description:
-      "Notes, questions, and visual explanations stay attached to the room where they belong.",
-    icon: BookOpenText,
-    title: "One dependable workspace",
+    title: "Shared notes",
+    icon: "notes",
+    description: "Write and revise one document together.",
+    detail:
+      "Put the explanation in your own words. Build on each other’s notes, with version history when you need to look back.",
   },
   {
-    description:
-      "Every edit merges automatically, with presence and history that keep the group oriented.",
-    icon: History,
-    title: "A thread nobody loses",
+    title: "PDF annotation",
+    icon: "pdf",
+    description: "Highlight and annotate your reading.",
+    detail:
+      "Keep the source beside your thinking. Add highlights and comments to the material your group is working through.",
   },
   {
-    description:
-      "Private rooms, explicit membership, and clear roles keep collaboration focused.",
-    icon: ShieldCheck,
-    title: "Built for trusted groups",
+    title: "Whiteboard",
+    icon: "whiteboard",
+    description: "Sketch the connections between ideas.",
+    detail:
+      "Draw a diagram, connect the pieces, and work through a question on a shared canvas.",
   },
 ] as const;
 
-const HOW_STEPS = [
-  {
-    description:
-      "Start a private room for your class, review team, or next exam block.",
-    number: "01",
-    title: "Create your room",
-  },
-  {
-    description:
-      "Bring in the people preparing beside you and set the right access.",
-    number: "02",
-    title: "Gather the group",
-  },
-  {
-    description:
-      "Write, annotate, sketch, and ask questions while every change stays in sync.",
-    number: "03",
-    title: "Work from one thread",
-  },
-] as const;
+const NAVIGATION = [
+  { href: "#why", label: "Why Qollab" },
+  { href: "#workspace", label: "Study tools" },
+  { href: "#how", label: "Your next session" },
+];
 
 export default async function HomePage(): Promise<React.ReactElement> {
   const isAuthenticated = (await getAuthenticatedContext()) !== null;
+  const destination = isAuthenticated ? "/rooms" : "/login";
+  const action = isAuthenticated
+    ? "Return to your rooms"
+    : "Start a study room";
 
   return (
-    <div className="landing-page">
-      <header className="landing-header">
-        <Link
-          className="landing-header__brand"
-          href="/"
-          aria-label="Qollab home"
+    <VStack gap={0} className="bg-body min-h-dvh">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-surface focus:p-4 focus:outline-accent"
+      >
+        Skip to content
+      </a>
+      <VStack
+        as="header"
+        hAlign="center"
+        className="border-b border-border"
+        paddingInline={4}
+      >
+        <HStack
+          width="100%"
+          maxWidth={1120}
+          hAlign="between"
+          vAlign="center"
+          gap={4}
+          paddingBlock={4}
+          wrap="wrap"
         >
-          <QollabBrandLogo />
-        </Link>
-        <nav className="landing-nav" aria-label="Primary navigation">
-          <a href="#why">Why Qollab</a>
-          <a href="#workspace">Workspace</a>
-          <a href="#how">How it works</a>
-        </nav>
-        <div className="landing-header__actions">
           <Link
-            className="landing-link-button"
-            href={isAuthenticated ? "/profile" : "/login"}
+            href="/"
+            aria-label="Qollab home"
+            className="inline-flex min-h-11 items-center"
           >
-            {isAuthenticated ? "Profile" : "Sign in"}
+            <QollabBrandLogo />
           </Link>
-          <Link className="landing-primary-button" href="/rooms">
-            {isAuthenticated ? "Your rooms" : "Open Qollab"}
-            <ArrowRight aria-hidden="true" size={17} />
-          </Link>
-        </div>
-      </header>
-
-      <main>
-        <section className="landing-hero" aria-labelledby="landing-title">
-          <div className="landing-hero__copy">
-            <p className="landing-eyebrow">
-              <Wifi aria-hidden="true" size={14} />
-              Study rooms, in sync
-            </p>
-            <h1 id="landing-title">
-              Keep the whole study group on the{" "}
-              <span className="landing-hero__accent">same page.</span>
-            </h1>
-            <p className="landing-hero__intro">
-              Qollab gives every study group one calm place to write, mark up,
-              explain, and ask—without scattering the work across five apps.
-            </p>
-            <div className="landing-hero__actions">
-              <Link className="landing-primary-button" href="/login">
-                Start a study room
-                <ArrowRight aria-hidden="true" size={18} />
+          <HStack
+            as="nav"
+            aria-label="Primary navigation"
+            gap={6}
+            className="hidden! md:flex!"
+          >
+            {NAVIGATION.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-11 items-center text-secondary hover:text-accent"
+              >
+                {label}
               </Link>
-              <a className="landing-text-link" href="#workspace">
-                Explore the workspace
-              </a>
-            </div>
-            <ul className="landing-hero__capabilities" aria-label="Key tools">
-              <li>Shared notes</li>
-              <li>PDF annotation</li>
-              <li>Whiteboard</li>
-              <li>Live Q&amp;A</li>
-            </ul>
-          </div>
-
-          <div
-            className="landing-hero__visual"
-            role="img"
-            aria-label="Qollab study room with shared notes and live questions"
+            ))}
+          </HStack>
+          <Button
+            href={isAuthenticated ? "/rooms" : "/login"}
+            label={isAuthenticated ? "Your rooms" : "Sign in"}
+            variant="secondary"
+          />
+        </HStack>
+      </VStack>
+      <VStack as="main" id="main-content" tabIndex={-1} gap={0}>
+        <VStack
+          as="section"
+          aria-labelledby="home-title"
+          paddingInline={4}
+          hAlign="center"
+          className="py-10 md:py-16 lg:py-20"
+        >
+          <HStack
+            width="100%"
+            maxWidth={1120}
+            gap={10}
+            vAlign="end"
+            className="flex-col lg:flex-row"
           >
-            <div className="landing-workspace-card" aria-hidden="true">
-              <div className="landing-workspace-card__topbar">
-                <span className="landing-workspace-card__dots">
-                  <i />
-                  <i />
-                  <i />
-                </span>
-                <strong>Neuroanatomy · Group 4</strong>
-                <span className="landing-live-pill">
-                  <i />
-                  Live
-                </span>
-              </div>
-              <div className="landing-workspace-card__body">
-                <div className="landing-workspace-card__rail">
-                  <span className="is-active">
-                    <BookOpenText size={16} />
-                    Notes
-                  </span>
-                  <span>
-                    <FileText size={16} />
-                    PDF
-                  </span>
-                  <span>
-                    <PenTool size={16} />
-                    Board
-                  </span>
-                </div>
-                <div className="landing-workspace-card__paper">
-                  <span className="landing-paper-kicker">Cranial nerves</span>
-                  <strong>Brainstem review</strong>
-                  <div className="landing-paper-line landing-paper-line--long" />
-                  <div className="landing-paper-line" />
-                  <div className="landing-paper-highlight">
-                    Sensory pathways cross at different levels.
-                  </div>
-                  <div className="landing-paper-line landing-paper-line--short" />
-                  <span className="landing-collaborator-cursor">
-                    <MousePointer2 size={15} />
-                    <b>Mika</b>
-                  </span>
-                </div>
-                <div className="landing-workspace-card__qa">
-                  <span className="landing-paper-kicker">Live Q&amp;A</span>
-                  <strong>2 questions</strong>
-                  <div className="landing-question">
-                    <span>AR</span>
-                    <p>Where does CN VII exit?</p>
-                  </div>
-                  <div className="landing-question landing-question--answered">
-                    <span>JL</span>
-                    <p>Added it to the notes.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="landing-orbit-note landing-orbit-note--top">
-              <UsersRound aria-hidden="true" size={17} />
-              <span>
-                <strong>4 studying</strong>
-                changes merge live
-              </span>
-            </div>
-            <div className="landing-orbit-note landing-orbit-note--bottom">
-              <Sparkles aria-hidden="true" size={17} />
-              <span>
-                <strong>One shared thread</strong>
-                from question to answer
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="landing-section landing-why"
+            <VStack gap={6} className="min-w-0 w-full lg:w-3/5">
+              <Heading
+                level={1}
+                type="display-1"
+                id="home-title"
+                className="text-4xl! md:text-6xl! font-medium! tracking-tight"
+                textWrap="balance"
+              >
+                Bring your notes.
+                <br />
+                Work through them together.
+              </Heading>
+              <Text
+                as="p"
+                type="large"
+                weight="normal"
+                color="secondary"
+                className="max-w-lg leading-relaxed"
+              >
+                Write shared notes, annotate PDFs, and sketch ideas with your
+                study group.
+              </Text>
+              <HStack gap={3} wrap="wrap" vAlign="center">
+                <Button
+                  href={destination}
+                  label={action}
+                  variant="primary"
+                  size="lg"
+                />
+                <Button
+                  href="#workspace"
+                  label="See the study tools"
+                  variant="ghost"
+                  size="lg"
+                />
+              </HStack>
+            </VStack>
+            <VStack gap={4} className="w-full lg:w-2/5 min-w-0">
+              <Image
+                src="/images/home-study-collaboration.png"
+                alt=""
+                width={1942}
+                height={809}
+                loading="eager"
+                sizes="(max-width: 1024px) 100vw, 440px"
+                className="h-auto w-full"
+              />
+              <Text
+                as="p"
+                color="secondary"
+                className="border-t border-border pt-4"
+              >
+                A shared place for the questions you’re still working out.
+              </Text>
+            </VStack>
+          </HStack>
+        </VStack>
+        <VStack
+          as="section"
           id="why"
           aria-labelledby="why-title"
+          paddingInline={4}
+          hAlign="center"
+          className="bg-surface border-y border-border py-8 md:py-12"
         >
-          <div className="landing-section__heading">
-            <p className="landing-eyebrow">Why Qollab</p>
-            <h2 id="why-title">Studying together should create clarity.</h2>
-            <p>
-              The room holds the context, so your group can spend less time
-              reconstructing the conversation and more time understanding it.
-            </p>
-          </div>
-          <div className="landing-why__grid">
-            {WHY_ITEMS.map(({ description, icon: Icon, title }, index) => (
-              <article className="landing-value-card" key={title}>
-                <div className="landing-value-card__number">0{index + 1}</div>
-                <span className="landing-value-card__icon">
-                  <Icon aria-hidden="true" size={22} />
-                </span>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section
-          className="landing-section landing-toolkit"
+          <HStack
+            width="100%"
+            maxWidth={1120}
+            gap={8}
+            vAlign="center"
+            className="flex-col md:flex-row"
+          >
+            <Heading
+              level={2}
+              type="display-3"
+              id="why-title"
+              className="w-full md:w-2/5 tracking-tight font-medium!"
+            >
+              Keep the group’s work together.
+            </Heading>
+            <Text
+              as="p"
+              color="secondary"
+              className="w-full md:w-3/5 text-lg! leading-relaxed"
+            >
+              Your notes, annotated PDFs, and diagrams belong in the same study
+              room. Return to the room when you’re ready to continue.
+            </Text>
+          </HStack>
+        </VStack>
+        <VStack
+          as="section"
           id="workspace"
           aria-labelledby="workspace-title"
+          paddingInline={4}
+          hAlign="center"
+          className="py-10 md:py-20"
         >
-          <div className="landing-section__heading landing-section__heading--split">
-            <div>
-              <p className="landing-eyebrow">The workspace toolkit</p>
-              <h2 id="workspace-title">One room. Four ways to think.</h2>
-            </div>
-            <p>
-              Move naturally between words, documents, diagrams, and questions
-              without losing the people or the context.
-            </p>
-          </div>
-
-          <div className="landing-toolkit__grid">
-            <article className="landing-tool-card landing-tool-card--notes">
-              <div className="landing-tool-card__heading">
-                <span>
-                  <BookOpenText aria-hidden="true" size={21} />
-                </span>
-                <p>Shared notes</p>
-              </div>
-              <h3>Write the explanation once. Improve it together.</h3>
-              <div className="landing-notes-demo" aria-hidden="true">
-                <span />
-                <strong>Key mechanism</strong>
-                <i />
-                <i />
-                <mark>High-yield distinction</mark>
-                <i />
-              </div>
-            </article>
-
-            <article className="landing-tool-card landing-tool-card--pdf">
-              <div className="landing-tool-card__heading">
-                <span>
-                  <FileText aria-hidden="true" size={21} />
-                </span>
-                <p>PDF annotation</p>
-              </div>
-              <h3>Keep the source and the discussion side by side.</h3>
-              <div className="landing-pdf-demo" aria-hidden="true">
-                <div>
-                  <i />
-                  <mark />
-                  <i />
-                  <i />
-                </div>
-                <span>
-                  <MessageCircleQuestion size={19} />
-                  Why is this the exception?
-                </span>
-              </div>
-            </article>
-
-            <article className="landing-tool-card landing-tool-card--board">
-              <div className="landing-tool-card__heading">
-                <span>
-                  <PenTool aria-hidden="true" size={21} />
-                </span>
-                <p>Whiteboard</p>
-              </div>
-              <h3>Sketch the relationships that words cannot hold.</h3>
-              <div className="landing-board-demo" aria-hidden="true">
-                <span>A</span>
-                <i />
-                <span>B</span>
-                <i />
-                <span>C</span>
-              </div>
-            </article>
-
-            <article className="landing-tool-card landing-tool-card--qa">
-              <div className="landing-tool-card__heading">
-                <span>
-                  <MessageCircleQuestion aria-hidden="true" size={21} />
-                </span>
-                <p>Live Q&amp;A</p>
-              </div>
-              <h3>Give every question a visible place to land.</h3>
-              <blockquote>
-                “Can someone connect this to the diagram?”
-                <span>Asked just now · 3 people viewing</span>
-              </blockquote>
-            </article>
-          </div>
-        </section>
-
-        <section
-          className="landing-section landing-how"
+          <HStack
+            width="100%"
+            maxWidth={1120}
+            gap={10}
+            vAlign="start"
+            className="flex-col lg:flex-row"
+          >
+            <VStack gap={4} className="w-full lg:w-1/3">
+              <Heading
+                level={2}
+                type="display-2"
+                id="workspace-title"
+                className="tracking-tight font-medium!"
+              >
+                Inside a<br className="hidden lg:block" /> study room
+              </Heading>
+              <Text as="p" color="secondary" className="max-w-sm">
+                Choose the tool that fits the question. Your group stays in the
+                same room.
+              </Text>
+              <Text type="code" color="secondary">
+                Notes / PDF / Whiteboard
+              </Text>
+            </VStack>
+            <VStack gap={0} className="w-full lg:w-2/3 min-w-0">
+              {TOOLS.map(({ title, icon, description, detail }, index) => (
+                <VStack
+                  as="article"
+                  key={title}
+                  gap={3}
+                  className={
+                    index === 0
+                      ? "border-t border-border pb-8 pt-6"
+                      : "border-t border-border py-6"
+                  }
+                  data-home-icon-region=""
+                >
+                  <HStack gap={4} vAlign="center">
+                    <HomeFeatureIcon kind={icon} />
+                    <Heading
+                      level={3}
+                      type={index === 0 ? "display-3" : undefined}
+                      className="tracking-tight"
+                    >
+                      {title}
+                    </Heading>
+                  </HStack>
+                  <Text as="p" weight="medium">
+                    {description}
+                  </Text>
+                  <Text
+                    as="p"
+                    color="secondary"
+                    className="max-w-xl leading-relaxed"
+                  >
+                    {detail}
+                  </Text>
+                </VStack>
+              ))}
+              <VStack
+                as="article"
+                gap={4}
+                padding={6}
+                className="bg-accent-muted rounded-lg"
+              >
+                <Heading level={3}>Build a study pack</Heading>
+                <Text as="p" color="secondary">
+                  Use the study assistant to turn the room’s notes into
+                  summaries, quizzes, and flashcards for your next review.
+                </Text>
+                <Text type="supporting">
+                  Generated material is a starting point. Check it against your
+                  sources.
+                </Text>
+              </VStack>
+            </VStack>
+          </HStack>
+        </VStack>
+        <VStack
+          as="section"
           id="how"
           aria-labelledby="how-title"
+          className="bg-surface border-y border-border py-10 md:py-12"
+          paddingInline={4}
+          hAlign="center"
         >
-          <div className="landing-section__heading">
-            <p className="landing-eyebrow">How it works</p>
-            <h2 id="how-title">From empty room to shared understanding.</h2>
-          </div>
-          <ol className="landing-how__steps">
-            {HOW_STEPS.map(({ description, number, title }) => (
-              <li key={number}>
-                <span>{number}</span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{description}</p>
-                </div>
-              </li>
+          <VStack width="100%" maxWidth={1120} gap={8}>
+            <Heading level={2} id="how-title" className="text-secondary!">
+              Your next session
+            </Heading>
+            <Grid columns={{ minWidth: 280, max: 2 }} gap={10}>
+              <VStack gap={4}>
+                <Heading level={3} type="display-3" className="tracking-tight">
+                  Starting a group?
+                </Heading>
+                <Text as="p" color="secondary" className="max-w-md">
+                  Create a room around the subject you’re studying. Keep it
+                  private for your group, or make it public so others can join.
+                </Text>
+              </VStack>
+              <VStack gap={4}>
+                <Heading level={3}>Returning to a room?</Heading>
+                <Text as="p" color="secondary" className="max-w-md">
+                  Sign in and open a room you’ve joined. Pick up the notes and
+                  shared materials your group has been working on.
+                </Text>
+              </VStack>
+            </Grid>
+          </VStack>
+        </VStack>
+        <VStack
+          as="section"
+          aria-labelledby="start-title"
+          paddingInline={4}
+          hAlign="center"
+          className="py-10 md:py-16"
+        >
+          <HStack
+            width="100%"
+            maxWidth={1120}
+            gap={6}
+            hAlign="between"
+            vAlign="center"
+            wrap="wrap"
+          >
+            <Heading
+              level={2}
+              type="display-2"
+              id="start-title"
+              className="tracking-tight font-medium! max-w-xl"
+            >
+              Make room for your next study session.
+            </Heading>
+            <Button
+              href={destination}
+              label={action}
+              variant="primary"
+              size="lg"
+            />
+          </HStack>
+        </VStack>
+      </VStack>
+      <VStack
+        as="footer"
+        paddingInline={4}
+        hAlign="center"
+        className="border-t border-border py-6"
+      >
+        <HStack
+          width="100%"
+          maxWidth={1120}
+          hAlign="between"
+          vAlign="center"
+          wrap="wrap"
+          gap={4}
+        >
+          <Text color="secondary">
+            © {new Date().getFullYear()} Qollab · Study commons
+          </Text>
+          <HStack as="nav" aria-label="Footer navigation" gap={6} wrap="wrap">
+            {NAVIGATION.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-11 items-center text-secondary hover:text-accent"
+              >
+                {label}
+              </Link>
             ))}
-          </ol>
-          <div className="landing-how__cta">
-            <div>
-              <p className="landing-eyebrow">Your next session</p>
-              <h3>Start with the room. Keep everything that follows.</h3>
-            </div>
-            <Link className="landing-primary-button" href="/login">
-              Create your first room
-              <ArrowRight aria-hidden="true" size={18} />
+            <Link
+              href={isAuthenticated ? "/profile" : "/signup"}
+              className="inline-flex min-h-11 items-center text-accent"
+            >
+              {isAuthenticated ? "Your profile" : "Create an account"}
             </Link>
-          </div>
-        </section>
-      </main>
-
-      <footer className="landing-footer">
-        <div className="landing-footer__brand">
-          <Link href="/" aria-label="Qollab home">
-            <QollabBrandLogo priority={false} />
-          </Link>
-          <p>One shared place for the work of learning together.</p>
-        </div>
-        <nav aria-label="Footer navigation">
-          <a href="#why">Why</a>
-          <a href="#workspace">Workspace</a>
-          <a href="#how">How it works</a>
-          <Link href="/login">Sign in</Link>
-        </nav>
-        <p className="landing-footer__legal">
-          © {new Date().getFullYear()} Qollab. Learn in the same room.
-        </p>
-      </footer>
-    </div>
+          </HStack>
+        </HStack>
+      </VStack>
+    </VStack>
   );
 }

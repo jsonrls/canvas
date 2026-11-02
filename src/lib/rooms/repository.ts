@@ -4,6 +4,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getProfileDisplayNames } from "@/lib/profiles/repository";
 import { PDF_BUCKET } from "@/lib/pdf-assets/validation";
+import {
+  ROOM_ICON_BUCKET,
+  ROOM_ICON_SIGNED_URL_TTL_SECONDS,
+} from "@/lib/room-banners/constants";
 
 const ROOM_SLUG_PATTERN = /^[a-z0-9-]{1,64}$/;
 const USER_ID_PATTERN =
@@ -13,6 +17,7 @@ export type RoomRole = "owner" | "editor" | "viewer";
 export type AssignableRoomRole = Exclude<RoomRole, "owner">;
 
 interface RoomRow {
+  banner_storage_path: string | null;
   id: string;
   is_public: boolean;
   name: string;
@@ -50,6 +55,7 @@ export interface RoomPdfAsset {
 
 export interface RoomSummary {
   id: string;
+  iconUrl: string | null;
   isPublic: boolean;
   name: string;
   role: RoomRole | null;
@@ -72,6 +78,8 @@ export interface RoomWorkspace {
   ownerId: string;
   pdfAsset: RoomPdfAsset | null;
   role: RoomRole;
+  roomIconStoragePath: string | null;
+  roomIconUrl: string | null;
   slug: string;
   viewerCanCollaborate: boolean;
 }
@@ -162,15 +170,55 @@ function assertUserId(userId: string): void {
   }
 }
 
-function toRoomSummary(room: RoomRow, role: RoomRole | null): RoomSummary {
+function toRoomSummary(
+  room: RoomRow,
+  role: RoomRole | null,
+  iconUrls: Map<string, string>,
+): RoomSummary {
   return {
     id: room.id,
+    iconUrl: room.banner_storage_path
+      ? (iconUrls.get(room.banner_storage_path) ?? null)
+      : null,
     isPublic: room.is_public,
     name: room.name,
     role,
     slug: room.slug,
     updatedAt: room.updated_at,
   };
+}
+
+async function createRoomIconUrlMap(
+  client: SupabaseClient,
+  rooms: RoomRow[],
+): Promise<Map<string, string>> {
+  const paths = Array.from(
+    new Set(
+      rooms.flatMap((room) =>
+        room.banner_storage_path ? [room.banner_storage_path] : [],
+      ),
+    ),
+  );
+
+  if (paths.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await client.storage
+    .from(ROOM_ICON_BUCKET)
+    .createSignedUrls(paths, ROOM_ICON_SIGNED_URL_TTL_SECONDS);
+
+  if (error || !data) {
+    return new Map();
+  }
+
+  return new Map(
+    data.flatMap((icon) =>
+      !icon.error && icon.path && icon.signedUrl
+        ? [[icon.path, icon.signedUrl] as const]
+        : [],
+    ),
+  );
 }
 
 async function findRoom(
@@ -181,7 +229,7 @@ async function findRoom(
   const { data, error } = await client
     .from("rooms")
     .select(
-      "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate",
+      "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate, banner_storage_path",
     )
     .eq("slug", roomSlug)
     .maybeSingle();
@@ -220,7 +268,7 @@ export async function listRoomDirectory(
     client
       .from("rooms")
       .select(
-        "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate",
+        "id, slug, name, owner_id, is_public, updated_at, viewer_can_collaborate, banner_storage_path",
       )
       .order("updated_at", { ascending: false })
       .limit(100),
@@ -231,19 +279,20 @@ export async function listRoomDirectory(
     throw new RoomDomainError("Your rooms could not be loaded.");
   }
 
+  const rooms = (roomsResult.data ?? []) as RoomRow[];
   const memberships = new Map(
-    ((membershipsResult.data ?? []) as MembershipRow[]).map((membership) => [
-      membership.room_id,
-      membership.role,
-    ]),
+    ((membershipsResult.data ?? []) as MembershipRow[]).map(
+      (membership) => [membership.room_id, membership.role] as const,
+    ),
   );
+  const iconUrls = await createRoomIconUrlMap(client, rooms);
   const joinedRooms: RoomSummary[] = [];
   const publicRooms: RoomSummary[] = [];
 
-  for (const room of (roomsResult.data ?? []) as RoomRow[]) {
+  for (const room of rooms) {
     const role =
       memberships.get(room.id) ?? (room.owner_id === userId ? "owner" : null);
-    const summary = toRoomSummary(room, role);
+    const summary = toRoomSummary(room, role, iconUrls);
 
     if (role) {
       joinedRooms.push(summary);
@@ -334,6 +383,10 @@ export async function getRoomWorkspace(
   }
 
   return {
+    roomIconStoragePath: room.banner_storage_path,
+    roomIconUrl:
+      directory.joinedRooms.find((joinedRoom) => joinedRoom.id === room.id)
+        ?.iconUrl ?? null,
     id: room.id,
     initialDocumentState: initialDocumentStates.notes,
     initialDocumentStates,
@@ -548,10 +601,21 @@ export async function updateRoom(
   userId: string,
   name: string,
   isPublic: boolean,
+  roomIconStoragePath?: string | null,
 ): Promise<void> {
+  const values: {
+    banner_storage_path?: string | null;
+    is_public: boolean;
+    name: string;
+  } = { is_public: isPublic, name };
+
+  if (roomIconStoragePath !== undefined) {
+    values.banner_storage_path = roomIconStoragePath;
+  }
+
   const { data, error } = await client
     .from("rooms")
-    .update({ is_public: isPublic, name })
+    .update(values)
     .eq("slug", roomSlug)
     .eq("owner_id", userId)
     .select("id");

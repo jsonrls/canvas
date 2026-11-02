@@ -57,7 +57,7 @@ Add public password-reset request UI and an authenticated new-password screen us
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------- |
 | TASK-007 | Add `scripts/verify-password-reset.ts` and `verify:password-reset` for validation, callback safety, route markup, and Server Action export assertions.    | ✅        | 2026-07-17 |
 | TASK-008 | Run focused verification, formatting, ESLint, strict TypeScript, production build, existing authentication HTTP smoke, and relevant collaboration checks. | ✅        | 2026-07-17 |
-| TASK-009 | Finalize this plan and the structured session change log after all checks pass.                                                                           | ✅        | 2026-07-17 |
+| TASK-009 | Finalize this plan after all checks pass.                                                                                                                 | ✅        | 2026-07-17 |
 
 ## 3. Alternatives
 

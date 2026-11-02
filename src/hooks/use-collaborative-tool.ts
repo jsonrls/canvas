@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  createProviderLifecycle,
+  type ProviderLifecycle,
+} from "@/lib/collaboration/provider-lifecycle";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
@@ -134,7 +139,7 @@ export function useCollaborativeTool({
   kind,
   roomId,
 }: UseCollaborativeToolOptions): UseCollaborativeToolResult {
-  const [attempt, setAttempt] = useState(0);
+  const lifecycleRef = useRef<ProviderLifecycle | null>(null);
   const [connection, setConnection] =
     useState<CollaborativeToolConnection | null>(null);
   const [message, setMessage] = useState("");
@@ -208,17 +213,12 @@ export function useCollaborativeTool({
       setMessage("Live collaboration is temporarily unavailable.");
     };
     const handleOffline = (): void => {
-      provider.disconnect();
       setStatus("offline");
-      setMessage("You are offline. Changes remain saved on this device.");
+      setMessage(
+        "You are offline. Keep this tab open until live sync returns.",
+      );
       setParticipants([]);
     };
-
-    provider.awareness.on("change", updateParticipants);
-    provider.on("status", updateStatus);
-    provider.on("sync", updateSync);
-    provider.on("connection-error", handleConnectionError);
-    window.addEventListener("offline", handleOffline);
 
     queueMicrotask(() => {
       if (!active) return;
@@ -234,6 +234,7 @@ export function useCollaborativeTool({
           offlineRoomId,
           document,
           kind,
+          abortController.signal,
         );
         persistence = offline.persistence;
       }
@@ -242,55 +243,29 @@ export function useCollaborativeTool({
         await persistence?.destroy();
         return;
       }
-
-      if (!navigator.onLine) {
-        handleOffline();
-        return;
-      }
-
-      if (endpoint.authentication === "access-token") {
-        const response = await fetch("/api/auth/access-token", {
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("The secure collaboration session could not open.");
-        }
-
-        const payload = (await response.json()) as { accessToken?: unknown };
-
-        if (typeof payload.accessToken !== "string") {
-          throw new Error("The collaboration token response was invalid.");
-        }
-
-        provider.params = { access_token: payload.accessToken };
-      }
-
-      if (active) {
-        provider.connect();
-      }
     };
-
-    void initialize().catch((error: unknown) => {
-      if (!active || abortController.signal.aborted) return;
-      setStatus(navigator.onLine ? "error" : "offline");
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "The collaboration session could not open.",
-      );
+    const lifecycle = createProviderLifecycle({
+      provider,
+      authentication: endpoint.authentication,
+      ready: initialize(),
+      onStatus: updateStatus,
+      onSync: updateSync,
+      onAwareness: updateParticipants,
+      onError: handleConnectionError,
+      onOffline: handleOffline,
+      onConnecting: () => {
+        setStatus("connecting");
+        setMessage("");
+      },
     });
+    lifecycleRef.current = lifecycle;
+    void lifecycle.reconnect();
 
     return () => {
       active = false;
       abortController.abort();
-      window.removeEventListener("offline", handleOffline);
-      provider.awareness.off("change", updateParticipants);
-      provider.off("status", updateStatus);
-      provider.off("sync", updateSync);
-      provider.off("connection-error", handleConnectionError);
+      lifecycle.dispose();
+      if (lifecycleRef.current === lifecycle) lifecycleRef.current = null;
       provider.destroy();
       void persistence?.destroy();
       document.destroy();
@@ -300,7 +275,6 @@ export function useCollaborativeTool({
       }
     };
   }, [
-    attempt,
     canEdit,
     breakoutCode,
     currentUser.displayName,
@@ -311,13 +285,8 @@ export function useCollaborativeTool({
   ]);
 
   const reconnect = useCallback((): void => {
-    if (!canEdit) return;
-    providerRef.current?.disconnect();
-    setMessage("");
-    setParticipants([]);
-    setStatus("connecting");
-    setAttempt((current) => current + 1);
-  }, [canEdit]);
+    void lifecycleRef.current?.reconnect();
+  }, []);
 
   const setAwarenessField = useCallback(
     (field: string, value: unknown): void => {

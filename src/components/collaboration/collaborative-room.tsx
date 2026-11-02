@@ -1,64 +1,42 @@
 "use client";
 
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Dialog } from "@astryxdesign/core/Dialog";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Text } from "@astryxdesign/core/Text";
 import {
   BookOpenText,
   BrainCircuit,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   FileText,
-  Globe2,
-  House,
-  Eye,
-  LockKeyhole,
   MousePointer2,
-  PanelLeft,
   PanelsTopLeft,
   Presentation,
-  Radio,
-  RefreshCw,
   Split,
   UsersRound,
-} from "lucide-react";
+} from "@/components/ui/icons";
+import { QollabAppShell } from "@/components/shell/qollab-app-shell";
+import { QollabSideNavigation } from "@/components/shell/qollab-side-navigation";
+import { QollabWorkspaceHeader } from "@/components/shell/qollab-workspace-header";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { useNotesCollaboration } from "@/lib/collaboration/use-notes-collaboration";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { WebsocketProvider } from "y-websocket";
-import * as Y from "yjs";
 
 import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
-import { createVersionAction } from "@/app/rooms/[roomId]/actions";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
-import {
-  ConflictReviewPanel,
-  type ConflictResolutionResult,
-} from "@/components/collaboration/conflict-review-panel";
-import {
-  RichTextEditor,
-  type RichTextEditorHandle,
-} from "@/components/collaboration/rich-text-editor";
+import { ConflictReviewPanel } from "@/components/collaboration/conflict-review-panel";
+import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
 import { VersionHistoryPanel } from "@/components/collaboration/version-history-panel";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
 import {
   ViewerCollaborationStatus,
   ViewerCollaborationToggle,
 } from "@/components/rooms/viewer-collaboration-toggle";
-import {
-  captureOfflineDraft,
-  createConflictCheckpointLabel,
-  createReconciliationWindow,
-  finalizeConflictReview,
-  isReconciliationUpdateRelevant,
-  recordReconciliationUpdate,
-  type ConflictReview,
-  type ReconciliationWindow,
-} from "@/lib/collaboration/conflict-review";
-import {
-  createOfflineDocument,
-  type OfflineDocumentResult,
-} from "@/lib/collaboration/offline-document";
-import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import type { VersionSummary } from "@/lib/version-history/types";
 import type {
   RoomDocumentKind,
@@ -68,22 +46,7 @@ import type {
 import { useRoomPresentation } from "@/hooks/use-room-presentation";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
-type LocalPersistenceStatus = "disabled" | "loading" | "saved" | "unavailable";
-type RemoteSyncStatus =
-  "connecting" | "synced" | "offline" | "error" | "viewing";
 type WorkspaceTool = RoomDocumentKind | "assistant";
-
-interface StudyUser {
-  clientId: number;
-  color: string;
-  name: string;
-}
-
-interface CollaborationConnection {
-  document: Y.Doc;
-  provider: WebsocketProvider;
-  user: StudyUser;
-}
 
 interface CollaborativeRoomProps {
   availableRooms: Array<{ name: string; slug: string }>;
@@ -99,6 +62,8 @@ interface CollaborativeRoomProps {
   initialViewerCanCollaborate: boolean;
   isPublic: boolean;
   roomId: string;
+  roomIconUrl: string | null;
+  roomName: string;
 }
 
 const PdfStudyTool = dynamic(
@@ -125,56 +90,11 @@ const AiStudyTool = dynamic(
 
 function ToolLoading({ label }: { label: string }): React.ReactElement {
   return (
-    <div className="editor-initializing" role="status">
-      <RefreshCw className="spin" aria-hidden="true" size={18} />
-      {label}
-    </div>
-  );
-}
-
-const USER_NAMES = [
-  "Maya",
-  "Theo",
-  "Iris",
-  "Noah",
-  "Sam",
-  "Lena",
-  "Kai",
-  "Ari",
-];
-const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
-
-function createStudyUser(clientId: number, displayName: string): StudyUser {
-  return {
-    clientId,
-    name: displayName || USER_NAMES[clientId % USER_NAMES.length],
-    color: USER_COLORS[clientId % USER_COLORS.length],
-  };
-}
-
-function readParticipants(provider: WebsocketProvider): StudyUser[] {
-  const participants = new Map<number, StudyUser>();
-
-  provider.awareness.getStates().forEach((state: unknown, clientId: number) => {
-    if (typeof state !== "object" || state === null || !("user" in state)) {
-      return;
-    }
-
-    const user = (state as { user?: Partial<StudyUser> }).user;
-
-    if (typeof user?.name !== "string" || typeof user.color !== "string") {
-      return;
-    }
-
-    participants.set(clientId, {
-      clientId,
-      name: user.name,
-      color: user.color,
-    });
-  });
-
-  return Array.from(participants.values()).sort((first, second) =>
-    first.name.localeCompare(second.name),
+    <LoadingIndicator
+      className="editor-initializing"
+      label={label}
+      size="panel"
+    />
   );
 }
 
@@ -189,9 +109,10 @@ export function CollaborativeRoom({
   initialViewerCanCollaborate,
   isPublic,
   roomId,
+  roomIconUrl,
+  roomName,
 }: CollaborativeRoomProps): React.ReactElement {
   const router = useRouter();
-  const collaborationEndpoint = getCollaborationWebSocketEndpoint();
   const { setViewerCanCollaborate, viewerCanCollaborate } =
     useViewerCollaboration({
       initialEnabled: initialViewerCanCollaborate,
@@ -201,6 +122,9 @@ export function CollaborativeRoom({
   const canManagePdf = currentUserRole !== "viewer";
   const canEdit = canManagePdf || viewerCanCollaborate;
   const [activeTool, setActiveTool] = useState<WorkspaceTool>("notes");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isRoomControlsOpen, setIsRoomControlsOpen] = useState(false);
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [followingPresenterId, setFollowingPresenterId] = useState<
     string | null
   >(null);
@@ -208,30 +132,29 @@ export function CollaborativeRoom({
   const [assistantSourceText, setAssistantSourceText] = useState("");
   const [isVersionHistoryCollapsed, setIsVersionHistoryCollapsed] =
     useState(true);
-  const [connection, setConnection] = useState<CollaborationConnection | null>(
-    null,
-  );
-  const [conflictReview, setConflictReview] = useState<ConflictReview | null>(
-    null,
-  );
-  const [localStatus, setLocalStatus] =
-    useState<LocalPersistenceStatus>("loading");
-  const [remoteStatus, setRemoteStatus] =
-    useState<RemoteSyncStatus>("connecting");
-  const [participants, setParticipants] = useState<StudyUser[]>([]);
-  const [connectionAttempt, setConnectionAttempt] = useState(0);
-  const [connectionMessage, setConnectionMessage] = useState("");
-  const [localMessage, setLocalMessage] = useState("");
-  const [reconciliationMessage, setReconciliationMessage] = useState("");
-  const editorRef = useRef<RichTextEditorHandle>(null);
   const notesWorkspaceRef = useRef<HTMLElement>(null);
-  const documentRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const reconciliationWindowRef = useRef<ReconciliationWindow | null>(null);
-  const reviewIdRef = useRef(0);
-  const offlineInitializationRef =
-    useRef<Promise<OfflineDocumentResult> | null>(null);
-  const isSigningOutRef = useRef(false);
+  const {
+    connection,
+    conflictReview,
+    localStatus,
+    remoteStatus,
+    participants,
+    connectionMessage,
+    localMessage,
+    editorRef,
+    reconnect,
+    prepareForSignOut,
+    keepMergedNote,
+    finishConflictReview,
+    useOfflineDraft,
+    remoteActionsAvailable,
+    remoteCopy,
+  } = useNotesCollaboration({
+    canEdit,
+    currentUser,
+    initialState: initialDocumentStates.notes,
+    roomId,
+  });
   const presentedWorkspace: RoomDocumentKind =
     activeTool === "assistant" ? "notes" : activeTool;
   const roomPresentation = useRoomPresentation({
@@ -267,6 +190,7 @@ export function CollaborativeRoom({
         setShowFollowPrompt(false);
       }
       setActiveTool(nextTool);
+      setIsMobileNavigationOpen(false);
     },
     [canEdit],
   );
@@ -356,1005 +280,492 @@ export function CollaborativeRoom({
     presentation?.workspace,
   ]);
 
-  const beginReconciliationWindow = useCallback((): void => {
-    if (!canEdit) {
-      return;
-    }
-
-    reconciliationWindowRef.current ??= createReconciliationWindow();
-  }, [canEdit]);
-
-  useEffect(() => {
-    let active = true;
-    let offlinePersistence: OfflineDocumentResult["persistence"] = null;
-    let snapshotMessage = "";
-    const document = new Y.Doc();
-
-    if (initialDocumentStates.notes) {
-      try {
-        const binary = window.atob(initialDocumentStates.notes);
-        const update = Uint8Array.from(binary, (character) =>
-          character.charCodeAt(0),
-        );
-        Y.applyUpdate(document, update);
-      } catch {
-        snapshotMessage =
-          "The saved notes snapshot could not be decoded. Refresh before relying on this view.";
-      }
-    }
-
-    const user = createStudyUser(document.clientID, currentUser.displayName);
-    const provider = new WebsocketProvider(
-      collaborationEndpoint.url,
-      roomId,
-      document,
-      {
-        connect: false,
-        maxBackoffTime: 4000,
-        params: {},
-        resyncInterval: 2500,
-      },
-    );
-    documentRef.current = document;
-    providerRef.current = provider;
-
-    const handleBeforeTransaction = (transaction: Y.Transaction): void => {
-      const reconciliationWindow = reconciliationWindowRef.current;
-
-      if (
-        reconciliationWindow === null ||
-        transaction.origin !== provider ||
-        reconciliationWindow.localUpdateCount === 0
-      ) {
-        return;
-      }
-
-      captureOfflineDraft(
-        reconciliationWindow,
-        editorRef.current?.captureDraft() ?? null,
-      );
-    };
-    const handleDocumentUpdate = (
-      _update: Uint8Array,
-      origin: unknown,
-    ): void => {
-      const reconciliationWindow = reconciliationWindowRef.current;
-
-      if (reconciliationWindow === null) {
-        return;
-      }
-
-      const isRemoteUpdate = origin === provider;
-      const updateSource = isRemoteUpdate ? "remote" : "local";
-
-      if (
-        !isReconciliationUpdateRelevant(
-          updateSource,
-          editorRef.current?.isFocused() ?? false,
-        )
-      ) {
-        return;
-      }
-
-      recordReconciliationUpdate(reconciliationWindow, updateSource);
-    };
-    const handleStatus = ({
-      status,
-    }: {
-      status: "connected" | "disconnected" | "connecting";
-    }): void => {
-      if (status === "disconnected") {
-        beginReconciliationWindow();
-        setRemoteStatus(navigator.onLine ? "connecting" : "offline");
-        return;
-      }
-
-      if (status === "connected") {
-        const reconciliationWindow = reconciliationWindowRef.current;
-
-        if (reconciliationWindow?.localUpdateCount) {
-          captureOfflineDraft(
-            reconciliationWindow,
-            editorRef.current?.captureDraft() ?? null,
-          );
-        }
-      }
-
-      setRemoteStatus(canEdit ? "connecting" : "viewing");
-    };
-    const handleSync = (synced: boolean): void => {
-      setRemoteStatus(synced ? (canEdit ? "synced" : "viewing") : "connecting");
-
-      if (!synced) {
-        beginReconciliationWindow();
-        return;
-      }
-
-      setConnectionMessage("");
-      const reconciliationWindow = reconciliationWindowRef.current;
-      reconciliationWindowRef.current = null;
-
-      if (reconciliationWindow === null) {
-        return;
-      }
-
-      queueMicrotask(() => {
-        if (!active) {
-          return;
-        }
-
-        reviewIdRef.current += 1;
-        const review = finalizeConflictReview(
-          reconciliationWindow,
-          editorRef.current?.captureDraft() ?? null,
-          reviewIdRef.current,
-        );
-
-        if (review !== null) {
-          setConflictReview(review);
-          setReconciliationMessage("");
-          return;
-        }
-
-        if (reconciliationWindow.localUpdateCount > 0) {
-          setReconciliationMessage(
-            "Your offline edits are live. No shared changes needed review.",
-          );
-        }
-      });
-    };
-    const handleConnectionError = (): void => {
-      beginReconciliationWindow();
-      setConnectionMessage(
-        navigator.onLine
-          ? "The collaboration service rejected or lost this connection."
-          : "The network is unavailable. Your local notes remain open.",
-      );
-      setRemoteStatus(navigator.onLine ? "error" : "offline");
-    };
-    const handleAwarenessChange = (): void => {
-      setParticipants(readParticipants(provider));
-    };
-
-    document.on("beforeTransaction", handleBeforeTransaction);
-    document.on("update", handleDocumentUpdate);
-    provider.on("status", handleStatus);
-    provider.on("sync", handleSync);
-    provider.on("connection-error", handleConnectionError);
-    provider.awareness.on("change", handleAwarenessChange);
-    provider.awareness.setLocalStateField("user", user);
-
-    const initializeLocalDocument = async (): Promise<void> => {
-      const initialization = createOfflineDocument(
-        currentUser.id,
-        roomId,
-        document,
-      );
-      offlineInitializationRef.current = initialization;
-      const result = await initialization;
-      offlinePersistence = result.persistence;
-
-      if (!active) {
-        await result.persistence?.destroy();
-        return;
-      }
-
-      if (isSigningOutRef.current) {
-        return;
-      }
-
-      setLocalStatus(result.status);
-      setLocalMessage(
-        result.status === "saved"
-          ? ""
-          : "Local saving is unavailable. Keep this tab open until live sync returns.",
-      );
-      beginReconciliationWindow();
-      setConnection({ document, provider, user });
-    };
-
-    if (!canEdit) {
-      queueMicrotask(() => {
-        if (!active) {
-          return;
-        }
-
-        setLocalMessage(snapshotMessage);
-        setLocalStatus("disabled");
-        setRemoteStatus("viewing");
-        setConnection({ document, provider, user });
-      });
-    } else {
-      void initializeLocalDocument().catch(() => {
-        if (!active || isSigningOutRef.current) {
-          return;
-        }
-
-        setLocalStatus("unavailable");
-        setLocalMessage(
-          "Local saving is unavailable. Keep this tab open until live sync returns.",
-        );
-        beginReconciliationWindow();
-        setConnection({ document, provider, user });
-      });
-    }
-
-    return () => {
-      active = false;
-      document.off("beforeTransaction", handleBeforeTransaction);
-      document.off("update", handleDocumentUpdate);
-      provider.off("status", handleStatus);
-      provider.off("sync", handleSync);
-      provider.off("connection-error", handleConnectionError);
-      provider.awareness.off("change", handleAwarenessChange);
-      provider.destroy();
-      void offlinePersistence?.destroy();
-      document.destroy();
-
-      if (providerRef.current === provider) {
-        providerRef.current = null;
-      }
-
-      if (documentRef.current === document) {
-        documentRef.current = null;
-        reconciliationWindowRef.current = null;
-      }
-    };
-  }, [
-    beginReconciliationWindow,
-    canEdit,
-    collaborationEndpoint.url,
-    currentUser.displayName,
-    currentUser.id,
-    initialDocumentStates.notes,
-    roomId,
-  ]);
-
-  useEffect(() => {
-    if (!connection) {
-      return;
-    }
-
-    const provider = providerRef.current;
-
-    if (!provider) {
-      return;
-    }
-
-    const abortController = new AbortController();
-    let active = true;
-
-    const openRemoteConnection = async (): Promise<void> => {
-      await Promise.resolve();
-
-      if (!navigator.onLine) {
-        beginReconciliationWindow();
-        setRemoteStatus("offline");
-        return;
-      }
-
-      setRemoteStatus("connecting");
-      if (collaborationEndpoint.authentication === "access-token") {
-        const tokenResponse = await fetch("/api/auth/access-token", {
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: abortController.signal,
-        });
-
-        if (!tokenResponse.ok) {
-          throw new Error(
-            "Your secure collaboration session could not be opened.",
-          );
-        }
-
-        const tokenPayload = (await tokenResponse.json()) as {
-          accessToken?: unknown;
-        };
-
-        if (typeof tokenPayload.accessToken !== "string") {
-          throw new Error("The collaboration token response was invalid.");
-        }
-
-        provider.params = { access_token: tokenPayload.accessToken };
-      }
-
-      if (active) {
-        provider.disconnect();
-        provider.connect();
-      }
-    };
-
-    void openRemoteConnection().catch((error: unknown) => {
-      if (!active || abortController.signal.aborted) {
-        return;
-      }
-
-      beginReconciliationWindow();
-      setConnectionMessage(
-        error instanceof Error
-          ? error.message
-          : "The secure collaboration session could not be opened.",
-      );
-      setRemoteStatus(navigator.onLine ? "error" : "offline");
-    });
-
-    return () => {
-      active = false;
-      abortController.abort();
-      provider.disconnect();
-    };
-  }, [
-    beginReconciliationWindow,
-    canEdit,
-    collaborationEndpoint.authentication,
-    connection,
-    connectionAttempt,
-  ]);
-
-  const reconnect = useCallback((): void => {
-    beginReconciliationWindow();
-    providerRef.current?.disconnect();
-    setRemoteStatus("connecting");
-    setConnectionMessage("");
-    setParticipants([]);
-    setConnectionAttempt((attempt) => attempt + 1);
-  }, [beginReconciliationWindow]);
-
-  useEffect(() => {
-    const handleOnline = (): void => reconnect();
-    const handleOffline = (): void => {
-      beginReconciliationWindow();
-      providerRef.current?.disconnect();
-      setRemoteStatus("offline");
-      setParticipants([]);
-      setConnectionMessage(
-        "The network is unavailable. Your local notes remain open.",
-      );
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [beginReconciliationWindow, canEdit, reconnect]);
-
-  const prepareForSignOut = useCallback(async (): Promise<void> => {
-    isSigningOutRef.current = true;
-    reconciliationWindowRef.current = null;
-    providerRef.current?.destroy();
-    providerRef.current = null;
-    const initialization = offlineInitializationRef.current;
-
-    if (initialization) {
-      const result = await initialization;
-      await result.persistence?.clearData();
-    }
-
-    documentRef.current?.destroy();
-    documentRef.current = null;
-  }, []);
-
-  const keepMergedNote = useCallback((reviewId: number): void => {
-    setConflictReview((currentReview) =>
-      currentReview?.id === reviewId ? null : currentReview,
-    );
-    setReconciliationMessage(
-      "Merged note kept. Your offline and shared changes remain live together.",
-    );
-  }, []);
-
-  const finishConflictReview = useCallback(
-    (reviewId: number, message: string): void => {
-      setConflictReview((currentReview) =>
-        currentReview?.id === reviewId ? null : currentReview,
-      );
-      setReconciliationMessage(message);
-    },
-    [],
-  );
-
-  const useOfflineDraft = useCallback(
-    async (review: ConflictReview): Promise<ConflictResolutionResult> => {
-      if (!providerRef.current?.synced) {
-        return {
-          message:
-            "Reconnect to live sync before replacing the shared note. The merged note is unchanged.",
-          ok: false,
-        };
-      }
-
-      const mergedSnapshot = editorRef.current?.captureSnapshot();
-
-      if (!mergedSnapshot) {
-        return {
-          message:
-            "Wait for the shared document to finish opening. The merged note is unchanged.",
-          ok: false,
-        };
-      }
-
-      const checkpointResult = await createVersionAction(
-        roomId,
-        createConflictCheckpointLabel(),
-        mergedSnapshot,
-      ).catch(() => null);
-
-      if (checkpointResult === null) {
-        return {
-          message:
-            "The safety checkpoint could not be confirmed. The merged note is unchanged.",
-          ok: false,
-        };
-      }
-
-      if (checkpointResult.data === null) {
-        return {
-          message: `${checkpointResult.error} The merged note is unchanged.`,
-          ok: false,
-        };
-      }
-
-      const latestSnapshot = editorRef.current?.captureSnapshot();
-
-      if (!latestSnapshot) {
-        return {
-          message:
-            "The safety checkpoint was saved, but the editor is reconnecting. The merged note is unchanged.",
-          ok: false,
-        };
-      }
-
-      if (latestSnapshot.yjsState !== mergedSnapshot.yjsState) {
-        const latestDraft = editorRef.current?.captureDraft();
-
-        if (latestDraft) {
-          setConflictReview((currentReview) =>
-            currentReview?.id === review.id
-              ? { ...currentReview, mergedDraft: latestDraft }
-              : currentReview,
-          );
-        }
-
-        return {
-          message:
-            "The live note changed while its checkpoint was saving, so nothing was replaced. Review the refreshed merge before trying again.",
-          ok: false,
-        };
-      }
-
-      try {
-        const restored = editorRef.current?.restoreContent(
-          review.offlineDraft.content,
-        );
-
-        if (!restored) {
-          return {
-            message:
-              "The safety checkpoint was saved, but the editor is reconnecting. Try using the offline draft again.",
-            ok: false,
-          };
-        }
-      } catch {
-        return {
-          message:
-            "The safety checkpoint was saved, but this offline draft is not compatible with the editor.",
-          ok: false,
-        };
-      }
-
-      router.refresh();
-
-      return {
-        message: `Offline draft restored. The merged result remains saved as “${checkpointResult.data.label}”.`,
-        ok: true,
-      };
-    },
-    [roomId, router],
-  );
-
-  const remoteActionsAvailable = canEdit && remoteStatus === "synced";
-  const remoteCopy: Record<RemoteSyncStatus, string> = {
-    connecting: "Connecting to live sync",
-    error: "Live sync needs attention",
-    offline: "Offline — edits stay on this device",
-    synced: "Live sync active",
-    viewing: "Read-only room access",
-  };
-
   const openAssistant = (): void => {
     setAssistantSourceText(editorRef.current?.captureDraft()?.text ?? "");
     chooseTool("assistant");
   };
 
+  const toolLabels: Record<WorkspaceTool, string> = {
+    notes: "Shared notes",
+    pdf: "PDF annotation",
+    whiteboard: "Whiteboard",
+    assistant: "AI study assistant",
+  };
+  const collaborationControl =
+    currentUserRole === "viewer" ? (
+      <ViewerCollaborationStatus compact enabled={viewerCanCollaborate} />
+    ) : (
+      <ViewerCollaborationToggle
+        compact
+        enabled={viewerCanCollaborate}
+        onEnabledChange={setViewerCanCollaborate}
+        roomSlug={roomId}
+      />
+    );
+  const selectTool = (value: string): void => {
+    if (value === "assistant") openAssistant();
+    else chooseTool(value as WorkspaceTool);
+  };
+
   return (
-    <main
-      className={`room-shell room-shell--${activeTool}`}
+    <VStack
+      className="h-dvh min-h-0 bg-surface text-primary"
       onPointerMove={(event) => {
-        if (isPresenting) {
+        if (isPresenting)
           updateCursor(
             event.clientX / Math.max(1, window.innerWidth),
             event.clientY / Math.max(1, window.innerHeight),
           );
-        }
       }}
     >
-      <header className="room-header">
-        <div className="brand-lockup">
-          <Link
-            className="brand-home-link"
-            href="/rooms"
-            aria-label="All study rooms"
-          >
-            <QollabBrandLogo />
-          </Link>
-        </div>
-
-        <div className="header-actions">
-          <Link
-            className="icon-button mobile-only room-directory-shortcut"
-            href="/rooms"
-            aria-label="All study rooms"
-          >
-            <PanelLeft aria-hidden="true" size={18} />
-          </Link>
-          <Link
-            className="icon-button mobile-only"
-            href={`/rooms/${roomId}/breakouts`}
-            aria-label="Breakout rooms"
-          >
-            <Split aria-hidden="true" size={18} />
-          </Link>
-          <Link
-            className="icon-button"
-            href="/rooms"
-            aria-label="All study rooms"
-          >
-            <House aria-hidden="true" size={18} />
-          </Link>
-          <div
-            className="participant-stack"
-            aria-label={`${participants.length} active participants`}
-          >
-            {participants.slice(0, 3).map((participant) => (
-              <span
-                className="participant-avatar"
-                key={participant.clientId}
-                style={{ backgroundColor: participant.color }}
-                title={participant.name}
-              >
-                {participant.name.charAt(0)}
-              </span>
-            ))}
-          </div>
-          {canEdit ? (
-            <button
-              aria-pressed={isPresenting}
-              aria-label={
-                isPresenting
-                  ? "Stop presenting"
-                  : "Start presenting this workspace"
-              }
-              className={`presentation-control${isPresenting ? " presentation-control--active" : ""}`}
-              onClick={isPresenting ? stopPresenting : startPresenting}
-              type="button"
-            >
-              <Presentation aria-hidden="true" size={16} />
-              {isPresenting ? "Stop presenting" : "Present"}
-            </button>
-          ) : (
-            <button
-              aria-pressed={isFollowingPresenter}
-              aria-label={
-                isFollowingPresenter && presentation
-                  ? `Stop following ${presentation.presenterName}`
-                  : presentation
-                    ? `Follow ${presentation.presenterName}`
-                    : "No active presenter"
-              }
-              className={`presentation-control${isFollowingPresenter ? " presentation-control--following" : ""}`}
-              disabled={!presentation}
-              onClick={() => {
-                if (isFollowingPresenter) {
-                  setFollowingPresenterId(null);
-                  setShowFollowPrompt(false);
-                } else {
-                  followPresenter();
-                }
-              }}
-              type="button"
-            >
-              <Eye aria-hidden="true" size={16} />
-              {isFollowingPresenter && presentation
-                ? `Following ${presentation.presenterName}`
-                : presentation
-                  ? `Follow ${presentation.presenterName}`
-                  : "No presenter"}
-            </button>
-          )}
-          {currentUserRole === "owner" ? (
-            <Link
-              aria-label="Manage room"
-              className="invite-button"
-              href={`/rooms/${roomId}/settings`}
-            >
-              <UsersRound aria-hidden="true" size={16} />
-              Manage
-            </Link>
-          ) : (
-            <span className="header-room-context">
-              {isPublic ? (
-                <Globe2 aria-hidden="true" size={14} />
-              ) : (
-                <LockKeyhole aria-hidden="true" size={14} />
-              )}
-              {currentUserRole}
-            </span>
-          )}
-        </div>
-      </header>
-
-      <nav className="mobile-workspace-tabs" aria-label="Room workspace">
-        <button
-          aria-pressed={activeTool === "notes"}
-          onClick={() => chooseTool("notes")}
-          type="button"
-        >
-          <BookOpenText aria-hidden="true" size={17} />
-          Notes
-        </button>
-        <button
-          aria-pressed={activeTool === "pdf"}
-          onClick={() => chooseTool("pdf")}
-          type="button"
-        >
-          <FileText aria-hidden="true" size={17} />
-          PDF
-        </button>
-        <button
-          aria-pressed={activeTool === "whiteboard"}
-          onClick={() => chooseTool("whiteboard")}
-          type="button"
-        >
-          <PanelsTopLeft aria-hidden="true" size={17} />
-          Board
-        </button>
-        <button
-          aria-pressed={activeTool === "assistant"}
-          onClick={openAssistant}
-          type="button"
-        >
-          <BrainCircuit aria-hidden="true" size={17} />
-          AI
-        </button>
-      </nav>
-      <div className="mobile-collaboration-control">
-        {currentUserRole === "viewer" ? (
-          <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
-        ) : (
-          <ViewerCollaborationToggle
-            enabled={viewerCanCollaborate}
-            onEnabledChange={setViewerCanCollaborate}
-            roomSlug={roomId}
+      <QollabAppShell
+        isContentScrollable={false}
+        mobileNavigation={{
+          isOpen: isMobileNavigationOpen,
+          onOpenChange: (open) => {
+            setIsMobileNavigationOpen(open);
+            if (open) setIsSidebarCollapsed(false);
+          },
+        }}
+        header={
+          <QollabWorkspaceHeader
+            label="Room controls"
+            startContent={
+              <VStack gap={0} className="min-w-0">
+                <Text type="label" maxLines={1}>
+                  {roomName}
+                </Text>
+                <Text type="supporting" className="hidden sm:block">
+                  {toolLabels[activeTool]}
+                </Text>
+              </VStack>
+            }
+            endContent={
+              <HStack gap={2} vAlign="center">
+                {canEdit ? (
+                  <Button
+                    label={isPresenting ? "Stop presenting" : "Present"}
+                    variant="secondary"
+                    className="min-h-11"
+                    aria-pressed={isPresenting}
+                    icon={<Presentation aria-hidden="true" size={16} />}
+                    onClick={isPresenting ? stopPresenting : startPresenting}
+                  />
+                ) : (
+                  <Button
+                    label={isFollowingPresenter ? "Stop following" : "Follow"}
+                    aria-label={
+                      presentation
+                        ? `${isFollowingPresenter ? "Stop following" : "Follow"} ${presentation.presenterName}`
+                        : "No active presenter"
+                    }
+                    variant="ghost"
+                    className="min-h-11"
+                    isDisabled={!presentation}
+                    aria-pressed={isFollowingPresenter}
+                    onClick={() => {
+                      if (isFollowingPresenter) {
+                        setFollowingPresenterId(null);
+                        setShowFollowPrompt(false);
+                      } else followPresenter();
+                    }}
+                  />
+                )}
+                {currentUserRole === "owner" ? (
+                  <Button
+                    as={Link}
+                    href={`/rooms/${roomId}/settings`}
+                    label="Manage"
+                    variant="ghost"
+                    className="min-h-11"
+                  />
+                ) : (
+                  <Text type="supporting" className="hidden sm:block">
+                    {currentUserRole}
+                  </Text>
+                )}
+              </HStack>
+            }
           />
-        )}
-      </div>
-
-      <div
-        className={`room-body${activeTool === "notes" ? " room-body--notes" : " room-body--study-tool"}${activeTool === "notes" && isVersionHistoryCollapsed ? " room-body--history-collapsed" : ""}`}
-      >
-        <aside
-          className="room-sidebar"
-          id="room-menu-sidebar"
-          aria-label="Study room navigation"
-        >
-          <div className="sidebar-room-switcher">
-            <div className="sidebar-room-switcher__label">
-              <BookOpenText aria-hidden="true" size={14} />
-              <span>Current room</span>
-            </div>
-            <label
-              className="sidebar-room-select"
-              aria-label="Switch study room"
-            >
-              <select
-                value={roomId}
-                onChange={(event) =>
-                  router.push(`/rooms/${event.target.value}`)
-                }
-              >
-                {availableRooms.map((room) => (
-                  <option value={room.slug} key={room.slug}>
-                    {room.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown aria-hidden="true" size={16} />
-            </label>
-            <p className="sidebar-room-switcher__hint">
-              Switch between your study spaces
-            </p>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">Workspace</p>
-            <nav className="sidebar-nav">
-              <button
-                className={`sidebar-link${activeTool === "notes" ? " sidebar-link--active" : ""}`}
-                onClick={() => chooseTool("notes")}
-                type="button"
-              >
-                <BookOpenText aria-hidden="true" size={17} />
-                Shared notes
-              </button>
-              <button
-                className={`sidebar-link${activeTool === "pdf" ? " sidebar-link--active" : ""}`}
-                onClick={() => chooseTool("pdf")}
-                type="button"
-              >
-                <FileText aria-hidden="true" size={17} />
-                PDF annotation
-              </button>
-              <button
-                className={`sidebar-link${activeTool === "whiteboard" ? " sidebar-link--active" : ""}`}
-                onClick={() => chooseTool("whiteboard")}
-                type="button"
-              >
-                <PanelsTopLeft aria-hidden="true" size={17} />
-                Whiteboard
-              </button>
-              <button
-                className={`sidebar-link${activeTool === "assistant" ? " sidebar-link--active" : ""}`}
-                onClick={openAssistant}
-                type="button"
-              >
-                <BrainCircuit aria-hidden="true" size={17} />
-                AI study assistant
-              </button>
-            </nav>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">Collaboration</p>
-            <nav className="sidebar-nav">
+        }
+        sideNavigation={
+          <QollabSideNavigation
+            footerIcons={
+              <Button
+                label="Room controls"
+                isIconOnly
+                icon={<UsersRound aria-hidden="true" size={16} />}
+                variant="ghost"
+                onClick={() => setIsRoomControlsOpen(true)}
+              />
+            }
+            collapsedHeader={<QollabBrandLogo variant="mark" />}
+            isCollapsed={isSidebarCollapsed}
+            onCollapsedChange={setIsSidebarCollapsed}
+            linkComponent={Link}
+            header={
               <Link
-                className="sidebar-link"
-                href={`/rooms/${roomId}/breakouts`}
+                href="/rooms"
+                aria-label="All study rooms"
+                className="block p-3"
               >
-                <Split aria-hidden="true" size={17} />
-                Breakouts
-                <span>{breakoutRoomCount}</span>
+                <QollabBrandLogo />
               </Link>
-            </nav>
-            {currentUserRole === "viewer" ? (
-              <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
-            ) : (
-              <ViewerCollaborationToggle
-                enabled={viewerCanCollaborate}
-                onEnabledChange={setViewerCanCollaborate}
-                roomSlug={roomId}
-              />
-            )}
-          </div>
-
-          <div className="sidebar-footer">
-            <SidebarAccountMenu
-              beforeSignOut={prepareForSignOut}
-              displayName={connection?.user.name ?? currentUser.displayName}
-              role={currentUserRole}
-              userColor={connection?.user.color}
-              userId={currentUser.id}
-            />
-          </div>
-        </aside>
-
-        {activeTool === "notes" ? (
-          <section
-            className="editor-workspace"
-            id="notes"
-            aria-label="Shared notes workspace"
-            onScrollCapture={handleNotesScroll}
-            ref={notesWorkspaceRef}
-          >
-            {conflictReview ? (
-              <ConflictReviewPanel
-                canUseOfflineDraft={remoteActionsAvailable}
-                onKeepMerged={keepMergedNote}
-                onResolved={finishConflictReview}
-                onUseOfflineDraft={useOfflineDraft}
-                review={conflictReview}
-              />
-            ) : reconciliationMessage ? (
-              <p className="reconciliation-message" role="status">
-                <CheckCircle2 aria-hidden="true" size={16} />
-                {reconciliationMessage}
-              </p>
-            ) : null}
-
-            {connection ? (
-              <RichTextEditor
-                ref={editorRef}
-                document={connection.document}
-                editable={canEdit}
-                provider={connection.provider}
-                syncLabel={
-                  remoteStatus === "synced" ? "Live" : remoteCopy[remoteStatus]
-                }
-                syncStatus={remoteStatus}
-                user={connection.user}
-              />
-            ) : (
-              <div className="editor-initializing" role="status">
-                <RefreshCw className="spin" aria-hidden="true" size={18} />
-                Opening the collaborative document…
-              </div>
-            )}
-
-            {(remoteStatus === "error" || remoteStatus === "offline") && (
-              <div
-                className="connection-callout"
-                role={remoteStatus === "error" ? "alert" : "status"}
-              >
-                <Radio aria-hidden="true" size={18} />
-                <div>
-                  <strong>
-                    {remoteStatus === "offline"
-                      ? "You are editing offline."
-                      : "The live room is temporarily unavailable."}
-                  </strong>
-                  <p>{connectionMessage || remoteCopy[remoteStatus]}</p>
-                </div>
-                <button type="button" onClick={reconnect}>
-                  Retry now
-                </button>
-              </div>
-            )}
-
-            {localStatus === "unavailable" ? (
-              <div
-                className="connection-callout connection-callout--storage"
-                role="status"
-              >
-                <Radio aria-hidden="true" size={18} />
-                <div>
-                  <strong>Local saving is unavailable.</strong>
-                  <p>{localMessage}</p>
-                </div>
-              </div>
-            ) : null}
-
-            {!canEdit && localMessage ? (
-              <div
-                className="connection-callout connection-callout--storage"
-                role="alert"
-              >
-                <Radio aria-hidden="true" size={18} />
-                <div>
-                  <strong>The saved notes snapshot is unavailable.</strong>
-                  <p>{localMessage}</p>
-                </div>
-              </div>
-            ) : null}
-          </section>
-        ) : (
-          <section
-            className={`study-tool-workspace${activeTool === "pdf" || activeTool === "whiteboard" ? " study-tool-workspace--visual" : ""}${activeTool === "pdf" ? " study-tool-workspace--pdf" : ""}`}
-          >
-            {activeTool === "pdf" ? (
-              <PdfStudyTool
-                canEdit={canEdit}
-                canManageAsset={canManagePdf}
-                currentUser={currentUser}
-                initialAsset={initialPdfAsset}
-                initialState={initialDocumentStates.pdf}
-                roomId={roomId}
-              />
-            ) : activeTool === "whiteboard" ? (
-              <WhiteboardStudyTool
-                canEdit={canEdit}
-                currentUser={currentUser}
-                initialState={initialDocumentStates.whiteboard}
-                roomId={roomId}
-              />
-            ) : (
-              <AiStudyTool
-                onReturnToNotes={() => chooseTool("notes")}
-                roomId={roomId}
-                sourceText={assistantSourceText}
-              />
-            )}
-          </section>
-        )}
-
-        {!canEdit &&
-        !isFollowingPresenter &&
-        showFollowPrompt &&
-        presentation ? (
-          <div
-            aria-labelledby="follow-presenter-title"
-            className="follow-presenter-dialog"
-            role="dialog"
-          >
-            <div className="follow-presenter-dialog__icon" aria-hidden="true">
-              <Presentation size={20} />
-            </div>
-            <div className="follow-presenter-dialog__copy">
-              <strong id="follow-presenter-title">Lost the presenter?</strong>
-              <p>
-                {presentation.presenterName} is now presenting{" "}
-                {presentation.workspace === "notes"
-                  ? "Shared Notes"
-                  : presentation.workspace === "pdf"
-                    ? "PDF Annotation"
-                    : "the Whiteboard"}
-                . Follow to move with them automatically.
-              </p>
-            </div>
-            <div className="follow-presenter-dialog__actions">
-              <button onClick={() => setShowFollowPrompt(false)} type="button">
-                Not now
-              </button>
-              <button onClick={followPresenter} type="button">
-                <Eye aria-hidden="true" size={15} /> Follow presenter
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {!canEdit && isFollowingPresenter && presentation?.cursor ? (
-          <div
-            aria-hidden="true"
-            className="presenter-cursor"
-            style={{
-              left: `${presentation.cursor.x * 100}vw`,
-              top: `${presentation.cursor.y * 100}vh`,
-            }}
-          >
-            <MousePointer2 fill="currentColor" size={22} />
-            <span>{presentation.presenterName}</span>
-          </div>
-        ) : null}
-
-        {activeTool === "notes" ? (
-          <>
-            <button
-              aria-controls="version-history-sidebar"
-              aria-expanded={!isVersionHistoryCollapsed}
-              aria-label={
-                isVersionHistoryCollapsed
-                  ? "Expand Version History sidebar"
-                  : "Collapse Version History sidebar"
-              }
-              className={`sidebar-edge-toggle history-sidebar-toggle${isVersionHistoryCollapsed ? " history-sidebar-toggle--collapsed" : ""}`}
-              onClick={() =>
-                setIsVersionHistoryCollapsed((isCollapsed) => !isCollapsed)
-              }
-              title={
-                isVersionHistoryCollapsed
-                  ? "Expand Version History sidebar"
-                  : "Collapse Version History sidebar"
-              }
-              type="button"
-            >
-              {isVersionHistoryCollapsed ? (
-                <ChevronLeft aria-hidden="true" size={18} strokeWidth={2} />
-              ) : (
-                <ChevronRight aria-hidden="true" size={18} strokeWidth={2} />
-              )}
-            </button>
-
+            }
+            topContent={
+              !isSidebarCollapsed ? (
+                <VStack gap={3} padding={4}>
+                  <Selector
+                    label="Current room"
+                    value={roomId}
+                    onChange={(slug) => router.push(`/rooms/${slug}`)}
+                    options={availableRooms.map((room) => ({
+                      value: room.slug,
+                      label: room.name,
+                    }))}
+                    startIcon={
+                      <Avatar
+                        name={roomName}
+                        src={roomIconUrl ?? undefined}
+                        size="sm"
+                        tooltip={false}
+                      />
+                    }
+                    className="[&_button]:min-h-11"
+                  />
+                  <Text type="supporting">
+                    {isPublic ? "Public room" : "Private room"}
+                  </Text>
+                </VStack>
+              ) : undefined
+            }
+            sections={[
+              {
+                id: "workspace",
+                title: "Study tools",
+                items: [
+                  {
+                    id: "notes",
+                    label: "Shared notes",
+                    icon: BookOpenText,
+                    isSelected: activeTool === "notes",
+                    onClick: () => chooseTool("notes"),
+                    size: "lg",
+                  },
+                  {
+                    id: "pdf",
+                    label: "PDF annotation",
+                    icon: FileText,
+                    isSelected: activeTool === "pdf",
+                    onClick: () => chooseTool("pdf"),
+                    size: "lg",
+                  },
+                  {
+                    id: "whiteboard",
+                    label: "Whiteboard",
+                    icon: PanelsTopLeft,
+                    isSelected: activeTool === "whiteboard",
+                    onClick: () => chooseTool("whiteboard"),
+                    size: "lg",
+                  },
+                  {
+                    id: "assistant",
+                    label: "AI study assistant",
+                    icon: BrainCircuit,
+                    isSelected: activeTool === "assistant",
+                    onClick: openAssistant,
+                    size: "lg",
+                  },
+                ],
+              },
+              {
+                id: "collaboration",
+                title: "Collaboration",
+                items: [
+                  {
+                    id: "breakouts",
+                    label: "Breakout rooms",
+                    icon: Split,
+                    href: `/rooms/${roomId}/breakouts`,
+                    endContent: <Badge label={breakoutRoomCount} />,
+                    size: "lg",
+                  },
+                ],
+              },
+            ]}
+            footer={
+              !isSidebarCollapsed ? (
+                <VStack
+                  gap={1}
+                  padding={2}
+                  className="border-t border-border [&_.viewer-collaboration-control]:border-0! [&_.viewer-collaboration-control]:shadow-none! [&_.viewer-collaboration-control]:bg-transparent! [&_.viewer-collaboration-control]:p-2! [&_.viewer-collaboration-control]:m-0! [&_.viewer-collaboration-control_small]:hidden [&_.viewer-collaboration-control_strong]:font-normal! [&_.viewer-collaboration-control_strong]:text-sm! [&_.viewer-collaboration-control__icon]:bg-transparent! [&_.viewer-collaboration-control__icon]:text-secondary! [&_.viewer-collaboration-status]:border-0! [&_.viewer-collaboration-status]:shadow-none! [&_.viewer-collaboration-status]:bg-transparent! [&_.current-user]:border-0! [&_.current-user]:shadow-none! [&_.current-user]:bg-transparent! [&_.current-user]:rounded-md! [&_.current-user]:p-2! [&_.current-user:hover]:bg-surface-hover! [&_.current-user_strong]:text-sm! [&_.current-user_small]:text-xs!"
+                >
+                  {collaborationControl}
+                  <SidebarAccountMenu
+                    beforeSignOut={prepareForSignOut}
+                    displayName={
+                      connection?.user.name ?? currentUser.displayName
+                    }
+                    role={currentUserRole}
+                    userColor={connection?.user.color}
+                    userId={currentUser.id}
+                  />
+                </VStack>
+              ) : undefined
+            }
+          />
+        }
+        contextPanel={
+          activeTool === "notes" ? (
             <VersionHistoryPanel
               currentUserId={currentUser.id}
               editorRef={editorRef}
               initialVersions={initialVersions}
               remoteActionsAvailable={remoteActionsAvailable}
               roomId={roomId}
+              isOpen={!isVersionHistoryCollapsed}
+              onOpenChange={(open) => setIsVersionHistoryCollapsed(!open)}
             />
-          </>
-        ) : null}
-      </div>
-    </main>
+          ) : undefined
+        }
+      >
+        <VStack className="h-full min-h-0" gap={0}>
+          <HStack padding={3} className="md:hidden! border-b border-border">
+            <Selector
+              label="Workspace"
+              isLabelHidden
+              value={activeTool}
+              onChange={selectTool}
+              options={Object.entries(toolLabels).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+              width="100%"
+              className="[&_button]:min-h-11"
+            />
+          </HStack>
+          {!canEdit &&
+          !isFollowingPresenter &&
+          showFollowPrompt &&
+          presentation ? (
+            <HStack
+              gap={3}
+              padding={3}
+              wrap="wrap"
+              vAlign="center"
+              className="border-b border-border bg-surface"
+              role="status"
+            >
+              <Text className="flex-1">
+                {presentation.presenterName} is presenting{" "}
+                {toolLabels[presentation.workspace]}. Follow to move with them.
+              </Text>
+              <Button
+                label="Not now"
+                variant="ghost"
+                onClick={() => setShowFollowPrompt(false)}
+              />
+              <Button label="Follow presenter" onClick={followPresenter} />
+            </HStack>
+          ) : null}
+          {activeTool === "notes" ? (
+            <VStack
+              as="section"
+              className="flex-1 min-h-0"
+              id="notes"
+              aria-label="Shared notes workspace"
+              onScrollCapture={handleNotesScroll}
+              ref={notesWorkspaceRef}
+            >
+              <HStack
+                gap={3}
+                paddingInline={5}
+                paddingBlock={3}
+                hAlign="between"
+                vAlign="center"
+                className="border-b border-border"
+              >
+                <Heading level={1} className="text-lg!">
+                  Shared notes
+                </Heading>
+                <Button
+                  label="Version history"
+                  aria-controls="version-history-sidebar"
+                  variant="ghost"
+                  className="min-h-11"
+                  aria-expanded={!isVersionHistoryCollapsed}
+                  onClick={() =>
+                    setIsVersionHistoryCollapsed((value) => !value)
+                  }
+                />
+              </HStack>
+              {conflictReview ? (
+                <ConflictReviewPanel
+                  canUseOfflineDraft={remoteActionsAvailable}
+                  onKeepMerged={keepMergedNote}
+                  onResolved={finishConflictReview}
+                  onUseOfflineDraft={useOfflineDraft}
+                  review={conflictReview}
+                />
+              ) : null}
+              {remoteStatus === "error" || remoteStatus === "offline" ? (
+                <HStack
+                  gap={3}
+                  padding={3}
+                  wrap="wrap"
+                  vAlign="center"
+                  role={remoteStatus === "error" ? "alert" : "status"}
+                  className="border-b border-border"
+                >
+                  <VStack gap={1} className="flex-1">
+                    <Text weight="semibold">
+                      {remoteStatus === "offline"
+                        ? "You are editing offline."
+                        : "Live sync is temporarily unavailable."}
+                    </Text>
+                    <Text type="supporting">
+                      {connectionMessage || remoteCopy[remoteStatus]}
+                    </Text>
+                  </VStack>
+                  <Button label="Retry now" onClick={reconnect} />
+                </HStack>
+              ) : null}
+              {localStatus === "unavailable" || (!canEdit && localMessage) ? (
+                <VStack
+                  gap={1}
+                  padding={3}
+                  role="alert"
+                  className="border-b border-border"
+                >
+                  <Text weight="semibold">
+                    {canEdit
+                      ? "Local saving is unavailable."
+                      : "The saved notes snapshot is unavailable."}
+                  </Text>
+                  <Text type="supporting">{localMessage}</Text>
+                </VStack>
+              ) : null}
+              {connection ? (
+                <RichTextEditor
+                  ref={editorRef}
+                  document={connection.document}
+                  editable={canEdit}
+                  provider={connection.provider}
+                  syncLabel={
+                    remoteStatus === "synced"
+                      ? "Live"
+                      : remoteCopy[remoteStatus]
+                  }
+                  syncStatus={remoteStatus}
+                  user={connection.user}
+                />
+              ) : (
+                <LoadingIndicator
+                  label="Opening the collaborative document…"
+                  size="panel"
+                />
+              )}
+            </VStack>
+          ) : (
+            <VStack
+              as="section"
+              className={
+                activeTool === "assistant"
+                  ? "flex-1 min-h-0 overflow-auto bg-surface"
+                  : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+              }
+              aria-label={toolLabels[activeTool]}
+            >
+              {activeTool === "pdf" ? (
+                <PdfStudyTool
+                  canEdit={canEdit}
+                  canManageAsset={canManagePdf}
+                  currentUser={currentUser}
+                  initialAsset={initialPdfAsset}
+                  initialState={initialDocumentStates.pdf}
+                  roomId={roomId}
+                />
+              ) : activeTool === "whiteboard" ? (
+                <WhiteboardStudyTool
+                  canEdit={canEdit}
+                  currentUser={currentUser}
+                  initialState={initialDocumentStates.whiteboard}
+                  roomId={roomId}
+                />
+              ) : (
+                <AiStudyTool
+                  onReturnToNotes={() => chooseTool("notes")}
+                  roomId={roomId}
+                  sourceText={assistantSourceText}
+                />
+              )}
+            </VStack>
+          )}
+        </VStack>
+      </QollabAppShell>
+      <Dialog
+        isOpen={isRoomControlsOpen}
+        onOpenChange={setIsRoomControlsOpen}
+        aria-label="Room controls"
+        purpose="info"
+      >
+        <VStack gap={4} padding={4}>
+          <HStack hAlign="between" vAlign="center">
+            <Heading level={2}>Room controls</Heading>
+            <Button
+              label="Close"
+              variant="ghost"
+              onClick={() => setIsRoomControlsOpen(false)}
+            />
+          </HStack>
+          <Selector
+            label="Current room"
+            value={roomId}
+            onChange={(slug) => router.push(`/rooms/${slug}`)}
+            options={availableRooms.map((room) => ({
+              value: room.slug,
+              label: room.name,
+            }))}
+            startIcon={
+              <Avatar
+                name={roomName}
+                src={roomIconUrl ?? undefined}
+                size="sm"
+              />
+            }
+          />
+          {collaborationControl}
+          <VStack gap={2}>
+            <Text type="label">{participants.length} active participants</Text>
+            {participants.map((participant) => (
+              <HStack gap={2} vAlign="center" key={participant.clientId}>
+                <Avatar name={participant.name} size="sm" />
+                <Text>{participant.name}</Text>
+              </HStack>
+            ))}
+          </VStack>
+          <SidebarAccountMenu
+            beforeSignOut={prepareForSignOut}
+            displayName={connection?.user.name ?? currentUser.displayName}
+            role={currentUserRole}
+            userColor={connection?.user.color}
+            userId={currentUser.id}
+          />
+        </VStack>
+      </Dialog>
+      {!canEdit && isFollowingPresenter && presentation?.cursor ? (
+        <VStack
+          aria-hidden="true"
+          className="presenter-cursor"
+          style={{
+            left: `${presentation.cursor.x * 100}vw`,
+            top: `${presentation.cursor.y * 100}vh`,
+          }}
+        >
+          <MousePointer2 fill="currentColor" size={22} />
+          <Text>{presentation.presenterName}</Text>
+        </VStack>
+      ) : null}
+    </VStack>
   );
 }

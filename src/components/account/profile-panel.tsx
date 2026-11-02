@@ -1,18 +1,20 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Eye,
-  LoaderCircle,
-  Mail,
-  Save,
-  UserRound,
-  UsersRound,
-} from "lucide-react";
+import { ButtonControl } from "@/components/ui/button";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Divider } from "@astryxdesign/core/Divider";
+import { Field } from "@astryxdesign/core/Field";
+import { FormLayout } from "@astryxdesign/core/FormLayout";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { useActionState, useState } from "react";
 
 import { INITIAL_PROFILE_ACTION_STATE } from "@/app/profile/action-state";
 import { updateProfileAction } from "@/app/profile/actions";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { useSuccessToast } from "@/components/ui/toast";
 import {
   normalizeProfileDisplayName,
   PROFILE_DISPLAY_NAME_MAX_LENGTH,
@@ -32,6 +34,7 @@ export function ProfilePanel({
     updateProfileAction,
     INITIAL_PROFILE_ACTION_STATE,
   );
+  useSuccessToast(state);
   const [draftName, setDraftName] = useState(displayName);
   const [fieldError, setFieldError] = useState("");
   const previewName = draftName.trim() || displayName;
@@ -54,125 +57,109 @@ export function ProfilePanel({
 
   return (
     <>
-      <section
-        className="account-card account-profile-summary"
+      <HStack
+        as="section"
+        gap={6}
+        vAlign="center"
+        wrap="wrap"
+        className="flex-col sm:flex-row items-start! sm:items-center!"
+        paddingBlock={4}
         aria-labelledby="profile-summary-title"
       >
-        <div className="account-profile-summary__avatar" aria-hidden="true">
-          {initial}
-          <span>
-            <BadgeCheck size={17} />
-          </span>
-        </div>
-        <div className="account-profile-summary__copy">
-          <p className="account-card__eyebrow">Profile preview</p>
-          <h2 id="profile-summary-title">{previewName}</h2>
-          <p>
-            <Mail aria-hidden="true" size={14} />
+        <Avatar name={initial} size="xl" tooltip={false} aria-hidden="true" />
+        <VStack gap={2} className="min-w-0 flex-1">
+          <Text color="secondary">Profile preview</Text>
+          <Heading
+            level={2}
+            id="profile-summary-title"
+            className="wrap-anywhere text-3xl!"
+          >
+            {previewName}
+          </Heading>
+          <Text color="secondary" className="wrap-anywhere">
             {email ?? "Email unavailable"}
-          </p>
-        </div>
-        <span className="account-profile-summary__badge">
-          <UsersRound aria-hidden="true" size={14} />
-          Visible in shared rooms
-        </span>
-      </section>
+          </Text>
+        </VStack>
+      </HStack>
+      <Divider />
 
-      <section className="account-card" aria-labelledby="display-name-title">
-        <div className="account-card__heading">
-          <div>
-            <p className="account-card__eyebrow">Public identity</p>
-            <h2 id="display-name-title">Display name</h2>
-          </div>
-          <span className="account-card__icon account-card__icon--yellow">
-            <UserRound aria-hidden="true" size={19} />
-          </span>
-        </div>
-
+      <VStack as="section" gap={5} aria-labelledby="display-name-title">
+        <Heading level={2} id="display-name-title">
+          Your name in rooms
+        </Heading>
         <form
           action={action}
-          className="account-form"
           onSubmit={(event) => {
             if (!validateDisplayName()) {
               event.preventDefault();
             }
           }}
         >
-          <label htmlFor="profile-display-name">Name</label>
-          <div className="account-input-wrap">
-            <input
-              aria-describedby={`profile-display-name-help${fieldError ? " profile-display-name-error" : ""}`}
-              aria-invalid={fieldError ? true : undefined}
-              autoComplete="name"
-              id="profile-display-name"
-              maxLength={PROFILE_DISPLAY_NAME_MAX_LENGTH}
-              name="displayName"
-              onBlur={validateDisplayName}
-              onChange={(event) => {
-                setDraftName(event.target.value);
-                if (fieldError) setFieldError("");
-              }}
-              required
-              type="text"
-              value={draftName}
-            />
-            <span aria-hidden="true">
+          <FormLayout className="gap-4">
+            <Field inputID="profile-display-name" label="Display name">
+              <input
+                className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+                aria-describedby={`profile-display-name-help${fieldError ? " profile-display-name-error" : ""}`}
+                aria-invalid={fieldError ? true : undefined}
+                autoComplete="name"
+                id="profile-display-name"
+                maxLength={PROFILE_DISPLAY_NAME_MAX_LENGTH}
+                name="displayName"
+                onBlur={validateDisplayName}
+                onChange={(event) => {
+                  setDraftName(event.target.value);
+                  if (fieldError) setFieldError("");
+                }}
+                required
+                type="text"
+                value={draftName}
+              />
+            </Field>
+            <Text color="secondary" aria-hidden="true" className="self-end">
               {draftName.trim().length}/{PROFILE_DISPLAY_NAME_MAX_LENGTH}
-            </span>
-          </div>
-          <p className="account-field-help" id="profile-display-name-help">
-            This name appears beside your notes, cursors, questions, and room
-            membership.
-          </p>
-          {fieldError ? (
-            <p
-              className="account-field-error"
-              id="profile-display-name-error"
-              role="alert"
-            >
-              {fieldError}
-            </p>
-          ) : null}
+            </Text>
+            <Text color="secondary" id="profile-display-name-help">
+              This name appears beside your notes, cursors, questions, and room
+              membership.
+            </Text>
+            {fieldError ? (
+              <Text
+                className="text-error"
+                id="profile-display-name-error"
+                role="alert"
+              >
+                {fieldError}
+              </Text>
+            ) : null}
 
-          {state.message ? (
-            <p
-              className={`account-message account-message--${state.status}`}
-              role={state.status === "error" ? "alert" : "status"}
-            >
-              {state.status === "success" ? (
-                <BadgeCheck aria-hidden="true" size={16} />
-              ) : null}
-              {state.message}
-            </p>
-          ) : null}
+            {state.status === "error" && state.message ? (
+              <Text className="bg-error-muted p-3 rounded-md" role="alert">
+                {state.message}
+              </Text>
+            ) : null}
 
-          <button
-            className="account-primary-button"
-            disabled={pending}
-            type="submit"
-          >
-            {pending ? (
-              <LoaderCircle className="spin" aria-hidden="true" size={17} />
-            ) : (
-              <Save aria-hidden="true" size={17} />
-            )}
-            {pending ? "Saving profile…" : "Save profile"}
-          </button>
+            <ButtonControl
+              variant="primary"
+              className="self-start min-h-11"
+              aria-busy={pending}
+              disabled={pending}
+              type="submit"
+            >
+              {pending ? <LoadingIndicator size="icon" /> : null}
+              {pending ? "Saving profile…" : "Save profile"}
+            </ButtonControl>
+          </FormLayout>
         </form>
-      </section>
+      </VStack>
 
-      <aside className="account-note" aria-label="Profile privacy note">
-        <span>
-          <Eye aria-hidden="true" size={18} />
-        </span>
-        <div>
-          <strong>What collaborators can see</strong>
-          <p>
-            People who share a room with you can see your display name. Your
-            sign-in email stays private.
-          </p>
-        </div>
-      </aside>
+      <Divider />
+      <VStack as="aside" gap={2} aria-label="Profile privacy note">
+        <Heading level={2}>What collaborators can see</Heading>
+        <Text color="secondary">
+          People who share a room with you can see your display name. Your
+          sign-in email stays private.
+        </Text>
+      </VStack>
     </>
   );
 }

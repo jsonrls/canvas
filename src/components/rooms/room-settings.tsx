@@ -1,18 +1,20 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Crown,
-  Globe2,
-  LoaderCircle,
-  LockKeyhole,
-  Save,
-  Trash2,
-  UserMinus,
-  UserPlus,
-} from "lucide-react";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@astryxdesign/core/Dialog";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { RadioList, RadioListItem } from "@astryxdesign/core/RadioList";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Token } from "@astryxdesign/core/Token";
+import { Selector } from "@astryxdesign/core/Selector";
+import { List } from "@astryxdesign/core/List";
+import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -22,47 +24,58 @@ import {
   removeRoomMemberAction,
   updateRoomAction,
 } from "@/app/rooms/actions";
-import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
-import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import {
+  INITIAL_ROOM_ACTION_STATE,
+  type RoomActionState,
+} from "@/app/rooms/action-state";
+import { RoomIconField } from "@/components/rooms/room-banner-field";
+import { ArrowLeft, Crown } from "@/components/ui/icons";
+import { useSuccessToast } from "@/components/ui/toast";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
 
+const destructiveClassName =
+  "min-h-11 font-bold! text-error! bg-transparent! bg-none!";
+const roleOptions = [
+  { value: "editor", label: "Editor" },
+  { value: "viewer", label: "Viewer" },
+];
+
 function SettingsSubmitButton({
-  children,
-  className,
+  label,
   pendingLabel,
+  variant = "secondary",
+  disabled = false,
+  accessibleLabel,
+  className = "",
 }: {
-  children: React.ReactNode;
-  className: string;
+  label: string;
   pendingLabel: string;
+  variant?: "primary" | "secondary" | "destructive";
+  disabled?: boolean;
+  accessibleLabel?: string;
+  className?: string;
 }) {
   const { pending } = useFormStatus();
-
   return (
-    <button className={className} type="submit" disabled={pending}>
-      {pending ? (
-        <LoaderCircle className="spin" aria-hidden="true" size={16} />
-      ) : null}
-      {pending ? pendingLabel : children}
-    </button>
+    <Button
+      aria-label={accessibleLabel}
+      type="submit"
+      label={pending ? pendingLabel : label}
+      variant={variant}
+      isLoading={pending}
+      isDisabled={disabled}
+      className={`min-h-11 ${variant === "primary" ? "text-on-accent!" : ""} ${className}`}
+    />
   );
 }
 
-function ActionMessage({
-  message,
-  status,
-}: {
-  message: string;
-  status: "idle" | "error" | "success";
-}) {
-  if (!message) return null;
-
+function ActionMessage({ state }: { state: RoomActionState }) {
+  useSuccessToast(state);
+  if (!state.message || state.status !== "error") return null;
   return (
-    <p
-      className={`room-inline-message room-inline-message--${status}`}
-      role={status === "error" ? "alert" : "status"}
-    >
-      {message}
-    </p>
+    <Text as="p" className="text-error" role="alert">
+      {state.message}
+    </Text>
   );
 }
 
@@ -77,78 +90,119 @@ function MemberRow({
     changeRoomMemberRoleAction.bind(null, roomSlug, member.userId),
     INITIAL_ROOM_ACTION_STATE,
   );
-  const [removeState, removeAction] = useActionState(
+  const [removeState, removeAction, removing] = useActionState(
     removeRoomMemberAction.bind(null, roomSlug, member.userId),
     INITIAL_ROOM_ACTION_STATE,
   );
+  const [role, setRole] = useState(member.role);
+  const [removeOpen, setRemoveOpen] = useState(false);
+  const titleId = useId();
+  const descriptionId = useId();
   const isOwner = member.role === "owner";
+  const joinedAt = new Date(member.joinedAt);
+  const joinedLabel = Number.isNaN(joinedAt.getTime())
+    ? "Collaborator"
+    : `Joined ${joinedAt.toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
 
   return (
-    <li className="room-member-row">
-      <div className="room-member-identity">
-        <span className="room-member-avatar" aria-hidden="true">
-          {member.displayName.charAt(0).toUpperCase()}
-        </span>
-        <div>
-          <strong>{member.displayName}</strong>
-          <small>
-            {isOwner
-              ? "Room owner"
-              : `Joined ${new Date(member.joinedAt).toLocaleDateString()}`}
-          </small>
-        </div>
-      </div>
-
-      {isOwner ? (
-        <span className="owner-role-label">
-          <Crown aria-hidden="true" size={15} />
-          Owner
-        </span>
-      ) : (
-        <div className="room-member-controls">
-          <form action={roleAction} className="member-role-form">
-            <label className="sr-only" htmlFor={`role-${member.userId}`}>
-              Role for {member.displayName}
-            </label>
-            <select
-              id={`role-${member.userId}`}
-              name="role"
-              defaultValue={member.role}
-            >
-              <option value="editor">Editor</option>
-              <option value="viewer">Viewer</option>
-            </select>
-            <SettingsSubmitButton
-              className="member-save-button"
-              pendingLabel="Saving…"
-            >
-              <Save aria-hidden="true" size={15} />
-              Save role
-            </SettingsSubmitButton>
-          </form>
-          <form
-            action={removeAction}
-            onSubmit={(event) => {
-              if (
-                !window.confirm(`Remove ${member.displayName} from this room?`)
-              ) {
-                event.preventDefault();
-              }
-            }}
+    <VStack
+      as="li"
+      gap={2}
+      paddingBlock={4}
+      className="border-b border-border last:border-b-0"
+    >
+      <HStack gap={4} hAlign="between" vAlign="center" wrap="wrap">
+        <HStack gap={3} vAlign="center" className="min-w-0 flex-1">
+          <Avatar name={member.displayName} size="md" />
+          <VStack gap={0.5} className="min-w-0">
+            <Text weight="semibold" className="break-words">
+              {member.displayName}
+            </Text>
+            <Text type="supporting">
+              {isOwner ? "Room owner" : joinedLabel}
+            </Text>
+          </VStack>
+        </HStack>
+        {isOwner ? (
+          <Token label="Owner" icon={<Crown aria-hidden="true" size={16} />} />
+        ) : (
+          <HStack
+            gap={2}
+            wrap="wrap"
+            vAlign="center"
+            className="w-full sm:w-auto"
           >
-            <SettingsSubmitButton
-              className="member-remove-button"
-              pendingLabel="Removing…"
-            >
-              <UserMinus aria-hidden="true" size={15} />
-              Remove
-            </SettingsSubmitButton>
-          </form>
-          <ActionMessage {...roleState} />
-          <ActionMessage {...removeState} />
-        </div>
-      )}
-    </li>
+            <form action={roleAction}>
+              <HStack gap={2} wrap="wrap" vAlign="center">
+                <Selector
+                  label={`Role for ${member.displayName}`}
+                  isLabelHidden
+                  htmlName="role"
+                  value={role}
+                  onChange={(value) => setRole(value as RoomMember["role"])}
+                  options={roleOptions}
+                  size="lg"
+                  width={128}
+                  className="min-h-11"
+                />
+                <SettingsSubmitButton
+                  label="Save"
+                  accessibleLabel={`Save role for ${member.displayName}`}
+                  pendingLabel="Saving…"
+                  disabled={role === member.role}
+                />
+              </HStack>
+            </form>
+            <Button
+              label="Remove"
+              aria-label={`Remove ${member.displayName}`}
+              variant="danger-ghost"
+              className={destructiveClassName}
+              onClick={() => setRemoveOpen(true)}
+            />
+          </HStack>
+        )}
+      </HStack>
+      <ActionMessage state={roleState} />
+      <Dialog
+        isOpen={removeOpen}
+        onOpenChange={(open) => {
+          if (!removing) setRemoveOpen(open);
+        }}
+        purpose="form"
+        role="alertdialog"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
+        <form action={removeAction}>
+          <VStack gap={4} padding={4}>
+            <Heading level={2} id={titleId}>
+              Remove {member.displayName}?
+            </Heading>
+            <Text as="p" color="secondary" id={descriptionId}>
+              They’ll lose access to this room and its shared study materials.
+              You can add them again later.
+            </Text>
+            <ActionMessage state={removeState} />
+            <HStack gap={2} hAlign="end" wrap="wrap">
+              <Button
+                label="Cancel"
+                variant="ghost"
+                data-autofocus
+                className="min-h-11"
+                isDisabled={removing}
+                onClick={() => setRemoveOpen(false)}
+              />
+              <SettingsSubmitButton
+                label="Remove collaborator"
+                pendingLabel="Removing…"
+                variant="destructive"
+              />
+            </HStack>
+          </VStack>
+        </form>
+      </Dialog>
+    </VStack>
   );
 }
 
@@ -165,128 +219,202 @@ export function RoomSettingsPanel({
     addRoomMemberAction.bind(null, room.slug),
     INITIAL_ROOM_ACTION_STATE,
   );
-  const [deleteState, deleteAction] = useActionState(
+  const [deleteState, deleteAction, deleting] = useActionState(
     deleteRoomAction.bind(null, room.slug),
     INITIAL_ROOM_ACTION_STATE,
   );
+  const [name, setName] = useState(room.name);
+  const [visibility, setVisibility] = useState(
+    room.isPublic ? "public" : "private",
+  );
+  const [startingRole, setStartingRole] = useState("editor");
+  const [email, setEmail] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+  const deleteTitleId = useId();
+  const deleteDescriptionId = useId();
 
   return (
-    <main className="room-settings-shell">
-      <header className="room-settings-header">
-        <Link className="room-settings-back" href={`/rooms/${room.slug}`}>
-          <ArrowLeft aria-hidden="true" size={17} />
-          Back to room
-        </Link>
-        <Link className="brand-lockup" href="/rooms" aria-label="Qollab rooms">
-          <QollabBrandLogo />
-        </Link>
-      </header>
+    <>
+      <HStack
+        as="header"
+        className="border-b border-border bg-surface"
+        hAlign="center"
+        paddingInline={4}
+      >
+        <HStack
+          width="100%"
+          maxWidth={1120}
+          className="min-h-20"
+          vAlign="center"
+          paddingBlock={3}
+        >
+          <Link
+            href="/rooms"
+            aria-label="Qollab rooms"
+            className="inline-flex min-h-11 min-w-11 items-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <QollabBrandLogo />
+          </Link>
+        </HStack>
+      </HStack>
+      <VStack
+        as="main"
+        gap={8}
+        padding={6}
+        className="mx-auto w-full max-w-3xl text-primary sm:py-10"
+      >
+        <VStack as="header" gap={5}>
+          <Button
+            as={Link}
+            href={`/rooms/${room.slug}`}
+            label="Back to room"
+            variant="ghost"
+            icon={<ArrowLeft aria-hidden="true" size={16} />}
+            className="self-start min-h-11 hover:bg-transparent! hover:bg-none!"
+          />
+          <VStack gap={2}>
+            <Text type="supporting" className="break-words">
+              {room.name}
+            </Text>
+            <Heading level={1}>Room settings</Heading>
+            <Text as="p" color="secondary">
+              Manage your room’s details, access, and collaborators.
+            </Text>
+          </VStack>
+        </VStack>
 
-      <div className="room-settings-content">
-        <div className="room-settings-title">
-          <p className="eyebrow">Owner controls</p>
-          <h1>{room.name}</h1>
-          <p>
-            Manage who can find this room and what collaborators can change.
-          </p>
-        </div>
-
-        <section className="settings-card" aria-labelledby="room-details-title">
-          <div className="settings-card-heading">
-            <div>
-              <p className="eyebrow">Room details</p>
-              <h2 id="room-details-title">Name and visibility</h2>
-            </div>
-            {room.isPublic ? (
-              <Globe2 aria-hidden="true" size={21} />
-            ) : (
-              <LockKeyhole aria-hidden="true" size={21} />
-            )}
-          </div>
-          <form action={settingsAction} className="settings-form">
-            <label htmlFor="settings-room-name">Room name</label>
-            <input
-              id="settings-room-name"
-              name="name"
-              type="text"
-              defaultValue={room.name}
-              maxLength={120}
-              required
-            />
-            <fieldset>
-              <legend>Visibility</legend>
-              <label>
-                <input
-                  type="radio"
-                  name="visibility"
+        <VStack as="section" gap={5} aria-labelledby="room-details-title">
+          <VStack gap={1}>
+            <Heading level={2} id="room-details-title">
+              Room details
+            </Heading>
+            <Text as="p" color="secondary">
+              Give your shared space a name and choose who can join.
+            </Text>
+          </VStack>
+          <form action={settingsAction}>
+            <VStack gap={5}>
+              <TextInput
+                label="Room name"
+                id="settings-room-name"
+                htmlName="name"
+                value={name}
+                onChange={setName}
+                size="lg"
+                isRequired
+                {...{ maxLength: 120, required: true }}
+              />
+              <RoomIconField
+                initialIconUrl={room.roomIconUrl}
+                inputId="settings-room-icon"
+              />
+              <RadioList
+                label="Visibility"
+                htmlName="visibility"
+                value={visibility}
+                onChange={setVisibility}
+              >
+                <RadioListItem
+                  label="Private"
                   value="private"
-                  defaultChecked={!room.isPublic}
+                  description="Only people you add can access this room."
+                  className="min-h-11"
                 />
-                Private — only added members
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="visibility"
+                <RadioListItem
+                  label="Public"
                   value="public"
-                  defaultChecked={room.isPublic}
+                  description="Signed-in users can discover and join this room."
+                  className="min-h-11"
                 />
-                Public — discoverable to signed-in users
-              </label>
-            </fieldset>
-            <ActionMessage {...settingsState} />
-            <SettingsSubmitButton
-              className="settings-primary-button"
-              pendingLabel="Saving settings…"
-            >
-              <Save aria-hidden="true" size={16} />
-              Save settings
-            </SettingsSubmitButton>
+              </RadioList>
+              <ActionMessage state={settingsState} />
+              <HStack hAlign="end">
+                <SettingsSubmitButton
+                  label="Save settings"
+                  className="w-full sm:w-auto"
+                  pendingLabel="Saving settings…"
+                  variant="primary"
+                />
+              </HStack>
+            </VStack>
           </form>
-        </section>
+        </VStack>
 
-        <section
-          className="settings-card"
+        <VStack
+          as="section"
+          gap={5}
+          paddingBlockStart={6}
+          className="border-t border-border"
           aria-labelledby="collaborators-title"
         >
-          <div className="settings-card-heading">
-            <div>
-              <p className="eyebrow">Membership</p>
-              <h2 id="collaborators-title">Collaborators</h2>
-            </div>
-            <span className="settings-count">{room.members.length}</span>
-          </div>
-
-          <form action={memberAction} className="add-member-form">
-            <div>
-              <label htmlFor="member-email">Qollab account email</label>
-              <input
-                id="member-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="study.partner@example.com"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="member-role">Starting role</label>
-              <select id="member-role" name="role" defaultValue="editor">
-                <option value="editor">Editor</option>
-                <option value="viewer">Viewer</option>
-              </select>
-            </div>
-            <SettingsSubmitButton
-              className="settings-secondary-button"
-              pendingLabel="Adding…"
-            >
-              <UserPlus aria-hidden="true" size={16} />
-              Add collaborator
-            </SettingsSubmitButton>
-            <ActionMessage {...memberState} />
+          <VStack gap={1}>
+            <HStack gap={2} vAlign="center">
+              <Heading level={2} id="collaborators-title">
+                Collaborators
+              </Heading>
+              <Badge label={room.members.length} />
+            </HStack>
+            <Text as="p" color="secondary">
+              Manage who can access this room.
+            </Text>
+          </VStack>
+          <form action={memberAction}>
+            <VStack gap={3}>
+              <Text weight="semibold">Add collaborator</Text>
+              <HStack
+                gap={3}
+                className="w-full flex-col! items-stretch! sm:flex-row! sm:items-end!"
+              >
+                <VStack className="w-full min-w-0 sm:flex-1 [&_label+span]:sr-only">
+                  <TextInput
+                    label="Email address"
+                    description="They’ll need an existing Qollab account."
+                    id="member-email"
+                    htmlName="email"
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    placeholder="name@example.com"
+                    size="lg"
+                    className="min-h-11"
+                    isRequired
+                    width="100%"
+                    {...{ required: true, autoComplete: "email" }}
+                  />
+                </VStack>
+                <HStack gap={3} vAlign="end" className="w-full sm:w-auto">
+                  <VStack className="min-w-0 flex-1 sm:flex-none">
+                    <Selector
+                      label="Role"
+                      htmlName="role"
+                      value={startingRole}
+                      onChange={setStartingRole}
+                      options={roleOptions}
+                      size="lg"
+                      width="100%"
+                      className="min-h-11 sm:w-32"
+                    />
+                  </VStack>
+                  <SettingsSubmitButton
+                    label="Add"
+                    accessibleLabel="Add collaborator"
+                    className="flex-1 sm:flex-none"
+                    pendingLabel="Adding…"
+                    variant="primary"
+                  />
+                </HStack>
+              </HStack>
+              <Text type="supporting" aria-hidden="true">
+                They’ll need an existing Qollab account.
+              </Text>
+              <ActionMessage state={memberState} />
+            </VStack>
           </form>
-
-          <ul className="room-member-list">
+          <List
+            aria-label="Room collaborators"
+            className="border-t border-border"
+          >
             {room.members.map((member) => (
               <MemberRow
                 key={member.userId}
@@ -294,44 +422,86 @@ export function RoomSettingsPanel({
                 roomSlug={room.slug}
               />
             ))}
-          </ul>
-        </section>
+          </List>
+        </VStack>
 
-        <section
-          className="settings-card settings-card--danger"
+        <HStack
+          as="section"
+          gap={4}
+          paddingBlockStart={6}
+          className="border-t border-border"
+          hAlign="between"
+          vAlign="center"
+          wrap="wrap"
           aria-labelledby="delete-room-title"
         >
-          <div className="settings-card-heading">
-            <div>
-              <p className="eyebrow">Danger zone</p>
-              <h2 id="delete-room-title">Delete this room</h2>
-            </div>
-            <Trash2 aria-hidden="true" size={21} />
-          </div>
-          <p>
-            This permanently removes the room, notes, versions, and memberships.
-            Type <strong>{room.name}</strong> to confirm.
-          </p>
-          <form action={deleteAction} className="delete-room-form">
-            <label htmlFor="delete-confirmation">Room name confirmation</label>
-            <input
-              id="delete-confirmation"
-              name="confirmation"
-              type="text"
-              autoComplete="off"
-              required
-            />
-            <ActionMessage {...deleteState} />
-            <SettingsSubmitButton
-              className="settings-danger-button"
-              pendingLabel="Deleting room…"
-            >
-              <Trash2 aria-hidden="true" size={16} />
-              Delete room permanently
-            </SettingsSubmitButton>
+          <VStack gap={1} className="flex-1">
+            <Heading level={2} id="delete-room-title">
+              Delete room
+            </Heading>
+            <Text as="p" color="secondary">
+              Permanently delete this room and all its shared content.
+            </Text>
+          </VStack>
+          <Button
+            label="Delete room"
+            variant="danger-ghost"
+            className={destructiveClassName}
+            onClick={() => setDeleteOpen(true)}
+          />
+        </HStack>
+        <Dialog
+          isOpen={deleteOpen}
+          onOpenChange={(open) => {
+            if (!deleting) setDeleteOpen(open);
+          }}
+          purpose="form"
+          role="alertdialog"
+          aria-labelledby={deleteTitleId}
+          aria-describedby={deleteDescriptionId}
+        >
+          <form action={deleteAction}>
+            <VStack gap={4} padding={4}>
+              <Heading level={2} id={deleteTitleId}>
+                Delete this room?
+              </Heading>
+              <Text as="p" color="secondary" id={deleteDescriptionId}>
+                This permanently removes the room, notes, versions, and
+                memberships. This can’t be undone.
+              </Text>
+              <Text as="p" className="break-words">
+                Type <strong>{room.name}</strong> to confirm.
+              </Text>
+              <TextInput
+                label="Room name confirmation"
+                id="delete-confirmation"
+                htmlName="confirmation"
+                value={confirmation}
+                onChange={setConfirmation}
+                hasAutoFocus
+                isRequired
+                {...{ required: true, autoComplete: "off" }}
+              />
+              <ActionMessage state={deleteState} />
+              <HStack gap={2} hAlign="end" wrap="wrap">
+                <Button
+                  label="Cancel"
+                  variant="ghost"
+                  className="min-h-11"
+                  isDisabled={deleting}
+                  onClick={() => setDeleteOpen(false)}
+                />
+                <SettingsSubmitButton
+                  label="Delete room permanently"
+                  pendingLabel="Deleting room…"
+                  variant="destructive"
+                  disabled={confirmation !== room.name}
+                />
+              </HStack>
+            </VStack>
           </form>
-        </section>
-      </div>
-    </main>
+        </Dialog>
+      </VStack>
+    </>
   );
 }

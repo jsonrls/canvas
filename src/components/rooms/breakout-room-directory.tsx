@@ -1,5 +1,20 @@
 "use client";
 
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@astryxdesign/core/Card";
+import { FormLayout } from "@astryxdesign/core/FormLayout";
+import { Grid } from "@astryxdesign/core/Grid";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Layout, LayoutContent, LayoutPanel } from "@astryxdesign/core/Layout";
+import { Link as AstryxLink } from "@astryxdesign/core/Link";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
+import { useMediaQuery } from "@astryxdesign/core/hooks";
 import {
   ArrowLeft,
   ArrowRight,
@@ -8,77 +23,83 @@ import {
   DoorOpen,
   FileText,
   KeyRound,
-  LoaderCircle,
   PanelsTopLeft,
   Plus,
   Split,
-  UsersRound,
-} from "lucide-react";
-import Link from "next/link";
-import { useActionState } from "react";
+} from "@/components/ui/icons";
+import NextLink from "next/link";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import {
   createBreakoutRoomAction,
   openBreakoutRoomAction,
 } from "@/app/rooms/[roomId]/breakouts/actions";
-import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
+import {
+  INITIAL_ROOM_ACTION_STATE,
+  type RoomActionState,
+} from "@/app/rooms/action-state";
+import { useSuccessToast } from "@/components/ui/toast";
 import type { BreakoutRoomDirectoryItem } from "@/lib/breakout-rooms/repository";
 import type { RoomRole } from "@/lib/rooms/repository";
 
 interface BreakoutRoomDirectoryProps {
   breakoutRooms: BreakoutRoomDirectoryItem[];
-  currentUser: {
-    displayName: string;
-    id: string;
-  };
   parentRoomName: string;
   parentRoomSlug: string;
   role: RoomRole;
 }
 
+const CARD_VARIANTS = [
+  "green",
+  "purple",
+  "orange",
+  "blue",
+  "pink",
+  "teal",
+] as const;
+
+const TOOL_TOKENS = [
+  { icon: BookOpenText, label: "Notes" },
+  { icon: FileText, label: "PDF" },
+  { icon: PanelsTopLeft, label: "Board" },
+] as const;
+
 function SubmitButton({
-  children,
+  canSubmit,
+  icon,
+  label,
   pendingLabel,
-  variant = "primary",
 }: {
-  children: React.ReactNode;
+  canSubmit: boolean;
+  icon: React.ReactNode;
+  label: string;
   pendingLabel: string;
-  variant?: "primary" | "secondary";
 }): React.ReactElement {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className={`breakout-directory__submit breakout-directory__submit--${variant}`}
-      disabled={pending}
+    <Button
+      icon={icon}
+      isDisabled={!canSubmit || pending}
+      isLoading={pending}
+      label={pending ? pendingLabel : label}
+      size="lg"
       type="submit"
-    >
-      {pending ? (
-        <LoaderCircle className="spin" aria-hidden="true" size={15} />
-      ) : null}
-      {pending ? pendingLabel : children}
-    </button>
+      variant="primary"
+      width="100%"
+    />
   );
 }
 
-function FormMessage({
-  message,
-  status,
-}: {
-  message: string;
-  status: "idle" | "error" | "success";
-}): React.ReactElement | null {
-  if (!message) return null;
+function FormMessage({ state }: { state: RoomActionState }) {
+  useSuccessToast(state);
+
+  if (!state.message || state.status !== "error") return null;
 
   return (
-    <p
-      className={`breakout-directory__message breakout-directory__message--${status}`}
-      role={status === "error" ? "alert" : "status"}
-    >
-      {message}
+    <p className="breakout-hub__message" role="alert">
+      {state.message}
     </p>
   );
 }
@@ -92,18 +113,17 @@ function formatCreatedAt(value: string): string {
   }).format(new Date(value));
 }
 
-async function prepareDirectorySignOut(): Promise<void> {
-  await Promise.resolve();
-}
-
 export function BreakoutRoomDirectory({
   breakoutRooms,
-  currentUser,
   parentRoomName,
   parentRoomSlug,
   role,
 }: BreakoutRoomDirectoryProps): React.ReactElement {
   const canCreate = role !== "viewer";
+  const isNarrow = useMediaQuery("(max-width: 960px)");
+  const [roomName, setRoomName] = useState("");
+  const [roomDescription, setRoomDescription] = useState("");
+  const [roomCode, setRoomCode] = useState("");
   const [createState, createAction] = useActionState(
     createBreakoutRoomAction.bind(null, parentRoomSlug),
     INITIAL_ROOM_ACTION_STATE,
@@ -112,222 +132,313 @@ export function BreakoutRoomDirectory({
     openBreakoutRoomAction.bind(null, parentRoomSlug),
     INITIAL_ROOM_ACTION_STATE,
   );
+  const canSubmitRoom =
+    roomName.trim().length > 0 && roomDescription.trim().length > 0;
+  const canOpenRoom = /^[A-Z0-9]{8}$/.test(roomCode);
+
+  const sidePanel = canCreate ? (
+    <Card
+      className="breakout-hub__form-card"
+      elevation="low"
+      padding={6}
+      width="100%"
+    >
+      <VStack gap={6}>
+        <HStack align="center" gap={3}>
+          <HStack
+            as="span"
+            align="center"
+            className="breakout-hub__panel-icon"
+            justify="center"
+          >
+            <Icon icon={Plus} color="accent" size="lg" />
+          </HStack>
+          <header className="breakout-hub__form-heading">
+            <p>Create a breakout</p>
+            <Heading level={2}>Add a new room</Heading>
+          </header>
+        </HStack>
+
+        <p className="breakout-hub__form-intro">
+          Give the group a clear purpose. Every room starts with collaborative
+          notes, a PDF workspace, and a shared board.
+        </p>
+
+        <form action={createAction} className="breakout-hub__form">
+          <FormLayout defaultOptionality="required">
+            <TextInput
+              description="Keep it specific and easy to scan."
+              htmlName="name"
+              label="Room Name"
+              onChange={(value) => setRoomName(value.slice(0, 80))}
+              placeholder="Case review · Group 1"
+              size="lg"
+              startIcon={DoorOpen}
+              value={roomName}
+              width="100%"
+            />
+            <TextArea
+              description="Describe what this group should work on."
+              htmlName="description"
+              label="Description"
+              maxLength={240}
+              onChange={(value) => setRoomDescription(value.slice(0, 240))}
+              placeholder="Review the evidence and prepare a short recommendation."
+              rows={5}
+              size="lg"
+              startIcon={FileText}
+              value={roomDescription}
+              width="100%"
+            />
+            <SubmitButton
+              canSubmit={canSubmitRoom}
+              icon={<Icon icon={Plus} size="sm" />}
+              label="Create breakout room"
+              pendingLabel="Creating room…"
+            />
+            <FormMessage state={createState} />
+          </FormLayout>
+        </form>
+      </VStack>
+    </Card>
+  ) : (
+    <Card
+      className="breakout-hub__form-card"
+      elevation="low"
+      padding={6}
+      width="100%"
+    >
+      <VStack gap={6}>
+        <HStack align="center" gap={3}>
+          <HStack
+            as="span"
+            align="center"
+            className="breakout-hub__panel-icon"
+            justify="center"
+          >
+            <Icon icon={KeyRound} color="accent" size="lg" />
+          </HStack>
+          <header className="breakout-hub__form-heading">
+            <p>Private access</p>
+            <Heading level={2}>Open a room</Heading>
+          </header>
+        </HStack>
+
+        <p className="breakout-hub__form-intro">
+          Enter the eight-character code shared by your room facilitator.
+        </p>
+
+        <form action={openAction} className="breakout-hub__form">
+          <FormLayout defaultOptionality="required">
+            <TextInput
+              description="Codes use letters and numbers."
+              htmlName="code"
+              label="Breakout Code"
+              onChange={(value) =>
+                setRoomCode(
+                  value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "")
+                    .slice(0, 8),
+                )
+              }
+              placeholder="A1B2C3D4"
+              size="lg"
+              startIcon={KeyRound}
+              value={roomCode}
+              width="100%"
+            />
+            <SubmitButton
+              canSubmit={canOpenRoom}
+              icon={<Icon icon="chevronRight" size="sm" />}
+              label="Open breakout room"
+              pendingLabel="Opening room…"
+            />
+            <FormMessage state={openState} />
+          </FormLayout>
+        </form>
+      </VStack>
+    </Card>
+  );
+
+  const roomDirectory = (
+    <LayoutContent
+      isScrollable
+      label="Breakout room directory"
+      padding={isNarrow ? 4 : 8}
+    >
+      <VStack as="section" gap={6}>
+        <header className="breakout-hub__intro">
+          <AstryxLink
+            as={NextLink}
+            color="secondary"
+            href={`/rooms/${parentRoomSlug}`}
+            className="hover:bg-transparent! hover:bg-none!"
+            isStandalone
+            weight="semibold"
+          >
+            <HStack as="span" align="center" gap={2}>
+              <Icon icon={ArrowLeft} size="sm" />
+              Back to {parentRoomName}
+            </HStack>
+          </AstryxLink>
+
+          <HStack align="end" gap={4} justify="between" wrap="wrap">
+            <section>
+              <p className="breakout-hub__eyebrow">Focused group work</p>
+              <Heading id="breakout-list-title" level={1} textWrap="balance">
+                Breakout rooms
+              </Heading>
+              <p className="breakout-hub__subtitle">
+                Choose a room and continue working with your group.
+              </p>
+            </section>
+            <Badge
+              label={`${breakoutRooms.length} ${
+                breakoutRooms.length === 1 ? "room" : "rooms"
+              }`}
+              variant="neutral"
+            />
+          </HStack>
+        </header>
+
+        {breakoutRooms.length > 0 ? (
+          <Grid
+            aria-labelledby="breakout-list-title"
+            columns={{ max: 3, minWidth: 240, repeat: "fit" }}
+            gap={4}
+          >
+            {breakoutRooms.map((breakout, index) => {
+              const variant = CARD_VARIANTS[index % CARD_VARIANTS.length];
+
+              return (
+                <article className="breakout-hub__room" key={breakout.id}>
+                  <Card
+                    className="breakout-hub__room-card"
+                    height="100%"
+                    padding={5}
+                    variant={variant}
+                  >
+                    <VStack gap={3} height="100%">
+                      <HStack align="center" justify="between">
+                        <HStack
+                          as="span"
+                          align="center"
+                          className="breakout-hub__card-icon"
+                          justify="center"
+                        >
+                          <Icon icon={DoorOpen} size="lg" />
+                        </HStack>
+                        {canCreate && breakout.code ? (
+                          <code
+                            className="breakout-hub__code"
+                            aria-label={`Private breakout code ${breakout.code}`}
+                          >
+                            {breakout.code}
+                          </code>
+                        ) : breakout.isJoined ? (
+                          <Badge
+                            icon={<Icon icon={CircleCheck} size="xsm" />}
+                            label="Joined"
+                            variant="green"
+                          />
+                        ) : null}
+                      </HStack>
+
+                      <section className="breakout-hub__card-copy">
+                        <p className="breakout-hub__meta">
+                          Created {formatCreatedAt(breakout.createdAt)}
+                        </p>
+                        <Heading level={3} maxLines={2} textWrap="balance">
+                          {breakout.name}
+                        </Heading>
+                        <p className="breakout-hub__description">
+                          {breakout.description ||
+                            "A focused space for notes, review, and shared problem-solving."}
+                        </p>
+                      </section>
+
+                      <HStack
+                        aria-label="Available tools"
+                        as="ul"
+                        gap={2}
+                        wrap="wrap"
+                      >
+                        {TOOL_TOKENS.map((tool) => (
+                          <li key={tool.label}>
+                            <Token
+                              color={variant}
+                              icon={<Icon icon={tool.icon} size="xsm" />}
+                              label={tool.label}
+                              size="sm"
+                            />
+                          </li>
+                        ))}
+                      </HStack>
+
+                      {breakout.code && (canCreate || breakout.isJoined) ? (
+                        <Button
+                          as={NextLink}
+                          className="breakout-hub__open"
+                          variant="secondary"
+                          label={
+                            canCreate ? "Open breakout" : "Reopen breakout"
+                          }
+                          endContent={<Icon icon={ArrowRight} size="sm" />}
+                          href={`/rooms/${parentRoomSlug}/breakouts/${breakout.code}`}
+                        />
+                      ) : (
+                        <p className="breakout-hub__locked">
+                          <Icon icon={KeyRound} size="sm" />
+                          Enter its private code to open
+                        </p>
+                      )}
+                    </VStack>
+                  </Card>
+                </article>
+              );
+            })}
+          </Grid>
+        ) : (
+          <Card className="breakout-hub__empty" padding={8} variant="muted">
+            <VStack align="center" gap={3}>
+              <Icon icon={Split} color="accent" label="" size="lg" />
+              <Heading justify="center" level={3}>
+                No breakout rooms yet
+              </Heading>
+              <p>
+                {canCreate
+                  ? "Use the form to create the first focused room."
+                  : "An owner or editor can create the first breakout room."}
+              </p>
+            </VStack>
+          </Card>
+        )}
+
+        {isNarrow ? sidePanel : null}
+      </VStack>
+    </LayoutContent>
+  );
 
   return (
-    <main className="breakout-directory">
-      <header className="room-header breakout-directory__header">
-        <div className="brand-lockup">
-          <Link
-            className="brand-home-link"
-            href="/rooms"
-            aria-label="All study rooms"
-          >
-            <QollabBrandLogo />
-          </Link>
-          <span className="brand-divider" aria-hidden="true" />
-          <Link
-            className="breakout-directory__room-link"
-            href={`/rooms/${parentRoomSlug}`}
-          >
-            {parentRoomName}
-          </Link>
-        </div>
-
-        <div className="header-actions">
-          <span className="header-room-context">
-            <UsersRound aria-hidden="true" size={14} />
-            {role}
-          </span>
-          <SignOutButton
-            beforeSignOut={prepareDirectorySignOut}
-            userId={currentUser.id}
-          />
-        </div>
-      </header>
-
-      <section className="breakout-directory__content">
-        <Link
-          className="breakout-directory__back"
-          href={`/rooms/${parentRoomSlug}`}
-        >
-          <ArrowLeft aria-hidden="true" size={16} />
-          Back to {parentRoomName}
-        </Link>
-
-        <div
-          className={`breakout-directory__layout${canCreate ? " breakout-directory__layout--creator" : ""}`}
-        >
-          <section
-            className="breakout-directory__rooms"
-            aria-labelledby="breakout-list-title"
-          >
-            <div className="breakout-directory__section-heading">
-              <div>
-                <p className="sidebar-label">Room directory</p>
-                <h1 id="breakout-list-title">Breakout rooms</h1>
-              </div>
-              <span>
-                {breakoutRooms.length}{" "}
-                {breakoutRooms.length === 1 ? "room" : "rooms"}
-              </span>
-            </div>
-
-            {canCreate ? (
-              <form
-                action={createAction}
-                className="breakout-directory__create-bar"
-              >
-                <span className="breakout-directory__create-icon">
-                  <Plus aria-hidden="true" size={17} />
-                </span>
-                <div className="breakout-directory__create-copy">
-                  <strong>Create a breakout</strong>
-                  <span>Start a focused group workspace</span>
-                </div>
-                <label
-                  className="visually-hidden"
-                  htmlFor="directory-breakout-name"
-                >
-                  Breakout room name
-                </label>
-                <input
-                  id="directory-breakout-name"
-                  maxLength={80}
-                  name="name"
-                  placeholder="Group 1 · Case review"
-                  required
-                />
-                <SubmitButton pendingLabel="Creating…">
-                  <Plus aria-hidden="true" size={15} />
-                  Create
-                </SubmitButton>
-                <FormMessage {...createState} />
-              </form>
-            ) : null}
-
-            {breakoutRooms.length > 0 ? (
-              <div className="breakout-directory__grid">
-                {breakoutRooms.map((breakout, index) => (
-                  <article
-                    className="breakout-directory__card"
-                    key={breakout.id}
-                    style={
-                      {
-                        "--breakout-card-index": index,
-                      } as React.CSSProperties
-                    }
-                  >
-                    <div className="breakout-directory__card-top">
-                      <span className="breakout-directory__card-icon">
-                        <DoorOpen aria-hidden="true" size={19} />
-                      </span>
-                      {canCreate && breakout.code ? (
-                        <span
-                          className="breakout-directory__code"
-                          aria-label={`Private breakout code ${breakout.code}`}
-                        >
-                          {breakout.code}
-                        </span>
-                      ) : breakout.isJoined ? (
-                        <span className="breakout-directory__joined">
-                          <CircleCheck aria-hidden="true" size={13} />
-                          Joined
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="breakout-directory__card-copy">
-                      <p>Created {formatCreatedAt(breakout.createdAt)}</p>
-                      <h3>{breakout.name}</h3>
-                    </div>
-                    <ul
-                      className="breakout-directory__tools"
-                      aria-label="Available tools"
-                    >
-                      <li>
-                        <BookOpenText aria-hidden="true" size={13} />
-                        Notes
-                      </li>
-                      <li>
-                        <FileText aria-hidden="true" size={13} />
-                        PDF
-                      </li>
-                      <li>
-                        <PanelsTopLeft aria-hidden="true" size={13} />
-                        Board
-                      </li>
-                    </ul>
-                    {breakout.code && (canCreate || breakout.isJoined) ? (
-                      <Link
-                        className="breakout-directory__open"
-                        href={`/rooms/${parentRoomSlug}/breakouts/${breakout.code}`}
-                      >
-                        {canCreate ? "Open breakout" : "Reopen breakout"}
-                        <ArrowRight aria-hidden="true" size={16} />
-                      </Link>
-                    ) : (
-                      <div className="breakout-directory__code-required">
-                        <KeyRound aria-hidden="true" size={14} />
-                        Enter its private code to open
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="breakout-directory__empty">
-                <span>
-                  <Split aria-hidden="true" size={25} />
-                </span>
-                <h3>No breakout rooms yet</h3>
-                <p>
-                  {canCreate
-                    ? "Create the first focused space for this study room."
-                    : "An owner or editor can create the first breakout room."}
-                </p>
-              </div>
-            )}
-          </section>
-
-          {!canCreate ? (
-            <aside
-              className="breakout-directory__controls"
-              aria-label="Participant breakout room access"
+    <main className="breakout-hub">
+      <Layout
+        content={roomDirectory}
+        end={
+          isNarrow ? undefined : (
+            <LayoutPanel
+              hasDivider
+              isScrollable
+              label={canCreate ? "Create a breakout room" : "Open a room"}
+              padding={6}
+              width={384}
             >
-              <div className="breakout-directory__control-heading">
-                <span>
-                  <KeyRound aria-hidden="true" size={18} />
-                </span>
-                <div>
-                  <p className="sidebar-label">Quick access</p>
-                  <h2>Enter a room code</h2>
-                </div>
-              </div>
-              <p className="breakout-directory__viewer-note">
-                Enter the code shared by your room facilitator.
-              </p>
-              <form action={openAction} className="breakout-directory__form">
-                <label htmlFor="directory-breakout-code">Breakout code</label>
-                <input
-                  autoCapitalize="characters"
-                  autoComplete="off"
-                  id="directory-breakout-code"
-                  inputMode="text"
-                  maxLength={8}
-                  minLength={8}
-                  name="code"
-                  placeholder="A1B2C3D4"
-                  required
-                />
-                <SubmitButton pendingLabel="Opening…" variant="secondary">
-                  Open with code
-                  <ArrowRight aria-hidden="true" size={15} />
-                </SubmitButton>
-                <FormMessage {...openState} />
-              </form>
-            </aside>
-          ) : null}
-        </div>
-      </section>
+              {sidePanel}
+            </LayoutPanel>
+          )
+        }
+        height="fill"
+      />
     </main>
   );
 }

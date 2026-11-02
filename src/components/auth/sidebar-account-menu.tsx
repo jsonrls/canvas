@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Settings, UserRound } from "lucide-react";
+import { ButtonControl } from "@/components/ui/button";
+import { AppIcon, Settings, UserRound } from "@/components/ui/icons";
+import {
+  ChevronDown as ChevronDownData,
+  ChevronUp as ChevronUpData,
+} from "lucide";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -37,7 +42,6 @@ export function SidebarAccountMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
   const isHeaderMenu = appearance === "header";
-  const Chevron = isHeaderMenu ? ChevronDown : ChevronUp;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -137,7 +141,8 @@ export function SidebarAccountMenu({
       className={`sidebar-account-menu sidebar-account-menu--${appearance}`}
       ref={rootRef}
     >
-      <button
+      <ButtonControl
+        variant="custom"
         aria-label={`${isOpen ? "Close" : "Open"} account menu for ${displayName}`}
         aria-controls={menuId}
         aria-expanded={isOpen}
@@ -172,12 +177,13 @@ export function SidebarAccountMenu({
           <strong>{displayName}</strong>
           {!isHeaderMenu ? <small>You · {role}</small> : null}
         </span>
-        <Chevron
-          className="sidebar-account-menu__chevron"
+        <AppIcon
+          iconData={isHeaderMenu !== isOpen ? ChevronDownData : ChevronUpData}
+          className="sidebar-account-menu__chevron transform-none!"
           aria-hidden="true"
           size={15}
         />
-      </button>
+      </ButtonControl>
 
       {isOpen ? (
         <div

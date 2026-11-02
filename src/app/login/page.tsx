@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { LoginForm } from "@/app/login/login-form";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { SuccessToastOnMount } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -21,13 +22,11 @@ export default async function LoginPage({
   return (
     <AuthShell
       eyebrow="Welcome back"
-      title="Return to your study circle."
-      intro="Sign in to reopen the notes, questions, and ideas your group has been building together."
+      title="Sign in to Qollab"
+      intro="Open your rooms and continue working with your group."
     >
       {reset === "success" ? (
-        <p className="login-message login-message--success" role="status">
-          Your password is updated. Sign in with the new one.
-        </p>
+        <SuccessToastOnMount message="Your password is updated. Sign in with the new one." />
       ) : null}
       <LoginForm nextPath={nextPath} />
     </AuthShell>

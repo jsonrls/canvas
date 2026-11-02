@@ -1,20 +1,35 @@
 "use client";
 
+import { Button, IconButton } from "@/components/ui/button";
 import {
   ArrowLeft,
   BookOpenText,
-  Check,
   Copy,
-  DoorOpen,
   FileText,
   MessageCircleQuestion,
   PanelsTopLeft,
-  Radio,
   RefreshCw,
   UsersRound,
-} from "lucide-react";
+} from "@/components/ui/icons";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Dialog } from "@astryxdesign/core/Dialog";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Selector } from "@astryxdesign/core/Selector";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
+import { QollabAppShell } from "@/components/shell/qollab-app-shell";
+import { QollabWorkspaceHeader } from "@/components/shell/qollab-workspace-header";
+import { QollabSideNavigation } from "@/components/shell/qollab-side-navigation";
+import { ResponsiveContextPanel } from "@/components/shell/responsive-context-panel";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import {
+  createProviderLifecycle,
+  type ProviderLifecycle,
+} from "@/lib/collaboration/provider-lifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
@@ -23,6 +38,8 @@ import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import { BreakoutQaPanel } from "@/components/collaboration/breakout-qa-panel";
 import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { useToast } from "@/components/ui/toast";
 import {
   ViewerCollaborationStatus,
   ViewerCollaborationToggle,
@@ -72,16 +89,13 @@ const WhiteboardStudyTool = dynamic(
 
 const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
-async function prepareBreakoutSignOut(): Promise<void> {
-  await Promise.resolve();
-}
-
 function BreakoutToolLoading({ label }: { label: string }): React.ReactElement {
   return (
-    <div className="editor-initializing" role="status">
-      <RefreshCw className="spin" aria-hidden="true" size={18} />
-      {label}
-    </div>
+    <LoadingIndicator
+      className="editor-initializing"
+      label={label}
+      size="panel"
+    />
   );
 }
 
@@ -108,6 +122,7 @@ export function BreakoutRoomWorkspace({
   breakout,
   currentUser,
 }: BreakoutRoomWorkspaceProps): React.ReactElement {
+  const { success } = useToast();
   const collaborationEndpoint = getCollaborationWebSocketEndpoint();
   const { setViewerCanCollaborate, viewerCanCollaborate } =
     useViewerCollaboration({
@@ -124,9 +139,13 @@ export function BreakoutRoomWorkspace({
     canEdit ? "connecting" : "viewing",
   );
   const [message, setMessage] = useState("");
-  const [copied, setCopied] = useState(false);
   const [qaOpen, setQaOpen] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+  const [qaDraft, setQaDraft] = useState("");
+  const qaTriggerRef = useRef<HTMLButtonElement>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const [isRoomControlsOpen, setIsRoomControlsOpen] = useState(false);
+  const lifecycleRef = useRef<ProviderLifecycle | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
 
   useEffect(() => {
@@ -197,10 +216,27 @@ export function BreakoutRoomWorkspace({
       if (active) setParticipants(readParticipants(provider));
     };
 
-    provider.on("status", handleStatus);
-    provider.on("sync", handleSync);
-    provider.on("connection-error", handleError);
-    provider.awareness.on("change", handleAwareness);
+    const lifecycle = createProviderLifecycle({
+      provider,
+      authentication: collaborationEndpoint.authentication,
+      onStatus: handleStatus,
+      onSync: handleSync,
+      onError: handleError,
+      onAwareness: handleAwareness,
+      onOffline: () => {
+        setStatus("error");
+        setMessage(
+          "You are offline. Keep this tab open until live sync returns.",
+        );
+        setParticipants([]);
+      },
+      onConnecting: () => {
+        setStatus("connecting");
+        setMessage("");
+      },
+    });
+    lifecycleRef.current = lifecycle;
+    void lifecycle.reconnect();
     provider.awareness.setLocalStateField("user", user);
     providerRef.current = provider;
     queueMicrotask(() => {
@@ -209,10 +245,8 @@ export function BreakoutRoomWorkspace({
 
     return () => {
       active = false;
-      provider.off("status", handleStatus);
-      provider.off("sync", handleSync);
-      provider.off("connection-error", handleError);
-      provider.awareness.off("change", handleAwareness);
+      lifecycle.dispose();
+      if (lifecycleRef.current === lifecycle) lifecycleRef.current = null;
       provider.destroy();
       document.destroy();
       if (providerRef.current === provider) providerRef.current = null;
@@ -223,74 +257,25 @@ export function BreakoutRoomWorkspace({
     breakout.parentRoomSlug,
     canEdit,
     collaborationEndpoint.url,
+    collaborationEndpoint.authentication,
     currentUser.displayName,
   ]);
 
-  useEffect(() => {
-    if (!connection) return;
-
-    let active = true;
-    const abortController = new AbortController();
-    const provider = providerRef.current;
-
-    if (!provider) return;
-
-    const connect = async (): Promise<void> => {
-      setStatus(canEdit ? "connecting" : "viewing");
-      if (collaborationEndpoint.authentication === "access-token") {
-        const response = await fetch("/api/auth/access-token", {
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error("Your secure breakout session could not be opened.");
-        }
-
-        const payload = (await response.json()) as { accessToken?: unknown };
-
-        if (typeof payload.accessToken !== "string") {
-          throw new Error("The collaboration token response was invalid.");
-        }
-
-        provider.params = { access_token: payload.accessToken };
-      }
-
-      if (active) {
-        provider.connect();
-      }
-    };
-
-    void connect().catch((error: unknown) => {
-      if (!active || abortController.signal.aborted) return;
-      setStatus("error");
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "The secure breakout session could not be opened.",
-      );
-    });
-
-    return () => {
-      active = false;
-      abortController.abort();
-      provider.disconnect();
-    };
-  }, [attempt, canEdit, collaborationEndpoint.authentication, connection]);
-
   const reconnect = useCallback((): void => {
-    providerRef.current?.disconnect();
-    setMessage("");
-    setStatus(canEdit ? "connecting" : "viewing");
-    setAttempt((currentAttempt) => currentAttempt + 1);
-  }, [canEdit]);
+    void lifecycleRef.current?.reconnect();
+  }, []);
+
+  const prepareBreakoutSignOut = useCallback(async (): Promise<void> => {
+    lifecycleRef.current?.dispose();
+    providerRef.current?.destroy();
+    providerRef.current = null;
+  }, []);
 
   const copyCode = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(breakout.code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1_800);
+      setMessage("");
+      success("Breakout code copied.");
     } catch {
       setMessage(`Share this breakout code: ${breakout.code}`);
     }
@@ -303,241 +288,261 @@ export function BreakoutRoomWorkspace({
     viewing: "Read-only breakout access",
   };
 
+  const chooseTool = (tool: RoomDocumentKind): void => {
+    setActiveTool(tool);
+    setIsMobileNavigationOpen(false);
+  };
+  const closeQa = (): void => {
+    setQaOpen(false);
+    qaTriggerRef.current?.focus();
+  };
+  const collaborationControl =
+    breakout.role === "viewer" ? (
+      <ViewerCollaborationStatus compact enabled={viewerCanCollaborate} />
+    ) : (
+      <ViewerCollaborationToggle
+        compact
+        enabled={viewerCanCollaborate}
+        onEnabledChange={setViewerCanCollaborate}
+        roomSlug={breakout.parentRoomSlug}
+      />
+    );
+  const accountMenu = (
+    <SidebarAccountMenu
+      beforeSignOut={prepareBreakoutSignOut}
+      displayName={connection?.user.name ?? currentUser.displayName}
+      role={breakout.role}
+      userColor={connection?.user.color}
+      userId={currentUser.id}
+    />
+  );
+
   return (
-    <main className={`breakout-workspace breakout-workspace--${activeTool}`}>
-      <header className="room-header breakout-workspace__header">
-        <div className="brand-lockup">
-          <Link
-            className="brand-home-link"
-            href="/rooms"
-            aria-label="All study rooms"
-          >
-            <QollabBrandLogo />
-          </Link>
-          <span className="brand-divider" aria-hidden="true" />
-          <span className="breakout-workspace__parent">
-            {breakout.parentRoomName}
-          </span>
-        </div>
-
-        <div className="header-actions">
-          <Link
-            className="breakout-workspace__back"
-            href={`/rooms/${breakout.parentRoomSlug}`}
-            aria-label={`Back to ${breakout.parentRoomName}`}
-          >
-            <ArrowLeft aria-hidden="true" size={17} />
-            <span>Back to room</span>
-          </Link>
-          <div className="breakout-workspace__header-collaboration">
-            {breakout.role === "viewer" ? (
-              <ViewerCollaborationStatus enabled={viewerCanCollaborate} />
-            ) : (
-              <ViewerCollaborationToggle
-                enabled={viewerCanCollaborate}
-                onEnabledChange={setViewerCanCollaborate}
-                roomSlug={breakout.parentRoomSlug}
-              />
-            )}
-          </div>
-          <div
-            className="participant-stack"
-            aria-label={`${participants.length} active participants`}
-          >
-            {participants.slice(0, 4).map((participant) => (
-              <span
-                className="participant-avatar"
-                key={participant.clientId}
-                style={{ backgroundColor: participant.color }}
-                title={participant.name}
-              >
-                {participant.name.charAt(0)}
-              </span>
-            ))}
-          </div>
-          <span className="header-room-context">
-            <UsersRound aria-hidden="true" size={14} />
-            {breakout.role}
-          </span>
-        </div>
-      </header>
-
-      <nav
-        className="mobile-workspace-tabs breakout-workspace__mobile-tabs"
-        aria-label="Breakout workspace"
-      >
-        <button
-          aria-pressed={activeTool === "notes"}
-          onClick={() => {
-            setActiveTool("notes");
-            setQaOpen(false);
-          }}
-          type="button"
-        >
-          <BookOpenText aria-hidden="true" size={17} />
-          Notes
-        </button>
-        <button
-          aria-pressed={activeTool === "pdf"}
-          onClick={() => {
-            setActiveTool("pdf");
-            setQaOpen(false);
-          }}
-          type="button"
-        >
-          <FileText aria-hidden="true" size={17} />
-          PDF
-        </button>
-        <button
-          aria-pressed={activeTool === "whiteboard"}
-          onClick={() => {
-            setActiveTool("whiteboard");
-            setQaOpen(false);
-          }}
-          type="button"
-        >
-          <PanelsTopLeft aria-hidden="true" size={17} />
-          Board
-        </button>
-      </nav>
-
-      <div
-        className={`breakout-workspace__body${qaOpen ? " breakout-workspace__body--qa-open" : ""}`}
-      >
-        <aside
-          className="room-sidebar breakout-workspace__sidebar"
-          aria-label="Breakout room navigation"
-        >
-          <div className="sidebar-section">
-            <p className="sidebar-label">Breakout room</p>
-            <nav className="sidebar-nav">
-              <Link
-                className="sidebar-link"
-                href={`/rooms/${breakout.parentRoomSlug}`}
-              >
-                <ArrowLeft aria-hidden="true" size={17} />
-                Main room
-              </Link>
-            </nav>
-
-            <div className="breakout-sidebar-code">
-              <div>
-                <small>Unique room code</small>
-                <strong>{breakout.code}</strong>
-              </div>
-              <button
-                aria-label={
-                  copied
-                    ? "Breakout code copied"
-                    : `Copy breakout code ${breakout.code}`
-                }
-                onClick={() => void copyCode()}
-                type="button"
-              >
-                {copied ? (
-                  <Check aria-hidden="true" size={15} />
-                ) : (
-                  <Copy aria-hidden="true" size={15} />
-                )}
-                {copied ? "Copied" : "Copy code"}
-              </button>
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <p className="sidebar-label">Workspace</p>
-            <nav className="sidebar-nav">
-              <button
-                className={`sidebar-link${activeTool === "notes" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("notes")}
-                type="button"
-              >
-                <BookOpenText aria-hidden="true" size={17} />
-                Shared notes
-              </button>
-              <button
-                className={`sidebar-link${activeTool === "pdf" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("pdf")}
-                type="button"
-              >
-                <FileText aria-hidden="true" size={17} />
-                PDF annotation
-              </button>
-              <button
-                className={`sidebar-link${activeTool === "whiteboard" ? " sidebar-link--active" : ""}`}
-                onClick={() => setActiveTool("whiteboard")}
-                type="button"
-              >
-                <PanelsTopLeft aria-hidden="true" size={17} />
-                Whiteboard
-              </button>
-            </nav>
-          </div>
-
-          <div className="sidebar-footer">
-            <SidebarAccountMenu
-              beforeSignOut={prepareBreakoutSignOut}
-              displayName={connection?.user.name ?? currentUser.displayName}
-              role={breakout.role}
-              userColor={connection?.user.color}
-              userId={currentUser.id}
-            />
-          </div>
-        </aside>
-
-        <section
-          className={`breakout-workspace__content breakout-workspace__content--${activeTool}`}
-        >
-          <button
-            aria-label={
-              copied
-                ? "Breakout code copied"
-                : `Copy breakout code ${breakout.code}`
+    <VStack className="h-dvh min-h-0 min-w-0 bg-surface text-primary">
+      <QollabAppShell
+        isContentScrollable={false}
+        mobileNavigation={{
+          isOpen: isMobileNavigationOpen,
+          onOpenChange: (open) => {
+            setIsMobileNavigationOpen(open);
+            if (open) setIsSidebarCollapsed(false);
+          },
+        }}
+        header={
+          <QollabWorkspaceHeader
+            label="Breakout controls"
+            startContent={
+              <HStack gap={2} vAlign="center" className="min-w-0">
+                <IconButton
+                  as={Link}
+                  href={`/rooms/${breakout.parentRoomSlug}`}
+                  label={`Back to ${breakout.parentRoomName}`}
+                  icon={<ArrowLeft aria-hidden="true" size={18} />}
+                />
+                <Text weight="semibold" maxLines={1}>
+                  {breakout.parentRoomName}
+                </Text>
+              </HStack>
             }
-            className="breakout-workspace__mobile-code"
-            onClick={() => void copyCode()}
-            type="button"
+            endContent={
+              <HStack gap={1}>
+                <IconButton
+                  label="Breakout room controls"
+                  icon={<UsersRound aria-hidden="true" size={18} />}
+                  onClick={() => setIsRoomControlsOpen(true)}
+                />
+                <IconButton
+                  ref={qaTriggerRef}
+                  label="Open Q and A"
+                  aria-controls="breakout-qa-panel"
+                  aria-expanded={qaOpen}
+                  icon={<MessageCircleQuestion aria-hidden="true" size={18} />}
+                  onClick={() => setQaOpen(true)}
+                />
+              </HStack>
+            }
+          />
+        }
+        sideNavigation={
+          <QollabSideNavigation
+            label="Breakout room navigation"
+            isCollapsed={isSidebarCollapsed}
+            onCollapsedChange={setIsSidebarCollapsed}
+            collapsedHeader={<QollabBrandLogo variant="mark" />}
+            header={
+              <Link
+                href="/rooms"
+                aria-label="All study rooms"
+                className="block p-3"
+              >
+                <QollabBrandLogo />
+              </Link>
+            }
+            linkComponent={Link}
+            topContent={
+              !isSidebarCollapsed ? (
+                <VStack padding={4} gap={2}>
+                  <Text type="supporting">Breakout code</Text>
+                  <Text className="font-mono" weight="semibold">
+                    {breakout.code}
+                  </Text>
+                  <Button
+                    label="Copy code"
+                    variant="secondary"
+                    icon={<Copy aria-hidden="true" size={16} />}
+                    onClick={() => void copyCode()}
+                  />
+                </VStack>
+              ) : undefined
+            }
+            sections={[
+              {
+                id: "room",
+                title: "Breakout room",
+                items: [
+                  {
+                    id: "parent",
+                    label: "Main room",
+                    href: `/rooms/${breakout.parentRoomSlug}`,
+                    icon: ArrowLeft,
+                    size: "lg",
+                  },
+                ],
+              },
+              {
+                id: "workspace",
+                title: "Study tools",
+                items: [
+                  {
+                    id: "notes",
+                    label: "Shared notes",
+                    icon: BookOpenText,
+                    isSelected: activeTool === "notes",
+                    onClick: () => chooseTool("notes"),
+                    size: "lg",
+                  },
+                  {
+                    id: "pdf",
+                    label: "PDF annotation",
+                    icon: FileText,
+                    isSelected: activeTool === "pdf",
+                    onClick: () => chooseTool("pdf"),
+                    size: "lg",
+                  },
+                  {
+                    id: "whiteboard",
+                    label: "Whiteboard",
+                    icon: PanelsTopLeft,
+                    isSelected: activeTool === "whiteboard",
+                    onClick: () => chooseTool("whiteboard"),
+                    size: "lg",
+                  },
+                ],
+              },
+            ]}
+            footer={
+              !isSidebarCollapsed ? (
+                <VStack padding={2} gap={2}>
+                  {collaborationControl}
+                  {accountMenu}
+                </VStack>
+              ) : undefined
+            }
+            footerIcons={
+              <IconButton
+                label="Breakout room controls"
+                icon={<UsersRound aria-hidden="true" size={18} />}
+                onClick={() => setIsRoomControlsOpen(true)}
+              />
+            }
+          />
+        }
+        contextPanel={
+          <ResponsiveContextPanel
+            isOpen={qaOpen}
+            onOpenChange={setQaOpen}
+            label="Breakout room Q and A"
+            fillContent
           >
-            {copied ? (
-              <Check aria-hidden="true" size={15} />
-            ) : (
-              <Copy aria-hidden="true" size={15} />
-            )}
-            {breakout.code}
-          </button>
-
+            <BreakoutQaPanel
+              activeTool={activeTool}
+              canAsk={canEdit}
+              document={connection?.document ?? null}
+              draft={qaDraft}
+              onDraftChange={setQaDraft}
+              onClose={closeQa}
+              participantCount={participants.length}
+              user={
+                connection
+                  ? {
+                      color: connection.user.color,
+                      id: currentUser.id,
+                      name: connection.user.name,
+                    }
+                  : null
+              }
+            />
+          </ResponsiveContextPanel>
+        }
+      >
+        <VStack gap={0} className="h-full min-h-0 min-w-0 overflow-hidden">
+          <HStack
+            padding={3}
+            className="md:hidden! shrink-0 border-b border-border"
+          >
+            <Selector
+              label="Breakout workspace"
+              isLabelHidden
+              value={activeTool}
+              onChange={(value) => chooseTool(value as RoomDocumentKind)}
+              options={[
+                { value: "notes", label: "Shared notes" },
+                { value: "pdf", label: "PDF annotation" },
+                { value: "whiteboard", label: "Whiteboard" },
+              ]}
+              width="100%"
+              className="[&_button]:min-h-11"
+            />
+          </HStack>
+          {message ? (
+            <Text role="alert" className="shrink-0 border-b border-border p-3">
+              {message}
+            </Text>
+          ) : null}
           {activeTool === "notes" ? (
-            <>
-              <div className="breakout-workspace__status">
-                <span
-                  className={`connection-badge connection-badge--${status}`}
-                >
-                  <span className="connection-dot" />
-                  {statusCopy[status]}
-                </span>
-                <span>
-                  <DoorOpen aria-hidden="true" size={14} />
-                  {participants.length} active
-                </span>
+            <VStack
+              as="section"
+              aria-label="Breakout shared notes"
+              className="flex-1 min-h-0 overflow-hidden"
+              gap={0}
+            >
+              <HStack
+                gap={2}
+                padding={3}
+                wrap="wrap"
+                vAlign="center"
+                className="shrink-0 border-b border-border"
+              >
+                <StatusDot
+                  variant={
+                    status === "error"
+                      ? "error"
+                      : status === "synced"
+                        ? "success"
+                        : "neutral"
+                  }
+                  label={statusCopy[status]}
+                />
+                <Text className="flex-1">{statusCopy[status]}</Text>
                 {status === "error" ? (
-                  <button onClick={reconnect} type="button">
-                    <RefreshCw aria-hidden="true" size={14} />
-                    Reconnect
-                  </button>
-                ) : (
-                  <span>
-                    <Radio aria-hidden="true" size={14} />
-                    Changes save automatically
-                  </span>
-                )}
-              </div>
-
-              {message ? (
-                <p className="breakout-workspace__message" role="alert">
-                  {message}
-                </p>
-              ) : null}
-
+                  <Button
+                    label="Reconnect"
+                    variant="secondary"
+                    icon={<RefreshCw aria-hidden="true" size={16} />}
+                    onClick={reconnect}
+                  />
+                ) : null}
+              </HStack>
               {connection ? (
                 <RichTextEditor
                   document={connection.document}
@@ -550,70 +555,78 @@ export function BreakoutRoomWorkspace({
               ) : (
                 <BreakoutToolLoading label="Preparing breakout notes…" />
               )}
-            </>
-          ) : null}
-
-          {activeTool === "pdf" ? (
-            <section
-              className="breakout-workspace__tool breakout-workspace__tool--visual"
-              aria-label="Breakout PDF Annotation"
+            </VStack>
+          ) : (
+            <VStack
+              as="section"
+              aria-label={
+                activeTool === "pdf"
+                  ? "Breakout PDF Annotation"
+                  : "Breakout Whiteboard"
+              }
+              className="workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
             >
-              <PdfStudyTool
-                breakoutCode={breakout.code}
-                canEdit={canEdit}
-                canManageAsset={canManagePdf}
-                currentUser={currentUser}
-                initialAsset={breakout.pdfAsset}
-                initialState={breakout.initialDocumentStates.pdf}
-                pdfApiPath={`/api/rooms/${breakout.parentRoomSlug}/breakouts/${breakout.code}/pdf`}
-                roomId={breakout.parentRoomSlug}
-              />
-            </section>
-          ) : null}
-
-          {activeTool === "whiteboard" ? (
-            <section
-              className="breakout-workspace__tool breakout-workspace__tool--visual"
-              aria-label="Breakout Whiteboard"
-            >
-              <WhiteboardStudyTool
-                breakoutCode={breakout.code}
-                canEdit={canEdit}
-                currentUser={currentUser}
-                initialState={breakout.initialDocumentStates.whiteboard}
-                roomId={breakout.parentRoomSlug}
-              />
-            </section>
-          ) : null}
-        </section>
-        <BreakoutQaPanel
-          activeTool={activeTool}
-          canAsk={canEdit}
-          document={connection?.document ?? null}
-          onClose={() => setQaOpen(false)}
-          participantCount={participants.length}
-          user={
-            connection
-              ? {
-                  color: connection.user.color,
-                  id: currentUser.id,
-                  name: connection.user.name,
-                }
-              : null
-          }
-        />
-        <button
-          aria-controls="breakout-qa-panel"
-          aria-expanded={qaOpen}
-          aria-label="Open Q and A"
-          className="breakout-qa-toggle"
-          onClick={() => setQaOpen(true)}
-          type="button"
-        >
-          <MessageCircleQuestion aria-hidden="true" size={18} />
-          <span>Ask Q&amp;A</span>
-        </button>
-      </div>
-    </main>
+              {activeTool === "pdf" ? (
+                <PdfStudyTool
+                  breakoutCode={breakout.code}
+                  canEdit={canEdit}
+                  canManageAsset={canManagePdf}
+                  currentUser={currentUser}
+                  initialAsset={breakout.pdfAsset}
+                  initialState={breakout.initialDocumentStates.pdf}
+                  pdfApiPath={`/api/rooms/${breakout.parentRoomSlug}/breakouts/${breakout.code}/pdf`}
+                  roomId={breakout.parentRoomSlug}
+                />
+              ) : (
+                <WhiteboardStudyTool
+                  breakoutCode={breakout.code}
+                  canEdit={canEdit}
+                  currentUser={currentUser}
+                  initialState={breakout.initialDocumentStates.whiteboard}
+                  roomId={breakout.parentRoomSlug}
+                />
+              )}
+            </VStack>
+          )}
+        </VStack>
+      </QollabAppShell>
+      <Dialog
+        isOpen={isRoomControlsOpen}
+        onOpenChange={setIsRoomControlsOpen}
+        aria-label="Breakout room controls"
+        purpose="info"
+      >
+        <VStack padding={4} gap={4}>
+          <HStack hAlign="between" vAlign="center">
+            <Heading level={2}>Breakout room</Heading>
+            <IconButton
+              label="Close room controls"
+              icon={<ArrowLeft aria-hidden="true" size={18} />}
+              onClick={() => setIsRoomControlsOpen(false)}
+            />
+          </HStack>
+          <Token label={breakout.role} />
+          <Text className="font-mono">{breakout.code}</Text>
+          <Button
+            label="Copy breakout code"
+            variant="secondary"
+            onClick={() => void copyCode()}
+          />
+          {collaborationControl}
+          <VStack gap={2}>
+            <Text weight="semibold">
+              {participants.length} active participants
+            </Text>
+            {participants.map((participant) => (
+              <HStack gap={2} vAlign="center" key={participant.clientId}>
+                <Avatar name={participant.name} size="sm" />
+                <Text>{participant.name}</Text>
+              </HStack>
+            ))}
+          </VStack>
+          {accountMenu}
+        </VStack>
+      </Dialog>
+    </VStack>
   );
 }

@@ -108,31 +108,51 @@ function writeRegisteredDocumentKeys(
   }
 }
 
-async function verifyIndexedDbAvailability(): Promise<void> {
+async function verifyIndexedDbAvailability(
+  signal?: AbortSignal,
+): Promise<void> {
   if (typeof indexedDB === "undefined") {
     throw new Error("IndexedDB is unavailable.");
   }
 
   await new Promise<void>((resolve, reject) => {
     let request: IDBOpenDBRequest;
+    const timeout = setTimeout(
+      () => finish(new Error("IndexedDB probe timed out.")),
+      INITIALIZATION_TIMEOUT_MS,
+    );
+    const aborted = (): void =>
+      finish(new Error("Offline initialization cancelled."));
+    const finish = (error?: Error): void => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", aborted);
+      if (error) reject(error);
+      else resolve();
+    };
+    signal?.addEventListener("abort", aborted, { once: true });
+    if (signal?.aborted) {
+      aborted();
+      return;
+    }
 
     try {
       request = indexedDB.open(STORAGE_PROBE_NAME);
     } catch {
-      reject(new Error("IndexedDB could not be opened."));
+      finish(new Error("IndexedDB could not be opened."));
       return;
     }
 
-    request.onerror = () => reject(new Error("IndexedDB could not be opened."));
+    request.onerror = () => finish(new Error("IndexedDB could not be opened."));
     request.onsuccess = () => {
       request.result.close();
-      resolve();
+      finish();
     };
   });
 }
 
 async function waitForPersistence(
   persistence: IndexeddbPersistence,
+  signal?: AbortSignal,
 ): Promise<void> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_resolve, reject) => {
@@ -141,13 +161,25 @@ async function waitForPersistence(
       INITIALIZATION_TIMEOUT_MS,
     );
   });
+  let abortHandler = (): void => {};
+  const aborted = new Promise<never>((_resolve, reject) => {
+    abortHandler = () => reject(new Error("Offline initialization cancelled."));
+    signal?.addEventListener("abort", abortHandler, { once: true });
+    if (signal?.aborted) abortHandler();
+  });
   const databaseFailure = persistence
     .get(HEALTH_CHECK_KEY)
     .then(() => persistence.whenSynced);
 
   try {
-    await Promise.race([persistence.whenSynced, databaseFailure, timeout]);
+    await Promise.race([
+      persistence.whenSynced,
+      databaseFailure,
+      timeout,
+      aborted,
+    ]);
   } finally {
+    signal?.removeEventListener("abort", abortHandler);
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
@@ -196,28 +228,39 @@ export async function createOfflineDocument(
   roomId: string,
   document: Y.Doc,
   kind: CollaborativeDocumentKind = "notes",
+  signal?: AbortSignal,
 ): Promise<OfflineDocumentResult> {
   const key = buildOfflineDocumentKey(userId, roomId, kind);
 
   try {
-    await verifyIndexedDbAvailability();
+    await verifyIndexedDbAvailability(signal);
   } catch {
     return { key, persistence: null, status: "unavailable" };
   }
 
+  if (signal?.aborted || document.isDestroyed) {
+    return { key, persistence: null, status: "unavailable" };
+  }
   const persistence = new IndexeddbPersistence(key, document);
 
   try {
-    await waitForPersistence(persistence);
+    await waitForPersistence(persistence, signal);
 
-    if (!registerOfflineDocument(userId, key)) {
-      await persistence.clearData();
+    if (signal?.aborted || document.isDestroyed) {
+      void persistence.destroy().catch(() => undefined);
       return { key, persistence: null, status: "unavailable" };
     }
 
+    if (!registerOfflineDocument(userId, key)) {
+      void persistence
+        .destroy()
+        .then(() => clearDocument(key))
+        .catch(() => undefined);
+      return { key, persistence: null, status: "unavailable" };
+    }
     return { key, persistence, status: "saved" };
   } catch {
-    await persistence.destroy().catch(() => undefined);
+    void persistence.destroy().catch(() => undefined);
     return { key, persistence: null, status: "unavailable" };
   }
 }

@@ -6,6 +6,22 @@ Each Supabase Auth account has a constrained `public.profiles` row. Signup creat
 
 Users who forget their password can request an account-neutral recovery email at `/reset-password`. Recovery links are exchanged through the cookie-backed `/auth/confirm` route before the authenticated new-password form is shown.
 
+## Code organization
+
+Routes and request boundaries live in `src/app/`; feature UI lives in
+`src/components/`; models and repositories live in `src/lib/`; shared browser
+lifecycles live in `src/hooks/`. `server/` owns the collaboration runtime and
+`supabase/migrations/` owns database changes. Workspace framing is shared through
+`src/components/shell/`. The [architecture guide](.agents/ARCHITECTURE.md) describes
+implemented boundaries; the [testing guide](.agents/TESTING.md) separates local
+checks from hosted integration verifiers.
+
+`theme/qollab-workshop.ts` is the theme source. Run `npm run theme:build` after
+editing it. `npm run verify:workspace` detects duplicate generated copies and
+checks private artifact exclusions; it also runs before typecheck and build.
+Keep `.next/`, `capacity-results/`, and `supabase/.temp/` out of filesystem sync
+and version control. Capacity output can contain disposable account credentials.
+
 ## Run locally
 
 Requirements: Node.js 20.9 or newer, npm, and a Supabase project. `psql` is only required for `verify:schema`.
@@ -129,21 +145,39 @@ Vercel WebSockets follow the Function maximum duration. The existing Yjs and pre
 
 ## Verification
 
+Start with the local checks below. Hosted verifiers in the second group create
+and clean up disposable records in the configured project; inspect their targets
+before running them. See [.agents/TESTING.md](.agents/TESTING.md) for scope.
+
 ```bash
+npm run verify:workspace
+npm run theme:check
 npm run format:check
 npm run lint
 npm run build
 npm run typecheck
 npm run verify:yjs
+npm run verify:collaboration-lifecycle
+npm run verify:collaboration-persistence
+npm run verify:study-tools
+npm run verify:workspace-shell
+npm run verify:design-system
+npm run verify:conflict-review
+npm run verify:password-reset
+npm run verify:account-profile
+npm run verify:buttons
+npm run verify:phase-3
+npm run verify:phase-4
+```
+
+Hosted integration checks:
+
+```bash
 npm run verify:schema
 npm run verify:rooms
 npm run verify:version-history
 npm run verify:offline-sync
-npm run verify:conflict-review
-npm run verify:password-reset
-npm run verify:phase-3
 npm run verify:phase-3-storage
-npm run verify:phase-4
 npm run verify:saved-study-guides
 npm run verify:serverless-collaboration
 npm run verify:vercel
@@ -159,9 +193,9 @@ npm run verify:vercel
 
 `verify:password-reset` checks input normalization, password confirmation limits, HTTP(S)-only callback construction, trusted-claim update ordering, accessible form contracts, recovery failure routing, and the login entry point without sending an email.
 
-`verify:phase-3` checks PDF magic/MIME/size validation, normalized annotation and whiteboard boundaries, isolated offline/remote names, independent CRDT-map merging, client-only loading, read-only controls, zoom, and upload-route guards. `verify:phase-3-storage` uses disposable confirmed users to prove the private bucket limits, three-document room invariant, owner upload/replacement, viewer denial, member signed reads, outsider denial, and old-object cleanup.
+`verify:phase-3` checks PDF magic/MIME/size validation, normalized annotation and whiteboard boundaries, isolated offline/remote names, independent CRDT-map merging, and static upload-route boundaries. `verify:phase-3-storage` uses disposable confirmed users to prove the private bucket limits, three-document room invariant, owner upload/replacement, viewer denial, member signed reads, outsider denial, and old-object cleanup.
 
-`verify:phase-4` checks source limits, exact output shapes, strict structured-output settings, provider refusal handling, authentication and membership wiring, server-only configuration, all five assistant views, keyboard tab behavior, medical-study messaging, and responsive navigation contracts without consuming provider tokens.
+`verify:phase-4` checks source limits, exact output shapes, strict structured-output settings, provider refusal handling, static authentication/membership boundaries, rendered assistant views, quiz feedback, flashcard states, and saved-library states without consuming provider tokens. `verify:study-tools` exercises extracted geometry, payload and interaction-state helpers. `verify:workspace-shell` checks rendered shell semantics; responsive layout and focus still require browser verification.
 
 `verify:saved-study-guides` uses disposable confirmed users and a temporary room to verify the hosted saved-guide table, metadata-only lists, creator detail loading, member/outsider isolation, immutable grants, owner deletion, and cleanup cascades.
 

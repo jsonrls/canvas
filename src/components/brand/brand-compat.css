@@ -1,0 +1,47 @@
+/* Existing logo mask assets and mark geometry. */
+
+.brand-logo {
+  display: flex;
+  width: 160px;
+  height: 44px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-logo__image {
+  display: block;
+  width: 160px;
+  height: 49px;
+  aspect-ratio: 160 / 49;
+  flex: 0 0 auto;
+  background: var(--brand-primary);
+  -webkit-mask: url("/brand/qollab-logo-lockup.png") center / contain no-repeat;
+  mask: url("/brand/qollab-logo-lockup.png") center / contain no-repeat;
+}
+
+.brand-logo[data-variant="mark"],
+.brand-logo[data-variant="mark"] .brand-logo__image {
+  width: var(--spacing-8);
+  height: var(--spacing-8);
+}
+
+.brand-logo[data-variant="mark"] .brand-logo__image {
+  aspect-ratio: 1;
+  -webkit-mask-image: url("/brand/qollab-mark.png");
+  mask-image: url("/brand/qollab-mark.png");
+}
+
+@media (max-width: 760px) {
+  .brand-logo {
+    width: 132px;
+  }
+
+  .brand-logo__image {
+    width: 132px;
+  }
+
+  .brand-logo__image {
+    height: auto;
+  }
+}

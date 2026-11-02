@@ -1,6 +1,7 @@
 "use client";
 
-import { MoreHorizontal, X } from "lucide-react";
+import { ButtonControl } from "@/components/ui/button";
+import { MoreHorizontal, X } from "@/components/ui/icons";
 import {
   useCallback,
   useEffect,
@@ -120,7 +121,9 @@ export function MobileToolsMenu({
                   <h2 id={titleId}>{title}</h2>
                   <p id={descriptionId}>{description}</p>
                 </div>
-                <button
+                <ButtonControl
+                  variant="ghost"
+                  size="sm"
                   aria-label={`Close ${title}`}
                   className="mobile-tools-dialog__close"
                   onClick={close}
@@ -128,7 +131,7 @@ export function MobileToolsMenu({
                   type="button"
                 >
                   <X aria-hidden="true" size={20} />
-                </button>
+                </ButtonControl>
               </header>
               <div className="mobile-tools-dialog__body">{children(close)}</div>
             </div>
@@ -139,7 +142,9 @@ export function MobileToolsMenu({
 
   return (
     <>
-      <button
+      <ButtonControl
+        variant="ghost"
+        size="sm"
         aria-controls={dialogId}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -152,7 +157,7 @@ export function MobileToolsMenu({
       >
         <MoreHorizontal aria-hidden="true" size={19} />
         <span>More</span>
-      </button>
+      </ButtonControl>
       {dialog}
     </>
   );

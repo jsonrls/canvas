@@ -83,6 +83,8 @@ export default async function RoomPage({
       isPublic={room.isPublic}
       key={room.slug}
       roomId={room.slug}
+      roomIconUrl={room.roomIconUrl}
+      roomName={room.name}
     />
   );
 }

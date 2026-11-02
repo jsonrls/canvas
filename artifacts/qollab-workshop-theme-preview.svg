@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">Qollab Workshop theme preview</title>
+  <desc id="desc">Light and dark previews of Qollab's warm paper, ink, signal blue, and annotation amber custom theme.</desc>
+
+  <defs>
+    <pattern id="light-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#D9D1C3" stroke-width="1" opacity="0.3" />
+    </pattern>
+    <pattern id="dark-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#596158" stroke-width="1" opacity="0.2" />
+    </pattern>
+    <style>
+      .ui { font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif; }
+      .display { font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif; }
+      .mono { font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif; font-variant-numeric: tabular-nums; }
+      .label { font-size: 13px; font-weight: 700; letter-spacing: 1.8px; }
+      .body { font-size: 16px; }
+      .small { font-size: 13px; }
+      .button { font-size: 14px; font-weight: 650; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="980" fill="#E7E0D4" />
+  <text x="64" y="58" class="ui label" fill="#55605A">QOLLAB / CUSTOM THEME REVIEW</text>
+  <text x="64" y="105" class="display" font-size="38" font-weight="600" fill="#17201C">Workshop, not showroom.</text>
+  <text x="1536" y="85" text-anchor="end" class="ui body" fill="#55605A">Paper · ink · signal blue · annotation amber</text>
+
+  <!-- Light mode -->
+  <rect x="64" y="144" width="716" height="772" rx="12" fill="#F3EFE6" stroke="#C9C0B2" />
+  <rect x="64" y="144" width="716" height="772" rx="12" fill="url(#light-grid)" />
+  <rect x="64" y="144" width="716" height="70" rx="12" fill="#FCFAF5" />
+  <path d="M64 202H780" stroke="#D9D1C3" />
+  <circle cx="100" cy="179" r="17" fill="#174FCE" />
+  <circle cx="110" cy="179" r="17" fill="none" stroke="#FCFAF5" stroke-width="4" />
+  <text x="137" y="185" class="ui" font-size="23" font-weight="700" fill="#17201C">Qollab</text>
+  <text x="746" y="184" text-anchor="end" class="ui label" fill="#55605A">LIGHT</text>
+
+  <text x="104" y="276" class="ui label" fill="#174FCE">ROOM 08 / CARDIO REVIEW</text>
+  <text x="104" y="330" class="display" font-size="40" font-weight="600" fill="#17201C">Keep the group on the same page.</text>
+  <text x="104" y="366" class="ui body" fill="#55605A">A calm working surface for notes, markup, and live review.</text>
+
+  <rect x="104" y="404" width="636" height="280" rx="9" fill="#FFFCF6" stroke="#D9D1C3" />
+  <rect x="104" y="404" width="7" height="280" rx="3" fill="#174FCE" />
+  <text x="136" y="443" class="ui label" fill="#55605A">TODAY'S FOCUS</text>
+  <text x="136" y="480" class="display" font-size="30" font-weight="600" fill="#17201C">Heart failure: compensatory mechanisms</text>
+  <rect x="136" y="508" width="340" height="8" rx="3" fill="#D9D1C3" />
+  <rect x="136" y="530" width="518" height="8" rx="3" fill="#EAE4D8" />
+  <rect x="136" y="552" width="460" height="8" rx="3" fill="#EAE4D8" />
+  <rect x="136" y="583" width="242" height="29" rx="4" fill="#F4E1B8" />
+  <text x="148" y="603" class="ui small" font-weight="650" fill="#674006">Compare preload and afterload</text>
+  <circle cx="642" cy="638" r="18" fill="#174FCE" />
+  <circle cx="670" cy="638" r="18" fill="#207A55" stroke="#FFFCF6" stroke-width="3" />
+  <circle cx="698" cy="638" r="18" fill="#D89A33" stroke="#FFFCF6" stroke-width="3" />
+  <text x="642" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#FFFFFF">JR</text>
+  <text x="670" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#FFFFFF">M</text>
+  <text x="698" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#21170A">A</text>
+
+  <rect x="104" y="718" width="154" height="44" rx="6" fill="#174FCE" />
+  <text x="181" y="745" text-anchor="middle" class="ui button" fill="#FFFFFF">Open study room</text>
+  <rect x="270" y="718" width="138" height="44" rx="6" fill="#FCFAF5" stroke="#AFA697" />
+  <text x="339" y="745" text-anchor="middle" class="ui button" fill="#17201C">View notes</text>
+  <rect x="104" y="782" width="394" height="48" rx="6" fill="#FCFAF5" stroke="#AFA697" />
+  <text x="122" y="812" class="ui body" fill="#929A94">Search this room</text>
+  <rect x="514" y="782" width="128" height="32" rx="5" fill="#DCECDF" />
+  <circle cx="532" cy="798" r="5" fill="#207A55" />
+  <text x="546" y="803" class="ui small" font-weight="650" fill="#24583F">4 collaborators</text>
+  <text x="104" y="872" class="mono small" fill="#55605A">accent #174FCE   paper #F3EFE6   ink #17201C</text>
+
+  <!-- Dark mode -->
+  <rect x="820" y="144" width="716" height="772" rx="12" fill="#141713" stroke="#343A33" />
+  <rect x="820" y="144" width="716" height="772" rx="12" fill="url(#dark-grid)" />
+  <rect x="820" y="144" width="716" height="70" rx="12" fill="#1D211C" />
+  <path d="M820 202H1536" stroke="#343A33" />
+  <circle cx="856" cy="179" r="17" fill="#88A9FF" />
+  <circle cx="866" cy="179" r="17" fill="none" stroke="#1D211C" stroke-width="4" />
+  <text x="893" y="185" class="ui" font-size="23" font-weight="700" fill="#F2EFE7">Qollab</text>
+  <text x="1502" y="184" text-anchor="end" class="ui label" fill="#B8BDB6">DARK</text>
+
+  <text x="860" y="276" class="ui label" fill="#A9BEFF">ROOM 08 / CARDIO REVIEW</text>
+  <text x="860" y="330" class="display" font-size="40" font-weight="600" fill="#F2EFE7">Keep the group on the same page.</text>
+  <text x="860" y="366" class="ui body" fill="#B8BDB6">Low-glare contrast for late sessions without neon theatrics.</text>
+
+  <rect x="860" y="404" width="636" height="280" rx="9" fill="#1A1E19" stroke="#343A33" />
+  <rect x="860" y="404" width="7" height="280" rx="3" fill="#88A9FF" />
+  <text x="892" y="443" class="ui label" fill="#B8BDB6">TODAY'S FOCUS</text>
+  <text x="892" y="480" class="display" font-size="30" font-weight="600" fill="#F2EFE7">Heart failure: compensatory mechanisms</text>
+  <rect x="892" y="508" width="340" height="8" rx="3" fill="#596158" />
+  <rect x="892" y="530" width="518" height="8" rx="3" fill="#343A33" />
+  <rect x="892" y="552" width="460" height="8" rx="3" fill="#343A33" />
+  <rect x="892" y="583" width="242" height="29" rx="4" fill="#49381F" />
+  <text x="904" y="603" class="ui small" font-weight="650" fill="#F8D28A">Compare preload and afterload</text>
+  <circle cx="1398" cy="638" r="18" fill="#88A9FF" />
+  <circle cx="1426" cy="638" r="18" fill="#8FD9B0" stroke="#1A1E19" stroke-width="3" />
+  <circle cx="1454" cy="638" r="18" fill="#EAB85B" stroke="#1A1E19" stroke-width="3" />
+  <text x="1398" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#10204B">JR</text>
+  <text x="1426" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#0D2A1D">M</text>
+  <text x="1454" y="643" text-anchor="middle" class="ui small" font-weight="700" fill="#21170A">A</text>
+
+  <rect x="860" y="718" width="154" height="44" rx="6" fill="#88A9FF" />
+  <text x="937" y="745" text-anchor="middle" class="ui button" fill="#10204B">Open study room</text>
+  <rect x="1026" y="718" width="138" height="44" rx="6" fill="#1D211C" stroke="#596158" />
+  <text x="1095" y="745" text-anchor="middle" class="ui button" fill="#F2EFE7">View notes</text>
+  <rect x="860" y="782" width="394" height="48" rx="6" fill="#1D211C" stroke="#596158" />
+  <text x="878" y="812" class="ui body" fill="#6F756E">Search this room</text>
+  <rect x="1270" y="782" width="128" height="32" rx="5" fill="#213C2C" />
+  <circle cx="1288" cy="798" r="5" fill="#8FD9B0" />
+  <text x="1302" y="803" class="ui small" font-weight="650" fill="#BCE8CE">4 collaborators</text>
+  <text x="860" y="872" class="mono small" fill="#B8BDB6">accent #88A9FF   canvas #141713   ink #F2EFE7</text>
+</svg>

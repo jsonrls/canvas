@@ -1,9 +1,17 @@
 "use client";
 
-import { Eye, EyeOff, KeyRound, LoaderCircle } from "lucide-react";
+import { AppIcon, KeyRound } from "@/components/ui/icons";
+import { Eye as EyeData, EyeOff as EyeOffData } from "lucide";
 import { useActionState, useState } from "react";
 
 import { updatePassword } from "@/app/reset-password/actions";
+import { Button } from "@/components/ui/button";
+import { Field } from "@astryxdesign/core/Field";
+import { IconButton } from "@/components/ui/button";
+import { FormLayout } from "@astryxdesign/core/FormLayout";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { useSuccessToast } from "@/components/ui/toast";
 import {
   INITIAL_PASSWORD_RESET_STATE,
   PASSWORD_MAX_LENGTH,
@@ -15,77 +23,86 @@ export function UpdatePasswordForm(): React.ReactElement {
     updatePassword,
     INITIAL_PASSWORD_RESET_STATE,
   );
+  useSuccessToast(state);
   const [showPasswords, setShowPasswords] = useState(false);
   const inputType = showPasswords ? "text" : "password";
 
   return (
-    <form className="login-form auth-form" action={action}>
-      <div className="auth-password-field">
-        <label htmlFor="new-password">
-          <span>New password</span>
-        </label>
-        <div className="password-input-wrap">
+    <form action={action}>
+      <FormLayout className="gap-5">
+        <Field inputID="new-password" label="New password">
+          <HStack gap={0} vAlign="center" className="relative w-full">
+            <input
+              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 pr-14! text-primary text-lg focus:outline-accent"
+              id="new-password"
+              name="password"
+              type={inputType}
+              autoComplete="new-password"
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
+              aria-describedby="new-password-help"
+              required
+            />
+            <IconButton
+              variant="ghost"
+              size="lg"
+              className="absolute! inset-y-0 right-0 min-h-11 min-w-11 focus-visible:outline-accent!"
+              type="button"
+              label={showPasswords ? "Hide passwords" : "Show passwords"}
+              aria-controls="new-password new-password-confirmation"
+              aria-pressed={showPasswords}
+              onClick={() => setShowPasswords((visible) => !visible)}
+              icon={
+                <AppIcon
+                  iconData={showPasswords ? EyeOffData : EyeData}
+                  aria-hidden="true"
+                  size={18}
+                />
+              }
+            />
+          </HStack>
+        </Field>
+        <Text as="p" color="secondary" id="new-password-help">
+          Use {PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters and choose
+          a password you do not use elsewhere.
+        </Text>
+
+        <Field inputID="new-password-confirmation" label="Confirm new password">
           <input
-            id="new-password"
-            name="password"
+            className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+            id="new-password-confirmation"
+            name="passwordConfirmation"
             type={inputType}
             autoComplete="new-password"
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={PASSWORD_MAX_LENGTH}
-            aria-describedby="new-password-help"
             required
           />
-          <button
-            className="password-toggle"
-            type="button"
-            aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
-            aria-controls="new-password new-password-confirmation"
-            aria-pressed={showPasswords}
-            onClick={() => setShowPasswords((visible) => !visible)}
+        </Field>
+
+        {state.status === "error" && state.message ? (
+          <Text
+            as="p"
+            role="alert"
+            className="text-primary! bg-error-muted p-3 rounded-md"
           >
-            {showPasswords ? (
-              <EyeOff aria-hidden="true" size={18} />
-            ) : (
-              <Eye aria-hidden="true" size={18} />
-            )}
-          </button>
-        </div>
-      </div>
-      <p className="auth-field-help" id="new-password-help">
-        Use {PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters and choose a
-        password you do not use elsewhere.
-      </p>
+            {state.message}
+          </Text>
+        ) : null}
 
-      <label htmlFor="new-password-confirmation">
-        <span>Confirm new password</span>
-        <input
-          id="new-password-confirmation"
-          name="passwordConfirmation"
-          type={inputType}
-          autoComplete="new-password"
-          minLength={PASSWORD_MIN_LENGTH}
-          maxLength={PASSWORD_MAX_LENGTH}
-          required
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          width="100%"
+          className="min-h-11 text-on-accent! focus-visible:outline-accent!"
+          isLoading={pending}
+          isDisabled={pending}
+          aria-busy={pending}
+          label={pending ? "Securing your account…" : "Set new password"}
+          icon={<KeyRound aria-hidden="true" size={17} />}
         />
-      </label>
-
-      {state.message ? (
-        <p
-          className={`login-message login-message--${state.status}`}
-          role={state.status === "error" ? "alert" : "status"}
-        >
-          {state.message}
-        </p>
-      ) : null}
-
-      <button className="login-submit" type="submit" disabled={pending}>
-        {pending ? (
-          <LoaderCircle className="spin" aria-hidden="true" size={17} />
-        ) : (
-          <KeyRound aria-hidden="true" size={17} />
-        )}
-        {pending ? "Securing your account…" : "Set new password"}
-      </button>
+      </FormLayout>
     </form>
   );
 }

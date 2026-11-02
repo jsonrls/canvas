@@ -1,8 +1,12 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
-import Link from "next/link";
 import { useEffect } from "react";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
+import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
   error,
@@ -20,27 +24,39 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <main className="error-page">
-      <section className="error-page__card" aria-labelledby="error-page-title">
-        <span className="error-page__icon" aria-hidden="true">
-          <RotateCcw size={24} />
-        </span>
-        <p className="error-page__eyebrow">Canvas interrupted</p>
-        <h1 id="error-page-title">That study session hit a snag.</h1>
-        <p className="error-page__copy">
-          Your notes are still safe in this browser session. Try loading the
-          room again.
-        </p>
-        <div className="error-page__actions">
-          <button type="button" className="error-page__retry" onClick={reset}>
-            <RotateCcw aria-hidden="true" size={17} />
-            Try again
-          </button>
-          <Link className="error-page__back" href="/rooms">
-            Back to rooms
-          </Link>
-        </div>
-      </section>
-    </main>
+    <VStack
+      as="main"
+      minHeight="100dvh"
+      hAlign="center"
+      vAlign="center"
+      padding={6}
+      className="bg-body"
+    >
+      <VStack
+        as="section"
+        maxWidth={560}
+        width="100%"
+        gap={6}
+        aria-labelledby="error-page-title"
+      >
+        <QollabBrandLogo />
+        <Heading
+          level={1}
+          type="display-2"
+          id="error-page-title"
+          textWrap="balance"
+        >
+          We couldn’t open this page.
+        </Heading>
+        <Text as="p" color="secondary">
+          Try loading it again. If the problem continues, return to your rooms
+          and reopen the workspace.
+        </Text>
+        <HStack gap={3} wrap="wrap">
+          <Button label="Try again" variant="primary" onClick={reset} />
+          <Button href="/rooms" label="Back to rooms" variant="secondary" />
+        </HStack>
+      </VStack>
+    </VStack>
   );
 }

@@ -1,0 +1,456 @@
+.field {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  gap: 9px 14px;
+  margin-block: 4px;
+}
+
+.labelRow,
+.optional,
+.pickButton,
+.removeButton,
+.headerRoomCopy small,
+.sidebarRoomCopy small {
+  font-family: var(--font-body), sans-serif;
+}
+
+.preview,
+.fieldCompact .preview {
+  border-color: var(--line-strong, #cec4b5);
+  border-radius: 14px;
+  background:
+    linear-gradient(rgb(49 86 216 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(49 86 216 / 5%) 1px, transparent 1px),
+    var(--blue-soft, #edf1ff);
+  background-size:
+    20px 20px,
+    20px 20px,
+    auto;
+}
+
+.pickButton,
+.removeButton {
+  border-radius: 10px;
+  text-transform: none;
+}
+
+.pickButton {
+  border-color: var(--brand-primary, #3156d8);
+  background: var(--brand-primary, #3156d8);
+  color: white;
+}
+
+.pickButton:hover,
+.fileInput:focus-visible ~ .actions .pickButton {
+  border-color: var(--blue-deep, #2448c7);
+  background: var(--blue-deep, #2448c7);
+}
+
+.headerRoomIcon,
+.sidebarRoomIcon {
+  border-color: rgb(49 86 216 / 18%);
+  border-radius: 10px;
+  background: var(--blue-soft, #edf1ff);
+  color: var(--brand-primary, #3156d8);
+}
+
+.headerRoomCopy strong,
+.sidebarRoomCopy strong {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 800;
+}
+
+.labelRow,
+.actions,
+.placeholder,
+.headerRoomIdentity,
+.sidebarRoomIdentity {
+  display: flex;
+  align-items: center;
+}
+
+.labelRow {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink, #25231f);
+  font-family: var(--font-mono), sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.optional {
+  color: var(--ink-soft, #746e65);
+  font-size: 9px;
+  font-family: var(--font-mono), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview {
+  position: relative;
+  display: grid;
+  width: 116px;
+  aspect-ratio: 1;
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--line-strong, #c9bfb0);
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 28% 22%, rgb(255 255 255 / 95%), transparent 42%),
+    linear-gradient(145deg, rgb(30 79 214 / 11%), rgb(138 154 214 / 14%)),
+    var(--canvas-deep, #f7f2e8);
+  color: var(--ink-soft, #746e65);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 44%);
+}
+
+.fieldCompact .preview {
+  width: 96px;
+  border-radius: 0;
+}
+
+.fieldCompact {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.previewHasImage {
+  border-style: solid;
+  background-image: var(--room-icon-image);
+  background-position: center;
+  background-size: cover;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 22%),
+    0 8px 20px rgb(63 50 30 / 10%);
+}
+
+.placeholder {
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  text-align: center;
+}
+
+.placeholder > svg {
+  flex: 0 0 auto;
+  color: var(--blue, #7352fa);
+}
+
+.placeholder strong {
+  color: var(--ink-soft, #746e65);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  margin: -1px;
+  white-space: nowrap;
+}
+
+.actions {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pickButton,
+.removeButton {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong, #c9bfb0);
+  border-radius: 0;
+  background: var(--surface-raised, #fff);
+  color: var(--blue-deep, #5c3de0);
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--font-mono), sans-serif;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.pickButton:hover,
+.fileInput:focus-visible ~ .actions .pickButton {
+  border-color: var(--blue, #7352fa);
+  background: var(--blue-soft, #eee9ff);
+}
+
+.fileInput:focus-visible ~ .actions .pickButton {
+  outline: 3px solid rgb(30 79 214 / 16%);
+  outline-offset: 2px;
+}
+
+.removeButton {
+  border-color: transparent;
+  background: transparent;
+  color: #9a3a28;
+}
+
+.removeButton:hover {
+  background: #fff0eb;
+}
+
+.message {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: start;
+  min-height: 15px;
+  margin: -2px 0 0;
+  font-size: 9px;
+  font-weight: 680;
+  line-height: 1.45;
+}
+
+.messageHint {
+  color: var(--ink-soft, #746e65);
+}
+
+.messageError {
+  color: #9a3a28;
+}
+
+.headerRoomIdentity {
+  min-width: 0;
+  gap: 9px;
+  padding-left: 14px;
+  border-left: 1px solid var(--line, #dfd7ca);
+}
+
+.headerRoomIcon,
+.sidebarRoomIcon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(30 79 214 / 22%);
+  background:
+    radial-gradient(circle at 28% 22%, rgb(255 255 255 / 95%), transparent 42%),
+    linear-gradient(145deg, #e8ecfa, #f4f1ea);
+  background-position: center;
+  background-size: cover;
+  color: var(--blue-deep, #5c3de0);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 48%),
+    0 5px 14px rgb(54 45 33 / 9%);
+}
+
+.roomIconHasImage {
+  background-image: var(--room-icon-image);
+  color: transparent;
+}
+
+.headerRoomIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  font-size: 9px;
+}
+
+.headerRoomCopy,
+.sidebarRoomCopy {
+  display: grid;
+  min-width: 0;
+}
+
+.headerRoomCopy small,
+.sidebarRoomCopy small {
+  color: var(--ink-soft, #746e65);
+  font-family: var(--font-mono), sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.headerRoomCopy strong,
+.sidebarRoomCopy strong {
+  overflow: hidden;
+  color: var(--ink, #25231f);
+  font-family: var(--font-display), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerRoomCopy {
+  max-width: min(18vw, 220px);
+}
+
+.sidebarRoomIdentity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebarRoomIcon {
+  width: 44px;
+  height: 44px;
+  border-color: rgb(30 79 214 / 28%);
+  border-radius: 0;
+  font-size: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 56%),
+    0 7px 16px rgb(54 45 33 / 12%);
+}
+
+.sidebarRoomCopy {
+  gap: 1px;
+}
+
+.sidebarRoomCopy small {
+  font-size: 9px;
+}
+
+.sidebarRoomCopy strong {
+  max-width: 134px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.sidebarRoomMeta {
+  overflow: hidden;
+  color: var(--ink-soft, #746e65);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1120px) {
+  .headerRoomCopy {
+    display: none;
+  }
+
+  .headerRoomIdentity {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .field {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+
+  .preview,
+  .fieldCompact .preview {
+    width: 88px;
+    border-radius: 0;
+  }
+
+  .headerRoomIdentity {
+    padding-left: 7px;
+  }
+
+  .headerRoomIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .headerRoomIdentity {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pickButton,
+  .removeButton {
+    transition: none;
+  }
+}
+
+/* Final visual-system precedence for room artwork controls. */
+.labelRow,
+.optional,
+.pickButton,
+.removeButton,
+.headerRoomCopy small,
+.sidebarRoomCopy small {
+  font-family: var(--font-body), sans-serif;
+}
+
+.preview,
+.fieldCompact .preview {
+  border-color: var(--line-strong, #cec4b5);
+  border-radius: 14px;
+  background:
+    linear-gradient(rgb(49 86 216 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(49 86 216 / 5%) 1px, transparent 1px),
+    var(--blue-soft, #edf1ff);
+  background-size:
+    20px 20px,
+    20px 20px,
+    auto;
+}
+
+.previewHasImage {
+  background-image: var(--room-icon-image);
+  background-position: center;
+  background-size: cover;
+}
+
+.pickButton,
+.removeButton {
+  border-radius: 10px;
+  text-transform: none;
+}
+
+.pickButton {
+  border-color: var(--brand-primary, #3156d8);
+  background: var(--brand-primary, #3156d8);
+  color: white;
+}
+
+.pickButton:hover,
+.fileInput:focus-visible ~ .actions .pickButton {
+  border-color: var(--blue-deep, #2448c7);
+  background: var(--blue-deep, #2448c7);
+}
+
+.headerRoomIcon,
+.sidebarRoomIcon {
+  border-color: rgb(49 86 216 / 18%);
+  border-radius: 10px;
+  background: var(--blue-soft, #edf1ff);
+  color: var(--brand-primary, #3156d8);
+}
+
+.headerRoomCopy strong,
+.sidebarRoomCopy strong {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 800;
+}

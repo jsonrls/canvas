@@ -18,6 +18,8 @@ const admin = createClient(supabaseUrl, serviceRoleKey, {
   },
 });
 const bucketName = "boardprep-pdfs";
+const firstDescription = "Review the first case and prepare a recommendation.";
+const secondDescription = "Compare the evidence and summarize the second case.";
 const createdPaths = [];
 const createdUserIds = [];
 let createdRoomId = null;
@@ -31,6 +33,20 @@ function createUserClient(accessToken) {
     },
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
   });
+}
+
+function hasExpectedDescriptions(rows) {
+  const descriptionsByName = new Map(
+    rows.map(({ breakout_room_description, breakout_room_name }) => [
+      breakout_room_name,
+      breakout_room_description,
+    ]),
+  );
+
+  return (
+    descriptionsByName.get("Case group one") === firstDescription &&
+    descriptionsByName.get("Case group two") === secondDescription
+  );
 }
 
 async function createVerifiedUser(label) {
@@ -115,6 +131,7 @@ try {
   const { data: firstData, error: firstError } = await editor.client.rpc(
     "create_breakout_room",
     {
+      input_description: firstDescription,
       input_name: "Case group one",
       input_room_id: createdRoomId,
     },
@@ -122,6 +139,7 @@ try {
   const { data: secondData, error: secondError } = await owner.client.rpc(
     "create_breakout_room",
     {
+      input_description: secondDescription,
       input_name: "Case group two",
       input_room_id: createdRoomId,
     },
@@ -159,6 +177,7 @@ try {
   const { error: viewerCreateError } = await viewer.client.rpc(
     "create_breakout_room",
     {
+      input_description: "This room creation must be rejected.",
       input_name: "Viewer must not create",
       input_room_id: createdRoomId,
     },
@@ -187,12 +206,14 @@ try {
   if (
     viewerDirectoryBeforeJoinError ||
     viewerDirectoryBeforeJoin?.length !== 2 ||
+    !hasExpectedDescriptions(viewerDirectoryBeforeJoin) ||
     viewerDirectoryBeforeJoin.some(
       ({ breakout_room_code, is_joined }) =>
         breakout_room_code !== null || is_joined,
     ) ||
     facilitatorDirectoryError ||
     facilitatorDirectory?.length !== 2 ||
+    !hasExpectedDescriptions(facilitatorDirectory) ||
     facilitatorDirectory.some(
       ({ breakout_room_code, is_joined }) =>
         !/^[A-Z0-9]{8}$/.test(breakout_room_code ?? "") || !is_joined,

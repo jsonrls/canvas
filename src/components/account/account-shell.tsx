@@ -1,7 +1,16 @@
-import { ArrowLeft, LockKeyhole, Settings, UserRound } from "lucide-react";
+"use client";
+
+import { AppShell } from "@astryxdesign/core/AppShell";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import Link from "next/link";
 
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import { ArrowLeft } from "@/components/ui/icons";
 
 interface AccountShellProps {
   activePage: "profile" | "settings";
@@ -15,96 +24,95 @@ interface AccountShellProps {
 export function AccountShell({
   activePage,
   children,
-  displayName,
-  email,
   intro,
   title,
 }: AccountShellProps): React.ReactElement {
-  const initial = displayName.trim().charAt(0).toUpperCase() || "Q";
-
   return (
-    <main className="account-page">
-      <a className="account-skip-link" href="#account-content">
-        Skip to account content
-      </a>
-
-      <header className="account-header">
-        <div className="account-header__inner">
-          <Link
-            className="account-brand"
-            href="/rooms"
-            aria-label="Qollab rooms"
+    <AppShell
+      className="bg-surface"
+      variant="section"
+      height="auto"
+      contentPadding={0}
+      mobileNav={false}
+      topNav={
+        <VStack className="bg-surface" gap={0}>
+          <HStack
+            className="border-b border-border"
+            hAlign="center"
+            paddingInline={4}
           >
-            <QollabBrandLogo />
-            <span>Account</span>
-          </Link>
-          <Link className="account-back-link" href="/rooms">
-            <ArrowLeft aria-hidden="true" size={16} />
-            Back to rooms
-          </Link>
-        </div>
-      </header>
-
-      <div className="account-content">
-        <header className="account-intro">
-          <p className="account-eyebrow">Your Qollab</p>
-          <h1>{title}</h1>
-          <p>{intro}</p>
-        </header>
-
-        <div className="account-layout">
-          <aside className="account-sidebar" aria-label="Account navigation">
-            <div className="account-sidebar__identity">
-              <span className="account-sidebar__avatar" aria-hidden="true">
-                {initial}
-              </span>
-              <span className="account-sidebar__copy">
-                <strong title={displayName}>{displayName}</strong>
-                <small title={email ?? undefined}>
-                  {email ?? "Signed-in account"}
-                </small>
-              </span>
-            </div>
-
-            <nav className="account-nav">
+            <HStack
+              width="100%"
+              maxWidth={1120}
+              className="min-h-14"
+              hAlign="between"
+              vAlign="center"
+              wrap="wrap"
+              gap={2}
+              paddingBlock={1}
+            >
               <Link
-                aria-current={activePage === "profile" ? "page" : undefined}
-                className="account-nav__link"
-                href="/profile"
+                href="/rooms"
+                aria-label="Qollab rooms"
+                className="inline-flex min-h-11 min-w-11 items-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
-                <UserRound aria-hidden="true" size={18} />
-                <span>
-                  <strong>Profile</strong>
-                  <small>Your public study name</small>
-                </span>
+                <QollabBrandLogo />
               </Link>
-              <Link
-                aria-current={activePage === "settings" ? "page" : undefined}
-                className="account-nav__link"
-                href="/settings"
-              >
-                <Settings aria-hidden="true" size={18} />
-                <span>
-                  <strong>Settings</strong>
-                  <small>Sign-in and security</small>
-                </span>
-              </Link>
-            </nav>
-
-            <div className="account-sidebar__privacy">
-              <LockKeyhole aria-hidden="true" size={16} />
-              <span>
-                <strong>Private by default</strong>
-                <small>Your email is only shown to you.</small>
-              </span>
-            </div>
-          </aside>
-
-          <div className="account-main" id="account-content" tabIndex={-1}>
-            {children}
-          </div>
-        </div>
-      </div>
-    </main>
+              <Button
+                as={Link}
+                href="/rooms"
+                label="Back to rooms"
+                variant="ghost"
+                icon={<ArrowLeft aria-hidden="true" size={16} />}
+              />
+            </HStack>
+          </HStack>
+          <VStack paddingInline={4} className="pt-6 md:pt-8" hAlign="center">
+            <HStack
+              as="nav"
+              aria-label="Account"
+              width="100%"
+              maxWidth={640}
+              gap={2}
+            >
+              {(["profile", "settings"] as const).map((page) => (
+                <Button
+                  key={page}
+                  as={Link}
+                  href={`/${page}`}
+                  label={page === "profile" ? "Profile" : "Settings"}
+                  variant="ghost"
+                  aria-current={activePage === page ? "page" : undefined}
+                  className="min-h-11"
+                />
+              ))}
+            </HStack>
+          </VStack>
+        </VStack>
+      }
+    >
+      <VStack className="px-4">
+        <Layout height="auto" contentWidth={640} padding={0}>
+          <LayoutContent isScrollable={false} padding={0}>
+            <VStack
+              id="account-content"
+              tabIndex={-1}
+              className="min-w-0 pt-6 pb-8"
+              gap={6}
+            >
+              <VStack gap={2}>
+                <Heading level={1} type="display-2">
+                  {title}
+                </Heading>
+                <Text color="secondary">{intro}</Text>
+              </VStack>
+              <VStack gap={6} className="min-w-0">
+                {children}
+              </VStack>
+            </VStack>
+          </LayoutContent>
+        </Layout>
+      </VStack>
+    </AppShell>
   );
 }

@@ -21,8 +21,8 @@ export default async function SignUpPage({
   return (
     <AuthShell
       eyebrow="Start studying together"
-      title="Make room for better sessions."
-      intro="Create your Qollab account, then bring your notes and study group into one dependable workspace."
+      title="Create your account"
+      intro="Create or join a room to work on notes with your group."
     >
       <LoginForm mode="signup" nextPath={nextPath} />
     </AuthShell>

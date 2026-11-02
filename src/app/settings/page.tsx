@@ -25,8 +25,8 @@ export default async function SettingsPage(): Promise<React.ReactElement> {
       activePage="settings"
       displayName={profile.displayName}
       email={context.email}
-      intro="Review your sign-in details, strengthen account security, and manage your current session."
-      title="Everything in its place."
+      intro="Manage your account and sign-in."
+      title="Settings"
     >
       <SettingsPanel
         displayName={profile.displayName}

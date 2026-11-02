@@ -2,9 +2,17 @@
 
 ## Overview
 
-This document outlines the development roadmap for the MyBoardPrep Collaborative Learning Suite, including planned features, improvements, and timeline.
+This document outlines the development roadmap for the Qollab collaborative learning workspace, including planned features, improvements, and timeline.
 
-## Version 1.0 - MVP (Current Focus)
+## Status of this document
+
+Reviewed 2026-10-02 against repository documentation and source structure. The
+2024–2025 quarter labels below are historical planning dates, not current delivery
+commitments. Completion checkboxes reflect documented implementation; they are
+not evidence of a fresh production acceptance run. Current limits and runtime
+behavior are described in the root README and ARCHITECTURE.md.
+
+## Version 1.0 - MVP foundation
 
 ### Phase 1: Core Infrastructure ✅
 
@@ -198,7 +206,7 @@ This document outlines the development roadmap for the MyBoardPrep Collaborative
 - [ ] Collaborative concept maps
 - [ ] Shared code editor
 - [ ] Real-time polling
-- [ ] Breakout rooms
+- [x] Breakout rooms with persistent live Q&A ([implementation plan](../plan/feature-breakout-live-qa-1.md))
 - [ ] Recording and playback
 
 ### AI Features
@@ -340,7 +348,7 @@ This roadmap is influenced by:
 
 ## Next Review
 
-Roadmap review scheduled for: 2026-07-24
+Last documentation reconciliation: 2026-10-02. The next delivery timeline requires product prioritization.
 
 Regular reviews will be conducted quarterly to adjust priorities based on:
 

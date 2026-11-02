@@ -53,13 +53,11 @@ assert.match(profilePage, /redirect\("\/login\?next=%2Fprofile"\)/);
 assert.match(settingsPage, /redirect\("\/login\?next=%2Fsettings"\)/);
 assert.match(profilePanel, /aria-describedby=/);
 assert.match(profilePanel, /disabled=\{pending\}/);
-assert.match(
-  profilePanel,
-  /role=\{state\.status === "error" \? "alert" : "status"\}/,
-);
+// These source checks enforce boundaries only; they do not simulate feedback.
+assert.match(profilePanel, /role="alert"/);
 assert.match(proxy, /"\/profile"/);
 assert.match(proxy, /"\/settings"/);
 
 process.stdout.write(
-  "Account-profile verification passed: normalization boundaries, authenticated mutation ordering, protected routes, and accessible feedback contracts.\n",
+  "Account-profile verification passed: normalization boundaries, authenticated mutation ordering, protected routes, and static form accessibility boundaries.\n",
 );

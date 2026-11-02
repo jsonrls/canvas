@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  readCompressedRoomIcon,
+  removeRoomIcon as removeRoomIconAsset,
+  uploadRoomIcon,
+} from "@/lib/room-banners/server";
+import {
   addRoomMember,
   changeRoomMemberRole,
   createRoom,
@@ -18,7 +23,10 @@ import {
   RoomDomainError,
   updateRoom,
 } from "@/lib/rooms/repository";
-import { getAuthenticatedContext } from "@/lib/supabase/server";
+import {
+  createServiceRoleClient,
+  getAuthenticatedContext,
+} from "@/lib/supabase/server";
 
 import type { RoomActionState } from "./action-state";
 
@@ -63,7 +71,39 @@ export async function createRoomAction(
     const context = await requireContext();
     const name = normalizeRoomName(formData.get("name"));
     const isPublic = readVisibility(formData);
+    const roomIcon = await readCompressedRoomIcon(
+      formData.get("room_icon"),
+      formData.get("room_icon_compressed"),
+    );
     const room = await createRoom(context.client, name, isPublic);
+
+    if (roomIcon) {
+      let uploadedPath: string | null = null;
+
+      try {
+        uploadedPath = await uploadRoomIcon(context.client, room.id, roomIcon);
+        await updateRoom(
+          context.client,
+          room.slug,
+          context.userId,
+          name,
+          isPublic,
+          uploadedPath,
+        );
+      } catch (error) {
+        if (uploadedPath) {
+          await removeRoomIconAsset(context.client, uploadedPath).catch(
+            () => false,
+          );
+        }
+
+        await deleteRoom(context.client, room.slug, context.userId).catch(
+          () => undefined,
+        );
+        throw error;
+      }
+    }
+
     roomSlug = room.slug;
     revalidateRoomPaths(roomSlug);
   } catch (error) {
@@ -120,7 +160,61 @@ export async function updateRoomAction(
     const context = await requireContext();
     const name = normalizeRoomName(formData.get("name"));
     const isPublic = readVisibility(formData);
-    await updateRoom(context.client, roomSlug, context.userId, name, isPublic);
+    const room = await getRoomSettings(
+      context.client,
+      roomSlug,
+      context.userId,
+    );
+    const roomIcon = await readCompressedRoomIcon(
+      formData.get("room_icon"),
+      formData.get("room_icon_compressed"),
+    );
+    const shouldRemoveRoomIcon = formData.get("remove_room_icon") === "true";
+
+    if (roomIcon && shouldRemoveRoomIcon) {
+      throw new RoomDomainError(
+        "Choose a replacement icon or remove the current one, not both.",
+      );
+    }
+
+    let uploadedPath: string | null = null;
+    let nextRoomIconPath: string | null | undefined;
+
+    try {
+      if (roomIcon) {
+        uploadedPath = await uploadRoomIcon(context.client, room.id, roomIcon);
+      }
+
+      nextRoomIconPath =
+        uploadedPath ?? (shouldRemoveRoomIcon ? null : undefined);
+      await updateRoom(
+        context.client,
+        roomSlug,
+        context.userId,
+        name,
+        isPublic,
+        nextRoomIconPath,
+      );
+    } catch (error) {
+      if (uploadedPath) {
+        await removeRoomIconAsset(context.client, uploadedPath).catch(
+          () => false,
+        );
+      }
+
+      throw error;
+    }
+
+    if (
+      nextRoomIconPath !== undefined &&
+      room.roomIconStoragePath &&
+      room.roomIconStoragePath !== nextRoomIconPath
+    ) {
+      await removeRoomIconAsset(context.client, room.roomIconStoragePath).catch(
+        () => false,
+      );
+    }
+
     revalidateRoomPaths(roomSlug);
     return { message: "Room settings saved.", status: "success" };
   } catch (error) {
@@ -223,6 +317,18 @@ export async function deleteRoomAction(
     }
 
     await deleteRoom(context.client, roomSlug, context.userId);
+
+    if (room.roomIconStoragePath) {
+      try {
+        await removeRoomIconAsset(
+          createServiceRoleClient(),
+          room.roomIconStoragePath,
+        );
+      } catch {
+        // The room deletion succeeded; stale asset cleanup must not undo it.
+      }
+    }
+
     revalidateRoomPaths(roomSlug);
   } catch (error) {
     return actionError(error, "The room could not be deleted.");

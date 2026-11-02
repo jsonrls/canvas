@@ -1,12 +1,19 @@
 "use client";
 
+import { Button, IconButton } from "@/components/ui/button";
 import {
-  CircleHelp,
   MessageCircleQuestion,
   SendHorizontal,
   Trash2,
   X,
-} from "lucide-react";
+} from "@/components/ui/icons";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { TextArea } from "@astryxdesign/core/TextArea";
+import { Token } from "@astryxdesign/core/Token";
+import { VStack } from "@astryxdesign/core/VStack";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import * as Y from "yjs";
 
@@ -16,6 +23,8 @@ interface BreakoutQaPanelProps {
   activeTool: RoomDocumentKind;
   canAsk: boolean;
   document: Y.Doc | null;
+  draft: string;
+  onDraftChange(draft: string): void;
   onClose(): void;
   participantCount: number;
   user: {
@@ -89,11 +98,12 @@ export function BreakoutQaPanel({
   activeTool,
   canAsk,
   document,
+  draft,
+  onDraftChange,
   onClose,
   participantCount,
   user,
 }: BreakoutQaPanelProps): React.ReactElement {
-  const [draft, setDraft] = useState("");
   const [questions, setQuestions] = useState<BreakoutQuestion[]>([]);
   const questionListRef = useRef<HTMLDivElement>(null);
   const sharedQuestions = useMemo(
@@ -126,7 +136,7 @@ export function BreakoutQaPanel({
     list.scrollTop = list.scrollHeight;
   }, [questions.length]);
 
-  const submitQuestion = (event: FormEvent<HTMLFormElement>): void => {
+  const submitQuestion = (event: FormEvent<HTMLElement>): void => {
     event.preventDefault();
 
     const body = draft.trim();
@@ -145,7 +155,7 @@ export function BreakoutQaPanel({
     document.transact(() => {
       sharedQuestions.push([question]);
     }, "breakout-qa");
-    setDraft("");
+    onDraftChange("");
   };
 
   const removeQuestion = (questionId: string): void => {
@@ -166,121 +176,135 @@ export function BreakoutQaPanel({
   };
 
   return (
-    <aside
-      className="breakout-qa"
+    <VStack
+      as="section"
       id="breakout-qa-panel"
       aria-label="Breakout room Q and A"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+      gap={0}
+      className="h-full min-h-0 min-w-0 overflow-hidden bg-surface"
     >
-      <header className="breakout-qa__header">
-        <div>
-          <span className="breakout-qa__eyebrow">
-            <span aria-hidden="true" />
-            Live
-          </span>
-          <h2>Q&amp;A</h2>
-        </div>
-        <div className="breakout-qa__header-actions">
-          <span className="breakout-qa__active-count">
-            {participantCount} active
-          </span>
-          <button
-            aria-label="Close Q and A"
-            className="breakout-qa__close"
-            onClick={onClose}
-            type="button"
-          >
-            <X aria-hidden="true" size={19} />
-          </button>
-        </div>
-      </header>
-
-      <div
-        className="breakout-qa__questions"
+      <HStack
+        as="header"
+        padding={4}
+        gap={2}
+        hAlign="between"
+        vAlign="center"
+        className="shrink-0 border-b border-border"
+      >
+        <VStack gap={1}>
+          <Heading level={2}>Q&amp;A</Heading>
+          <Text type="supporting">{participantCount} active</Text>
+        </VStack>
+        <IconButton
+          label="Close Q and A"
+          icon={<X aria-hidden="true" size={19} />}
+          onClick={onClose}
+        />
+      </HStack>
+      <VStack
         ref={questionListRef}
+        isScrollable
+        className="flex-1 min-h-0 min-w-0 overscroll-contain"
         aria-live="polite"
         aria-relevant="additions"
       >
         {questions.length > 0 ? (
           questions.map((question) => (
-            <article className="breakout-qa__question" key={question.id}>
-              <span
-                className="breakout-qa__avatar"
-                style={{ backgroundColor: question.authorColor }}
-                aria-hidden="true"
-              >
-                {question.authorName.charAt(0).toUpperCase()}
-              </span>
-              <div>
-                <div className="breakout-qa__question-heading">
-                  <div className="breakout-qa__question-meta">
-                    <strong>{question.authorName}</strong>
-                    <time dateTime={new Date(question.createdAt).toISOString()}>
-                      {TIME_FORMATTER.format(question.createdAt)}
-                    </time>
-                    <span>{TOOL_LABELS[question.tool]}</span>
-                  </div>
+            <HStack
+              as="article"
+              padding={4}
+              gap={3}
+              key={question.id}
+              className="shrink-0 min-w-0 border-b border-border"
+            >
+              <Avatar name={question.authorName} size="sm" />
+              <VStack gap={2} className="flex-1 min-w-0">
+                <HStack gap={2} hAlign="between" vAlign="start">
+                  <VStack gap={1} className="min-w-0">
+                    <Text weight="semibold" className="break-words">
+                      {question.authorName}
+                    </Text>
+                    <HStack gap={2} wrap="wrap" vAlign="center">
+                      <time
+                        className="text-secondary text-sm"
+                        dateTime={new Date(question.createdAt).toISOString()}
+                      >
+                        {TIME_FORMATTER.format(question.createdAt)}
+                      </time>
+                      <Token label={TOOL_LABELS[question.tool]} />
+                    </HStack>
+                  </VStack>
                   {user && question.authorId === user.id ? (
-                    <button
-                      aria-label="Remove question"
+                    <IconButton
+                      variant="danger-ghost"
+                      label="Remove question"
+                      icon={<Trash2 aria-hidden="true" size={16} />}
                       onClick={() => removeQuestion(question.id)}
-                      type="button"
-                    >
-                      <Trash2 aria-hidden="true" size={14} />
-                    </button>
+                    />
                   ) : null}
-                </div>
-                <p>{question.body}</p>
-              </div>
-            </article>
+                </HStack>
+                <Text className="whitespace-pre-wrap break-words">
+                  {question.body}
+                </Text>
+              </VStack>
+            </HStack>
           ))
         ) : (
-          <div className="breakout-qa__empty">
-            <span aria-hidden="true">
-              <MessageCircleQuestion size={24} />
-            </span>
-            <h3>Questions will appear here</h3>
-            <p>
+          <VStack
+            gap={3}
+            padding={6}
+            hAlign="center"
+            vAlign="center"
+            className="flex-1"
+          >
+            <MessageCircleQuestion aria-hidden="true" size={24} />
+            <Heading level={3}>Questions will appear here</Heading>
+            <Text color="secondary">
               Ask about the shared notes, the PDF, or anything on the
               whiteboard.
-            </p>
-          </div>
+            </Text>
+          </VStack>
         )}
-      </div>
-
-      <form className="breakout-qa__composer" onSubmit={submitQuestion}>
-        <label htmlFor="breakout-question">
-          <CircleHelp aria-hidden="true" size={15} />
-          Ask the group
-        </label>
-        <div className="breakout-qa__composer-row">
-          <textarea
-            aria-describedby="breakout-question-help"
-            disabled={!canAsk || !document || !user}
-            id="breakout-question"
-            maxLength={MAX_QUESTION_LENGTH}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={
-              canAsk
-                ? `Ask about ${TOOL_LABELS[activeTool].toLowerCase()}…`
-                : "Q&A is read-only"
-            }
-            rows={1}
-            value={draft}
-          />
-          <button
-            aria-label="Post question"
-            disabled={!draft.trim() || !canAsk || !document || !user}
-            type="submit"
-          >
-            <SendHorizontal aria-hidden="true" size={17} />
-          </button>
-        </div>
-        <p id="breakout-question-help">
+      </VStack>
+      <VStack
+        as="form"
+        padding={4}
+        gap={3}
+        onSubmit={submitQuestion}
+        className="shrink-0 border-t border-border"
+      >
+        <TextArea
+          label="Ask the group"
+          isDisabled={!canAsk || !document || !user}
+          onChange={(value) =>
+            onDraftChange(value.slice(0, MAX_QUESTION_LENGTH))
+          }
+          placeholder={
+            canAsk
+              ? `Ask about ${TOOL_LABELS[activeTool].toLowerCase()}…`
+              : "Q&A is read-only"
+          }
+          rows={2}
+          value={draft}
+        />
+        <Text type="supporting">
           {canAsk
             ? `${draft.length}/${MAX_QUESTION_LENGTH} · Visible to everyone in this breakout`
             : "The room owner has disabled viewer collaboration."}
-        </p>
-      </form>
-    </aside>
+        </Text>
+        <Button
+          label="Post question"
+          icon={<SendHorizontal aria-hidden="true" size={17} />}
+          isDisabled={!draft.trim() || !canAsk || !document || !user}
+          type="submit"
+        />
+      </VStack>
+    </VStack>
   );
 }

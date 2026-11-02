@@ -1,35 +1,40 @@
 "use client";
 
-import {
-  ArrowRight,
-  CalendarDays,
-  Clock3,
-  DoorOpen,
-  Globe2,
-  LibraryBig,
-  LoaderCircle,
-  LogOut,
-  LockKeyhole,
-  Plus,
-  Settings2,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { Avatar } from "@astryxdesign/core/Avatar";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { List } from "@astryxdesign/core/List";
+import { RadioList, RadioListItem } from "@astryxdesign/core/RadioList";
+import { Text } from "@astryxdesign/core/Text";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Token } from "@astryxdesign/core/Token";
 import Link from "next/link";
-import { useActionState, useId, useRef } from "react";
+import { startTransition, useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
 import {
   createRoomAction,
   joinRoomAction,
   leaveRoomAction,
 } from "@/app/rooms/actions";
-import { INITIAL_ROOM_ACTION_STATE } from "@/app/rooms/action-state";
 import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
+import { RoomIconField } from "@/components/rooms/room-banner-field";
+import {
+  ArrowRight,
+  DoorOpen,
+  Globe2,
+  LibraryBig,
+  LockKeyhole,
+  Plus,
+} from "@/components/ui/icons";
+import { useSuccessToast } from "@/components/ui/toast";
 import type { RoomDirectory, RoomSummary } from "@/lib/rooms/repository";
-
-import styles from "./rooms-dashboard.module.css";
 
 interface RoomsDashboardProps {
   directory: RoomDirectory;
@@ -43,11 +48,7 @@ async function prepareRoomHomeSignOut(): Promise<void> {
 
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Recently active";
-  }
-
+  if (Number.isNaN(date.getTime())) return "Recently active";
   return `Updated ${new Intl.DateTimeFormat("en", {
     day: "numeric",
     month: "short",
@@ -55,49 +56,34 @@ function formatUpdatedAt(value: string): string {
   }).format(date)}`;
 }
 
-function getRoomInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  return words
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
-}
+const roomActionClassName = "min-h-11 px-4";
 
 function PendingButton({
-  children,
-  className,
+  label,
   pendingLabel,
+  roomName,
+  primary = false,
 }: {
-  children: React.ReactNode;
-  className: string;
+  label: string;
   pendingLabel: string;
-}): React.ReactElement {
+  roomName?: string;
+  primary?: boolean;
+}) {
   const { pending } = useFormStatus();
-
   return (
-    <button className={className} type="submit" disabled={pending}>
-      {pending ? (
-        <LoaderCircle className="spin" aria-hidden="true" size={17} />
-      ) : null}
-      {pending ? pendingLabel : children}
-    </button>
-  );
-}
-
-function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
-  const Icon = isPublic ? Globe2 : LockKeyhole;
-
-  return (
-    <span
-      className={`${styles.badge} ${
-        isPublic ? styles.badgeOpen : styles.badgePrivate
-      }`}
-    >
-      <Icon aria-hidden="true" size={13} />
-      {isPublic ? "Open" : "Private"}
-    </span>
+    <Button
+      type="submit"
+      label={pending ? pendingLabel : label}
+      aria-label={roomName ? `${label}: ${roomName}` : undefined}
+      isLoading={pending}
+      variant={primary ? "primary" : "secondary"}
+      icon={roomName ? <DoorOpen aria-hidden="true" size={16} /> : undefined}
+      className={
+        roomName
+          ? roomActionClassName
+          : `min-h-11 font-normal! ${primary ? "text-on-accent!" : ""}`
+      }
+    />
   );
 }
 
@@ -106,190 +92,159 @@ function JoinRoomForm({ room }: { room: RoomSummary }) {
     joinRoomAction.bind(null, room.slug),
     INITIAL_ROOM_ACTION_STATE,
   );
-
+  useSuccessToast(state);
   return (
-    <form action={action} className={styles.roomActionForm}>
-      {state.status === "error" ? (
-        <p
-          className="room-inline-message room-inline-message--error"
-          role="alert"
-        >
-          {state.message}
-        </p>
-      ) : null}
-      <PendingButton
-        className={styles.roomPrimaryAction}
-        pendingLabel="Joining…"
-      >
-        <DoorOpen aria-hidden="true" size={16} />
-        Join room
-      </PendingButton>
+    <form action={action}>
+      <VStack gap={2} hAlign="start">
+        {state.status === "error" ? (
+          <Text role="alert" className="text-error">
+            {state.message}
+          </Text>
+        ) : null}
+        <PendingButton
+          label="Join room"
+          pendingLabel="Joining…"
+          roomName={room.name}
+        />
+      </VStack>
     </form>
   );
 }
 
 function LeaveRoomForm({ room }: { room: RoomSummary }) {
-  const [state, action] = useActionState(
+  const [state, action, pending] = useActionState(
     leaveRoomAction.bind(null, room.slug),
     INITIAL_ROOM_ACTION_STATE,
   );
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
   const descriptionId = useId();
-
-  const openLeaveDialog = (): void => {
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    window.requestAnimationFrame(() => {
-      dialog
-        ?.querySelector<HTMLButtonElement>("[data-leave-dialog-cancel]")
-        ?.focus();
-    });
-  };
-
-  const closeLeaveDialog = (): void => {
-    dialogRef.current?.close();
-  };
-
+  useSuccessToast(state);
   return (
     <>
-      <div className={styles.roomActionForm}>
-        <button
-          className={styles.roomSecondaryAction}
-          onClick={openLeaveDialog}
-          ref={triggerRef}
-          type="button"
-        >
-          Leave
-        </button>
-      </div>
-
-      <dialog
-        aria-describedby={descriptionId}
+      <Button
+        label="Leave"
+        aria-label={`Leave room: ${room.name}`}
+        variant="danger-ghost"
+        className="min-h-11"
+        onClick={() => setIsOpen(true)}
+      />
+      <Dialog
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        purpose="form"
+        role="alertdialog"
         aria-labelledby={titleId}
-        className={styles.leaveDialog}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) {
-            closeLeaveDialog();
-          }
-        }}
-        onClose={() => triggerRef.current?.focus()}
-        ref={dialogRef}
+        aria-describedby={descriptionId}
       >
-        <div className={styles.leaveDialogPanel}>
-          <span className={styles.leaveDialogIcon} aria-hidden="true">
-            <TriangleAlert size={20} />
-          </span>
-          <div className={styles.leaveDialogCopy}>
-            <p>Room membership</p>
-            <h2 id={titleId}>Leave “{room.name}”?</h2>
-            <p id={descriptionId}>
-              You’ll lose access to this room and its shared study materials.
-              You can return if the room is public or you’re invited again.
-            </p>
-          </div>
-
-          <form action={action} className={styles.leaveDialogForm}>
-            {state.status === "error" ? (
-              <p
-                className="room-inline-message room-inline-message--error"
-                role="alert"
-              >
-                {state.message}
-              </p>
-            ) : null}
-            <div className={styles.leaveDialogActions}>
-              <button
-                className={styles.leaveDialogCancel}
-                data-leave-dialog-cancel
-                onClick={closeLeaveDialog}
-                type="button"
-              >
-                Keep room
-              </button>
-              <PendingButton
-                className={styles.leaveDialogConfirm}
-                pendingLabel="Leaving…"
-              >
-                <LogOut aria-hidden="true" size={16} />
-                Leave room
-              </PendingButton>
-            </div>
-          </form>
-        </div>
-      </dialog>
+        <VStack gap={4} padding={4}>
+          <Heading level={2} id={titleId}>
+            Leave “{room.name}”?
+          </Heading>
+          <Text color="secondary" id={descriptionId}>
+            You’ll lose access to this room and its shared study materials. You
+            can return if the room is public or you’re invited again.
+          </Text>
+          {state.status === "error" ? (
+            <Text role="alert" className="text-error">
+              {state.message}
+            </Text>
+          ) : null}
+          <HStack gap={2} hAlign="end" wrap="wrap">
+            <Button
+              label="Keep room"
+              variant="ghost"
+              data-autofocus
+              className="min-h-11"
+              onClick={() => setIsOpen(false)}
+            />
+            <Button
+              label={pending ? "Leaving…" : "Leave room"}
+              variant="destructive"
+              className="min-h-11"
+              isLoading={pending}
+              onClick={() => startTransition(() => action(new FormData()))}
+            />
+          </HStack>
+        </VStack>
+      </Dialog>
     </>
   );
 }
 
-function JoinedRoomRow({ room }: { room: RoomSummary }) {
-  const roleClassName =
-    room.role === "owner"
-      ? styles.badgeOwner
-      : room.role === "viewer"
-        ? styles.badgeViewer
-        : styles.badgeEditor;
-
+function RoomRow({ room, joined }: { room: RoomSummary; joined: boolean }) {
   return (
-    <article className={styles.roomRow}>
-      <div className={styles.roomMonogram} aria-hidden="true">
-        {getRoomInitials(room.name)}
-      </div>
-      <div className={styles.roomDetails}>
-        <div className={styles.roomTitleLine}>
-          <h2>{room.name}</h2>
-          <VisibilityBadge isPublic={room.isPublic} />
-        </div>
-        <div className={styles.roomMeta}>
-          <span className={`${styles.badge} ${roleClassName}`}>
-            {room.role}
-          </span>
-          <span className={styles.roomUpdated}>
-            <Clock3 aria-hidden="true" size={13} />
-            {formatUpdatedAt(room.updatedAt)}
-          </span>
-        </div>
-      </div>
-      <div className={styles.roomActions}>
-        {room.role === "owner" ? (
-          <Link
-            className={styles.roomSecondaryAction}
-            href={`/rooms/${room.slug}/settings`}
-          >
-            <Settings2 aria-hidden="true" size={15} />
-            Manage
-          </Link>
-        ) : (
-          <LeaveRoomForm room={room} />
-        )}
-        <Link className={styles.roomPrimaryAction} href={`/rooms/${room.slug}`}>
-          Open room
-          <ArrowRight aria-hidden="true" size={16} />
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-function PublicRoomRow({ room }: { room: RoomSummary }) {
-  return (
-    <article className={`${styles.roomRow} ${styles.roomRowPublic}`}>
-      <div className={styles.roomMonogram} aria-hidden="true">
-        {getRoomInitials(room.name)}
-      </div>
-      <div className={styles.roomDetails}>
-        <div className={styles.roomTitleLine}>
-          <h2>{room.name}</h2>
-          <VisibilityBadge isPublic />
-        </div>
-        <span className={styles.roomUpdated}>
-          <CalendarDays aria-hidden="true" size={13} />
-          {formatUpdatedAt(room.updatedAt)}
-        </span>
-      </div>
-      <JoinRoomForm room={room} />
-    </article>
+    <VStack
+      as="li"
+      paddingBlock={5}
+      gap={3}
+      className="w-full border-b border-border last:border-b-0"
+    >
+      <HStack gap={4} vAlign="start" className="flex-col md:flex-row">
+        <HStack gap={3} vAlign="start" className="min-w-0 flex-1 w-full">
+          <Avatar
+            name={room.name}
+            src={room.iconUrl ?? undefined}
+            size="md"
+            tooltip={false}
+          />
+          <VStack gap={2} className="min-w-0 flex-1">
+            <Heading level={3} className="break-words text-lg!">
+              {room.name}
+            </Heading>
+            <HStack gap={2} wrap="wrap" vAlign="center">
+              <Token
+                size="sm"
+                label={room.isPublic ? "Public" : "Private"}
+                icon={
+                  room.isPublic ? (
+                    <Globe2 aria-hidden="true" size={12} />
+                  ) : (
+                    <LockKeyhole aria-hidden="true" size={12} />
+                  )
+                }
+              />
+              {joined && room.role ? (
+                <Token
+                  size="sm"
+                  label={room.role.charAt(0).toUpperCase() + room.role.slice(1)}
+                />
+              ) : null}
+              <Text type="supporting">{formatUpdatedAt(room.updatedAt)}</Text>
+            </HStack>
+          </VStack>
+        </HStack>
+        <HStack gap={2} wrap="wrap" vAlign="center" className="shrink-0">
+          {joined ? (
+            <>
+              {room.role === "owner" ? (
+                <Button
+                  as={Link}
+                  href={`/rooms/${room.slug}/settings`}
+                  label="Manage"
+                  aria-label={`Manage room: ${room.name}`}
+                  variant="ghost"
+                  className="min-h-11"
+                />
+              ) : (
+                <LeaveRoomForm room={room} />
+              )}
+              <Button
+                as={Link}
+                href={`/rooms/${room.slug}`}
+                label="Open room"
+                aria-label={`Open room: ${room.name}`}
+                variant="secondary"
+                endContent={<ArrowRight aria-hidden="true" size={16} />}
+                className={roomActionClassName}
+              />
+            </>
+          ) : (
+            <JoinRoomForm room={room} />
+          )}
+        </HStack>
+      </HStack>
+    </VStack>
   );
 }
 
@@ -302,207 +257,210 @@ export function RoomsDashboard({
     createRoomAction,
     INITIAL_ROOM_ACTION_STATE,
   );
-  const createDialogRef = useRef<HTMLDialogElement>(null);
-  const roomCount = directory.joinedRooms.length;
-
-  const openCreateDialog = (): void => {
-    const dialog = createDialogRef.current;
-    dialog?.showModal();
-    dialog?.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
-  };
-
-  const closeCreateDialog = (): void => {
-    createDialogRef.current?.close();
-  };
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [visibility, setVisibility] = useState("private");
+  useSuccessToast(createState);
+  const openCreate = () => setIsCreateOpen(true);
 
   return (
-    <main className={styles.shell}>
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <div className={styles.brandGroup}>
-            <Link
-              className={styles.brand}
-              href="/rooms"
-              aria-label="Qollab rooms"
-            >
+    <>
+      <VStack className="min-h-dvh bg-surface">
+        <a
+          href="#rooms-content"
+          className="sr-only focus:not-sr-only focus:p-4 focus:bg-surface focus:text-accent"
+        >
+          Skip to rooms
+        </a>
+        <VStack as="header" className="border-b border-border" hAlign="center">
+          <HStack
+            maxWidth={1120}
+            className="w-full min-h-20 md:px-8"
+            paddingInline={4}
+            paddingBlock={3}
+            hAlign="between"
+            vAlign="center"
+            gap={4}
+          >
+            <Link href="/rooms" aria-label="Qollab rooms">
               <QollabBrandLogo />
             </Link>
-          </div>
-          <div className={styles.headerActions}>
-            <button
-              className={styles.newRoomButton}
-              onClick={openCreateDialog}
-              type="button"
-            >
-              <Plus aria-hidden="true" size={16} />
-              <span>New room</span>
-            </button>
-            <div className={styles.account}>
-              <SidebarAccountMenu
-                appearance="header"
-                beforeSignOut={prepareRoomHomeSignOut}
-                displayName={displayName}
-                userId={userId}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className={styles.content}>
-        <section className={styles.roomsSection} aria-labelledby="rooms-title">
-          <header className={styles.pageHeading}>
-            <div>
-              <p className={styles.eyebrow}>Workspace</p>
-              <h1 id="rooms-title">Your rooms</h1>
-            </div>
-            <p>
-              {roomCount} {roomCount === 1 ? "room" : "rooms"}
-            </p>
-          </header>
-
-          {roomCount > 0 ? (
-            <div className={styles.roomList}>
-              {directory.joinedRooms.map((room) => (
-                <JoinedRoomRow key={room.id} room={room} />
-              ))}
-            </div>
-          ) : (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyStateIcon}>
-                <LibraryBig aria-hidden="true" size={25} />
-              </span>
-              <div>
-                <h2>No rooms yet</h2>
-                <p>Create a room to begin studying with your group.</p>
-              </div>
-              <button
-                className={styles.emptyAction}
-                onClick={openCreateDialog}
-                type="button"
-              >
-                Create a room
-              </button>
-            </div>
-          )}
-        </section>
-
-        {directory.publicRooms.length > 0 ? (
-          <section
-            className={`${styles.roomsSection} ${styles.openRoomsSection}`}
-            aria-labelledby="open-rooms-title"
-          >
-            <header className={styles.secondaryHeading}>
-              <div>
-                <p className={styles.eyebrow}>Available to join</p>
-                <h2 id="open-rooms-title">Open rooms</h2>
-              </div>
-              <p>{directory.publicRooms.length}</p>
-            </header>
-            <div className={styles.roomList}>
-              {directory.publicRooms.map((room) => (
-                <PublicRoomRow key={room.id} room={room} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-      </div>
-
-      <dialog
-        aria-labelledby="create-room-title"
-        className={styles.createDialog}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) {
-            closeCreateDialog();
-          }
-        }}
-        ref={createDialogRef}
-      >
-        <div className={styles.dialogPanel}>
-          <header className={styles.dialogHeading}>
-            <div>
-              <p className={styles.eyebrow}>New workspace</p>
-              <h2 id="create-room-title">Create a room</h2>
-            </div>
-            <button
-              aria-label="Close create room dialog"
-              className={styles.dialogClose}
-              onClick={closeCreateDialog}
-              type="button"
-            >
-              <X aria-hidden="true" size={18} />
-            </button>
-          </header>
-          <p className={styles.dialogIntro}>
-            Give your group a focused place for notes, files, and live study
-            sessions.
-          </p>
-
-          <form action={createAction} className={styles.createForm}>
-            <label htmlFor="room-name">Room name</label>
-            <input
-              id="room-name"
-              maxLength={120}
-              name="name"
-              placeholder="e.g. Cardiovascular pharmacology"
-              required
-              type="text"
+            <SidebarAccountMenu
+              appearance="header"
+              beforeSignOut={prepareRoomHomeSignOut}
+              displayName={displayName}
+              userId={userId}
             />
-
-            <fieldset>
-              <legend>Access</legend>
-              <div className={styles.visibilityGrid}>
-                <label className={styles.visibilityOption}>
-                  <input
-                    defaultChecked
-                    name="visibility"
-                    type="radio"
-                    value="private"
-                  />
-                  <span className={styles.visibilityIcon}>
-                    <LockKeyhole aria-hidden="true" size={17} />
-                  </span>
-                  <span>
-                    <strong>Private</strong>
-                    <small>Invite only</small>
-                  </span>
-                </label>
-                <label className={styles.visibilityOption}>
-                  <input name="visibility" type="radio" value="public" />
-                  <span className={styles.visibilityIcon}>
-                    <Globe2 aria-hidden="true" size={17} />
-                  </span>
-                  <span>
-                    <strong>Public</strong>
-                    <small>Anyone can join</small>
-                  </span>
-                </label>
-              </div>
-            </fieldset>
-
-            {createState.message ? (
-              <p
-                className={`room-inline-message room-inline-message--${createState.status}`}
-                role={createState.status === "error" ? "alert" : "status"}
-              >
-                {createState.message}
-              </p>
-            ) : null}
-
-            <PendingButton
-              className={styles.createSubmit}
-              pendingLabel="Creating room…"
+          </HStack>
+        </VStack>
+        <VStack
+          as="main"
+          id="rooms-content"
+          tabIndex={-1}
+          maxWidth={1120}
+          className="w-full mx-auto md:px-8 md:py-12"
+          paddingInline={4}
+          paddingBlock={8}
+          gap={10}
+        >
+          <VStack gap={8}>
+            <HStack gap={4} hAlign="between" vAlign="start" wrap="wrap">
+              <Text weight="semibold">Study commons</Text>
+              <HStack gap={6} wrap="wrap" className="hidden md:flex">
+                <Text type="supporting">Shared notes / PDF annotation</Text>
+                <Text type="supporting">Whiteboard / AI study assistant</Text>
+              </HStack>
+            </HStack>
+            <HStack gap={5} hAlign="between" vAlign="end" wrap="wrap">
+              <VStack gap={3}>
+                <Heading level={1} className="text-2xl! md:text-3xl!">
+                  Your study rooms
+                </Heading>
+                <Text color="secondary">
+                  Return to your group, or join a public room to study together.
+                </Text>
+              </VStack>
+              <Button
+                label="Create room"
+                variant="primary"
+                icon={<Plus aria-hidden="true" />}
+                onClick={openCreate}
+                className="min-h-11"
+              />
+            </HStack>
+          </VStack>
+          <VStack as="section" gap={0} aria-labelledby="your-rooms-title">
+            <HStack
+              gap={3}
+              vAlign="center"
+              paddingBlock={4}
+              className="border-b border-border-strong"
             >
-              Create room
-              <ArrowRight aria-hidden="true" size={17} />
-            </PendingButton>
-          </form>
-          <p className={styles.createFootnote}>
-            <LockKeyhole aria-hidden="true" size={12} />
-            You can change access anytime
-          </p>
-        </div>
-      </dialog>
-    </main>
+              <Heading level={2} id="your-rooms-title">
+                Joined rooms
+              </Heading>
+              <Badge label={directory.joinedRooms.length} />
+            </HStack>
+            {directory.joinedRooms.length ? (
+              <List aria-labelledby="your-rooms-title" className="w-full">
+                {directory.joinedRooms.map((room) => (
+                  <RoomRow key={room.id} room={room} joined />
+                ))}
+              </List>
+            ) : (
+              <EmptyState
+                isCompact
+                title="No rooms joined yet"
+                description="Create a room for your group, or join a public room below."
+                icon={<LibraryBig />}
+              />
+            )}
+          </VStack>
+          <VStack as="section" gap={0} aria-labelledby="public-rooms-title">
+            <VStack
+              gap={2}
+              paddingBlock={4}
+              className="border-b border-border-strong"
+            >
+              <HStack gap={2} vAlign="center">
+                <Heading level={2} id="public-rooms-title">
+                  Public rooms
+                </Heading>
+                <Badge label={directory.publicRooms.length} />
+              </HStack>
+              <Text color="secondary">
+                Open to anyone. Join a room to add it to your list.
+              </Text>
+            </VStack>
+            {directory.publicRooms.length ? (
+              <List aria-labelledby="public-rooms-title" className="w-full">
+                {directory.publicRooms.map((room) => (
+                  <RoomRow key={room.id} room={room} joined={false} />
+                ))}
+              </List>
+            ) : (
+              <EmptyState
+                isCompact
+                title="No public rooms available"
+                description="There are no public rooms to join right now. You can create one with the Create room button above."
+                icon={<Globe2 />}
+              />
+            )}
+          </VStack>
+        </VStack>
+      </VStack>
+      {/* The modal stays mounted across closing and viewport changes to preserve the selected icon file. */}
+      <Dialog
+        isOpen={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        purpose="form"
+        width={560}
+      >
+        <DialogHeader
+          title="Create a room"
+          subtitle="Give your group a focused place to study together."
+          onOpenChange={setIsCreateOpen}
+          className="[&_button]:min-h-11 [&_button]:min-w-11"
+        />
+        <form action={createAction} className="w-full">
+          <VStack gap={4} padding={4}>
+            <VStack className="w-full [&_label]:flex-row [&_label]:items-center [&_label_span]:text-error!">
+              <TextInput
+                label="Room name"
+                id="room-name"
+                hasAutoFocus
+                size="lg"
+                width="100%"
+                className="min-h-11 [&_input]:text-lg"
+                htmlName="name"
+                value={name}
+                onChange={setName}
+                placeholder="e.g. Cardiovascular pharmacology"
+                isRequired
+                {...{ maxLength: 120, required: true }}
+              />
+            </VStack>
+            <RoomIconField compact inputId="room-icon" />
+            <RadioList
+              label="Access"
+              htmlName="visibility"
+              value={visibility}
+              onChange={setVisibility}
+            >
+              <RadioListItem
+                label="Private"
+                className="min-h-11"
+                value="private"
+                description="Invite only"
+              />
+              <RadioListItem
+                label="Public"
+                className="min-h-11"
+                value="public"
+                description="Anyone can join"
+              />
+            </RadioList>
+            <Text type="supporting">You can change access anytime.</Text>
+            {createState.status === "error" && createState.message ? (
+              <Text role="alert" className="text-error">
+                {createState.message}
+              </Text>
+            ) : null}
+            <HStack gap={2} hAlign="end" vAlign="center" wrap="wrap">
+              <Button
+                label="Cancel"
+                className="min-h-11 font-normal!"
+                onClick={() => setIsCreateOpen(false)}
+              />
+              <PendingButton
+                label="Create room"
+                pendingLabel="Creating room…"
+                primary
+              />
+            </HStack>
+          </VStack>
+        </form>
+      </Dialog>
+    </>
   );
 }

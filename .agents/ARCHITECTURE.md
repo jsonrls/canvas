@@ -1,325 +1,155 @@
-# Architecture Document
-
-## System Overview
-
-The MyBoardPrep Collaborative Learning Suite follows a modern real-time web application architecture with separate frontend and backend services, connected through WebSocket connections for real-time collaboration.
-
-## High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   React UI   │  │ Tiptap Editor │  │ SVG Whiteboard│     │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  React PDF   │  │  Yjs Client   │  │  State Mgmt  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              │ WebSocket (Y-websocket)
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                      Backend Services                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Supabase    │  │  PostgreSQL  │  │  Yjs Server  │      │
-│  │   Auth       │  │   Database   │  │  (WebSocket) │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Supabase    │  │  OpenAI API  │  │  Storage     │      │
-│  │  Storage     │  │  Integration  │  │              │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Frontend Architecture
-
-### Component Structure
-
-```
-src/
-├── components/
-│   ├── common/           # Shared UI components
-│   ├── collaboration/    # Real-time collaboration components
-│   │   ├── collaborative-room.tsx       # Unified tool navigation
-│   │   ├── ai-study-tool.tsx            # Five-part AI pack + private saved-guide shelf
-│   │   ├── pdf-study-tool.tsx           # React PDF + Yjs annotations
-│   │   ├── whiteboard-study-tool.tsx    # SVG + Yjs scene
-│   │   └── rich-text-editor.tsx         # Tiptap notes
-│   ├── study/            # Study-related components
-│   │   ├── flashcards/   # Flashcard system
-│   │   ├── cases/        # Case discussions
-│   │   └── rooms/        # Study rooms
-│   └── ai/               # AI-powered features
-├── hooks/
-│   └── use-collaborative-tool.ts        # PDF/whiteboard connection lifecycle
-├── lib/ai/
-│   └── study-pack.ts                    # Strict schema, prompt, and validation
-├── stores/
-│   ├── collaborationStore.ts
-│   ├── userStore.ts
-│   └── roomStore.ts
-├── utils/
-│   ├── yjs/
-│   │   ├── documentManager.ts
-│   │   ├── awareness.ts
-│   │   └── offlineSync.ts
-│   └── api/
-└── types/
-```
-
-### State Management
-
-- **Zustand** for global state management
-- **Yjs** for collaborative document state
-- **React Context** for theme and authentication
-- **IndexedDB** through `y-indexeddb` for account-and-room-scoped Yjs document persistence; `localStorage` holds only the minimal versioned cleanup registry
-
-### Real-time Communication
-
-- **Y-websocket** for Yjs document synchronization
-- **Supabase Realtime** for presence and notifications
-- **Custom WebSocket handlers** for room-specific events
-
-### Phase 4 AI Request Flow
-
-The room captures plain text through `RichTextEditorHandle.captureDraft()` before switching away from Notes. The lazy-loaded assistant sends that explicit snapshot to `POST /api/rooms/[roomId]/ai-study-pack`. The Route Handler validates the Supabase cookie claim and performs a focused `rooms` plus `room_members` lookup before provider use. `src/lib/ai/study-pack.ts` owns source limits, untrusted-data prompt separation, strict JSON Schema, Responses API parsing, refusal detection, and a second runtime validation pass. The assistant can explicitly save the validated five-view payload through the creator-private saved-guide Route Handler; the source note snapshot, revealed state, and provider metadata are never persisted.
-
-The server uses native `fetch` rather than a client SDK, so provider code and credentials remain isolated from the room bundle. The assistant component is dynamically imported with SSR disabled, keeping the Notes/PDF/Whiteboard initial path unchanged.
-
-## Backend Architecture
-
-### Supabase Services
-
-- **Authentication**: User management and role-based access control
-- **Database**: PostgreSQL with Row Level Security (RLS), including creator-private immutable saved AI guides
-- **Storage**: Private `boardprep-pdfs` bucket for one versioned active PDF per room; whiteboard images remain bounded Yjs data URLs
-- **Realtime**: PostgreSQL changes and presence subscriptions
-- **Edge Functions**: Custom server-side logic when needed
-
-### Database Schema
-
-```
-public/
-├── profiles/
-├── rooms/
-├── room_members/
-├── documents/
-└── document_versions/
-```
-
-Supabase Auth owns `auth.users`; `public.profiles` exposes only application-safe identity fields. A signup trigger provisions the one-to-one profile, while RLS limits profile discovery to the current user and shared-room collaborators.
-
-### Yjs Server Architecture
-
-- **WebSocket Server**: Separate Node process validates a Supabase access token and owner/editor room membership before upgrade
-- **Document Storage**: Loads full Yjs state from `public.documents` before sync, debounces complete-state writes, and flushes on last disconnect/shutdown
-- **Awareness Service**: Manages user presence information
-- **Version History**: Stores immutable ProseMirror JSON plus corresponding Yjs state in `public.document_versions`
-- **Offline Sync**: One stable browser `Y.Doc` is shared by IndexedDB and a disconnected/reconnected authenticated `WebsocketProvider`
-- **Conflict Review**: Transient ref-backed counters classify local versus provider-origin document batches; a completed overlap review compares the pre-remote draft with the Yjs merge, and any override uses authenticated immutable version history as its safety boundary
-- **Document Routing**: Notes use `<roomSlug>`; PDF and whiteboard use `<roomSlug>--pdf` and `<roomSlug>--whiteboard`. The service parses the kind, loads the matching `public.documents` row, and applies the same owner/editor socket authorization.
-
-## Data Flow
-
-### Real-time Collaboration Flow
-
-1. Supabase Auth establishes an HTTP-only cookie session and `src/proxy.ts` protects room requests
-2. The protected Room Server Component establishes RLS-controlled membership/document rows and reads all three tool snapshots, current PDF metadata, the profile, and version metadata in parallel where independent
-3. The browser constructs one Yjs document per selected tool and loads its account/room/kind IndexedDB state before enabling edits
-4. The browser requests a no-store access token and connects its stable provider; the Yjs service validates token and owner/editor membership
-5. Stored server Yjs state and any local updates merge through the protocol before the UI reports live sync
-6. User changes are broadcast to all participants and presence is updated in real time
-7. Complete state is debounced to the tool's matching Supabase row, named note versions are inserted through user-JWT RLS calls, and visible author names are resolved from shared-room profiles
-
-### Private PDF Flow
-
-1. An owner/editor validates MIME, size, and `%PDF-` bytes in the browser, then requests a signed upload from `POST /api/rooms/[roomId]/pdf`.
-2. The Route Handler validates cookie claims and editor membership, enforces the private bucket configuration, and issues a random versioned room-prefixed path.
-3. The browser uploads directly to Supabase Storage. A final `PUT` revalidates membership, object size/type/header, publishes PDF metadata with a compare-and-swap condition, returns a signed member read URL, and removes the replaced object.
-4. React PDF renders client-only. Annotations, replies, and bookmarks use independent Yjs map keys and are filtered by asset revision.
-
-### Whiteboard Flow
-
-1. The client-only SVG surface maps pointer coordinates into a fixed `1200 × 720` viewBox.
-2. Drawings, shapes, arrows, text, and bounded images are stored as individually validated `whiteboard-elements` map values, so concurrent objects merge independently.
-3. Laser positions use awareness fields and disappear on pointer exit/disconnect; they never enter durable Yjs state.
-
-### Offline Editing Flow
-
-1. The protected room loads an account-scoped key in the form `boardprep:${userId}:${roomId}:${kind}` before enabling the selected editable tool
-2. IndexedDB and the remote provider share one Yjs document; offline events disconnect only the remote transport
-3. Edits remain writable and persist locally while remote-only checkpoint actions are gated
-4. On `online` or manual retry, the browser fetches a fresh token, updates provider parameters, and reconnects without recreating the editor or document
-5. Yjs merges local and concurrent server updates, while a bounded resync interval repairs an incomplete initial handshake
-6. Explicit sign-out clears all IndexedDB databases registered for the active account before the server session ends
-
-Cold offline startup is not included: the application shell and protected route still require a renderable page. IndexedDB is unencrypted same-origin storage and is not an authorization source.
-
-### Reconnection Review Flow
-
-1. While initial remote sync is pending or an established provider is disconnected, a transient reconciliation window counts Yjs document updates without causing React renders
-2. Provider-origin transactions are remote batches; non-provider updates count as local only while the editor is focused, filtering initialization and persistence activity. Awareness and presence events never enter the detector
-3. Immediately before the first remote transaction, the editor captures the current local JSON and plain text; after sync, the detector creates a review only if both local and remote batches occurred
-4. The inline UI recommends the already-live Yjs merge and keeps editing available while comparing short local and merged excerpts
-5. A confirmed local-draft override saves the latest merged snapshot through the authorized version Server Action, rechecks the Yjs state for intervening edits, and only then restores JSON as a normal synchronizing Yjs update
-
-The detector intentionally covers trustworthy current-session overlap. It does not add last-write-wins behavior, semantic rich-text diffing, per-author attribution, or a persistent conflict queue.
-
-### AI Assistant Flow
-
-1. User requests AI assistance
-2. Context is gathered from collaborative document
-3. Request is sent to OpenAI API
-4. Response is processed and formatted
-5. Result is displayed in the UI
-
-## Security Architecture
-
-### Authentication & Authorization
-
-- **Supabase Auth**: JWT-based authentication
-- **Role-Based Access Control**: Room owner/editor write access and viewer read access
-- **Row Level Security**: Database-level access control with private, hardened `SECURITY DEFINER` predicates
-- **Room-based Authorization**: Access control per collaborative space
-
-### Data Security
-
-- **Encryption**: TLS 1.3 for all connections
-- **Input Validation**: Server-side validation for all inputs
-- **SQL Injection Prevention**: Parameterized queries
-- **XSS Prevention**: Content sanitization and CSP headers
-
-### Audit Logging
-
-- **Action Logging**: All instructor actions are logged
-- **Change Tracking**: Document version history
-- **Access Logs**: Room access and modifications
-
-## Performance Architecture
-
-### Frontend Optimization
-
-- **Code Splitting**: Route-based code splitting
-- **Lazy Loading**: Component lazy loading
-- **Memoization**: React.memo and useMemo for expensive operations
-- **Virtual Scrolling**: For large lists and documents
-
-### Backend Optimization
-
-- **Database Indexing**: Proper indexes for frequent queries
-- **Connection Pooling**: Efficient database connection management
-- **Caching**: Redis caching for frequently accessed data
-- **CDN**: Static asset delivery through CDN
-
-### Real-time Optimization
-
-- **Delta Updates**: Only send changed data
-- **Compression**: WebSocket message compression
-- **Batching**: Batch multiple updates together
-- **Debouncing**: Debounce rapid updates
-
-## Scalability Architecture
-
-### Horizontal Scaling
-
-- **Stateless Frontend**: Can be deployed across multiple instances
-- **Database Replication**: Read replicas for scaling
-- **WebSocket Scaling**: Redis pub/sub for WebSocket scaling
-- **Load Balancing**: Application load balancer
-
-### Vertical Scaling
-
-- **Database Optimization**: Query optimization and indexing
-- **Resource Allocation**: Dynamic resource allocation
-- **Caching Layers**: Multiple caching layers
-
-## Deployment Architecture
-
-### Development Environment
-
-- **Local Development**: Native Node.js tooling and Supabase CLI for local services
-- **Hot Reloading**: Vite for fast development
-- **Mock Services**: Mock services for development
-
-### Staging Environment
-
-- **Preview Deployments**: Preview deployments for pull requests
-- **Automated Testing**: Automated testing on deployment
-- **Performance Monitoring**: Performance monitoring tools
-
-### Production Environment
-
-- **Multi-region Deployment**: Deployed across multiple regions
-- **Auto-scaling**: Automatic scaling based on load
-- **Monitoring**: Comprehensive monitoring and alerting
-- **Backup**: Automated backup and disaster recovery
-
-## Technology Choices
-
-### Frontend Framework: React
-
-- Large ecosystem and community support
-- Component-based architecture
-- Excellent developer tools
-- Strong TypeScript support
-
-### Rich Text Editor: Tiptap
-
-- Based on ProseMirror (proven, reliable)
-- Excellent collaboration support with Yjs
-- Highly extensible
-- Great TypeScript support
-
-### Real-time: Yjs
-
-- CRDT-based conflict resolution
-- Excellent performance
-- Strong offline support
-- Easy integration with React
-
-### Backend: Supabase
-
-- Comprehensive backend solution
-- Built-in authentication
-- Real-time capabilities
-- Excellent PostgreSQL integration
-
-### Database: PostgreSQL
-
-- ACID compliance
-- Excellent performance
-- Strong data integrity
-- Great JSON support
-
-## Monitoring & Observability
-
-### Frontend Monitoring
-
-- **Error Tracking**: Sentry for error tracking
-- **Performance Monitoring**: Web Vitals monitoring
-- **User Analytics**: User behavior analytics
-- **Real-time Health**: WebSocket connection health
-
-### Backend Monitoring
-
-- **Application Monitoring**: APM tools
-- **Database Monitoring**: Query performance monitoring
-- **WebSocket Monitoring**: Connection and message monitoring
-- **Resource Monitoring**: CPU, memory, and disk monitoring
-
-## Disaster Recovery
-
-### Backup Strategy
-
-- **Database Backups**: Daily automated backups
-- **Document Backups**: Yjs document snapshots
-- **Storage Backups**: File storage backups
-- **Configuration Backups**: Configuration version control
-
-### Recovery Procedures
-
-- **Database Recovery**: Point-in-time recovery
-- **Document Recovery**: Document version history
-- **Service Recovery**: Automated service recovery
-- **Data Validation**: Post-recovery data validation
+# Qollab architecture
+
+This document describes the implemented application. Product ideas and future
+capabilities belong in [ROADMAP.md](./ROADMAP.md), not the current architecture.
+Installed dependency versions and executable commands are in `package.json`.
+
+## Repository boundaries
+
+- `src/app/`: Next.js App Router pages, layouts, Server Actions, and HTTP handlers.
+  Pages authenticate, load authorized data, and compose feature components.
+- `src/components/`: feature UI grouped under account, auth, rooms, collaboration,
+  home, and brand. `shell/` owns reusable workspace framing; `ui/` contains only
+  shared controls such as buttons, icons, loading indicators, and toasts.
+- `src/hooks/`: browser collaboration and presentation lifecycles.
+- `src/lib/`: domain-specific models, validation, and repositories. Repository
+  modules marked `server-only` stay out of client runtime bundles. Type-only
+  imports do not bundle their server implementations.
+- `server/`: Node-compatible collaboration runtime and standalone WebSocket entry.
+  The Next.js collaboration route adapts this runtime to Vercel WebSockets.
+- `supabase/migrations/`: ordered, authoritative database and storage changes.
+- `theme/qollab-workshop.ts`: editable Astryx theme; `theme/generated/` contains
+  its canonical generated CSS, runtime theme, and declarations.
+- `scripts/`: executable local checks and explicitly separate hosted integration
+  verifiers. See [TESTING.md](./TESTING.md) before running hosted checks.
+- `.agents/`: engineering/product documentation; `plan/` holds historical feature
+  plans; `artifacts/` holds design evidence. These are not application modules.
+
+Use feature-local components and pure models before adding shared helpers. Keep
+route files small, browser-heavy tools dynamically imported, and lifecycle code
+separate from rendering. Do not introduce a parallel generic service/store layer.
+
+## Feature ownership
+
+- `collaboration/{whiteboard,pdf,ai}/` contains tool-specific hooks and views.
+  The three `*-study-tool.tsx` files compose these modules. Pure geometry and
+  payload helpers live beside their domain models in `src/lib/`.
+- `src/lib/collaboration/provider-lifecycle.ts` owns provider authentication,
+  online recovery, retry scheduling, and disposal for all workspace consumers.
+  `use-notes-collaboration.ts` owns main notes persistence and conflict review.
+- `server/document-persistence.mjs` serializes saves per document within one
+  process; `collaboration-shutdown.mjs` bounds shutdown and reports failure.
+- `shell/` owns the shared app frame, navigation, header, and responsive context
+  panel. Breakout Q&A keeps its draft above the responsive presentation boundary.
+
+## Runtime and state
+
+The application uses Next.js App Router with React, TypeScript, Astryx, and
+Tailwind. Tiptap renders notes, React PDF renders PDFs, and a native SVG surface
+renders whiteboards. PDF, whiteboard, and AI workspaces are loaded dynamically.
+
+React state and refs hold local interaction state. Yjs owns collaborative content;
+its awareness channel holds transient participants and laser positions. IndexedDB
+persists editable documents per account, room, and tool. React context supplies
+shared UI services such as toasts. Authentication is established and validated
+on the server using Supabase cookie sessions. There is no Zustand store, Redis
+cache, Vite runtime, Sentry integration, or installed general-purpose test runner.
+
+## Authentication and data access
+
+Server pages, actions, and routes use `src/lib/supabase/` to establish authenticated
+context. Domain repositories apply room membership rules using user-scoped data
+access and database RLS. Privileged operations remain server-side; neither the
+service-role key nor the OpenAI key belongs in browser props or public variables.
+
+The deployed schema is defined by migrations, including profiles, rooms,
+room_members, documents, document_versions, saved_study_guides, breakout_rooms,
+breakout_documents, and breakout_room_members. Supabase owns `auth.users`.
+Profiles expose constrained application identity; they are readable by the user
+and authorized shared-room collaborators.
+
+Room roles are owner, editor, and viewer. A room setting can allow viewer
+collaboration; upload and administrative permissions remain independently checked.
+Breakout access also checks breakout membership. UI disabled states are not the
+authorization boundary.
+
+## Collaboration flow
+
+1. A server page reads authorized room metadata, initial document snapshots, and
+   supporting profile/version information.
+2. The browser initializes the selected tool's Yjs document. Editable tools load
+   their account-scoped IndexedDB state; read-only tools do not create writable
+   offline stores.
+3. The WebSocket service validates identity, room/breakout membership, and write
+   permissions before attaching a connection. Read-only connections receive live
+   updates while the server rejects document writes.
+4. Yjs merges document updates; awareness propagates presence separately.
+5. The runtime persists full document state to Supabase and relays document,
+   awareness, and presentation events across runtime instances through Supabase.
+
+Main notes use `<roomSlug>`, with `--pdf` and `--whiteboard` suffixes for the
+other tools. Breakouts use `<roomSlug>--breakout--<CODE>` plus the same tool
+suffixes. These names and existing IndexedDB keys are compatibility contracts;
+a file refactor must not rename stored documents.
+
+Locally, `npm run dev:all` runs Next.js and the standalone Node WebSocket server.
+The browser uses `NEXT_PUBLIC_YJS_WS_URL` and an authenticated token endpoint.
+On Vercel, omitting that variable selects the same-origin `/api/collaboration`
+adapter with cookie authentication. Deployment configuration selects `hnd1`;
+this repository does not establish a multi-region deployment or measured SLA.
+
+## Recovery and history
+
+Offline persistence uses `boardprep:${userId}:${roomId}:${kind}` identities, with
+breakout scope incorporated into the room identity. The historical prefix is
+retained to preserve existing data. Main notes, PDF annotations, and whiteboards persist locally. Breakout notes
+currently recover in memory while their tab remains open; they do not initialize
+IndexedDB. A loaded editable workspace can continue through network loss. Cold offline startup is not implemented.
+
+Notes reconciliation compares current-session offline edits with remotely merged
+content. Yjs remains the merge authority. Replacing a merge with the offline draft
+requires confirmation and an immutable safety version; a failed checkpoint or
+intervening edit aborts replacement. Version history stores both ProseMirror JSON
+and matching Yjs state. Sign-out clears the account's registered offline stores.
+
+## Study tools
+
+PDF uploads use private storage, signed upload/read URLs, metadata and file-header
+validation, and asset revisions. A room/breakout has one active PDF. Annotation
+coordinates are normalized, and annotations from replaced revisions are hidden.
+PDF comments, replies, and bookmarks use independent Yjs entries.
+
+The whiteboard keeps drawings, shapes, arrows, text, and bounded images as
+independent Yjs objects. Camera geometry maps pointer positions to world space.
+Laser trails are transient awareness state. Detected question/target geometry can
+request an AI answer, stored as ordinary collaborative text.
+
+The AI study assistant captures an explicit note snapshot and sends it to a
+room-authorized server endpoint. Server-side request construction uses bounded
+input/output, structured output validation, provider storage disabled, timeouts,
+and instance-local rate limiting. It produces summaries, quizzes, flashcards,
+recommendations, and cautious misconception signals. Saved guides are creator
+private; source note snapshots are not saved with them. General PDF extraction,
+shared saved-guide libraries, and distributed AI quotas remain future work.
+
+## Styling and composition
+
+The root layout loads the generated theme and global integration once. Shared
+shell components own workspace regions and responsive framing. Feature components
+own tool interactions; canvas state must not move into the shell. Use Astryx props
+and semantic token utilities for ordinary UI. Renderer geometry, editor content,
+and browser-specific mechanics have narrowly scoped styling exceptions described
+in [DESIGN.md](./DESIGN.md).
+
+## Verification and limits
+
+Checks establish only what they exercise. Local contract and model tests do not
+prove hosted authorization, browser focus behavior, data durability under every
+failure, or production capacity. Hosted verification scripts explicitly create
+and clean up disposable fixtures. `verify:vercel` exercises the deployed adapter;
+standalone Yjs tests are not a substitute for that path.
+
+Full-state persistence, instance-local AI limits, unencrypted browser storage,
+one-PDF-per-room limits, and lack of cold offline startup remain known design
+constraints. Monitoring, institutional roles, guaranteed backups, and learning
+outcome improvements must not be described as implemented without evidence.

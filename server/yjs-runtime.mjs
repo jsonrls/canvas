@@ -3,6 +3,8 @@ import { createRequire } from "node:module";
 
 import { createClient } from "@supabase/supabase-js";
 
+import { createDocumentPersistence } from "./document-persistence.mjs";
+
 import { parseDocumentName } from "./document-name.mjs";
 
 const require = createRequire(import.meta.url);
@@ -39,7 +41,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const instanceId = randomUUID();
 const loadOrigin = Symbol("supabase-persistence-load");
 const documentIds = new Map();
-const persistTimers = new Map();
+const closingDocuments = new Map();
+let stopping = false;
 const lastEditors = new Map();
 const documentRelays = new Map();
 const presenceRelays = new Map();
@@ -144,7 +147,8 @@ function normalizeRelayChunk(payload) {
 function receiveRelayChunk(relay, event, rawPayload) {
   const payload = normalizeRelayChunk(rawPayload);
 
-  if (!payload || payload.source === instanceId) return;
+  if (stopping || relay.closed || !payload || payload.source === instanceId)
+    return;
 
   const partialKey = `${event}:${payload.source}:${payload.updateId}`;
   let partial = relay.partials.get(partialKey);
@@ -240,6 +244,7 @@ async function releaseDocumentRelay(documentName) {
   const relay = documentRelays.get(documentName);
   if (!relay) return;
 
+  relay.closed = true;
   documentRelays.delete(documentName);
   relay.partials.forEach((partial) => clearTimeout(partial.timer));
   relay.partials.clear();
@@ -326,28 +331,21 @@ async function persistDocument(documentName, document) {
   }
 }
 
+const persistence = createDocumentPersistence({
+  save: persistDocument,
+  onError: () =>
+    console.error(JSON.stringify({ event: "collaboration_save_failed" })),
+});
+
 function schedulePersist(documentName, document, origin) {
-  if (origin?.boardprepUserId) {
+  if (origin?.boardprepUserId)
     lastEditors.set(documentName, origin.boardprepUserId);
-  }
-
-  const existingTimer = persistTimers.get(documentName);
-  if (existingTimer) clearTimeout(existingTimer);
-
-  persistTimers.set(
-    documentName,
-    setTimeout(() => {
-      persistTimers.delete(documentName);
-      void persistDocument(documentName, document).catch(() => {
-        console.error(
-          `Failed to persist collaborative document ${documentName}.`,
-        );
-      });
-    }, 750),
-  );
+  persistence.schedule(documentName, document);
 }
 
 setContentInitializor(async (document) => {
+  await closingDocuments.get(document.name);
+  await persistence.flush(document.name);
   const stored = await findDocument(document.name);
   documentIds.set(document.name, { id: stored.id, table: stored.table });
 
@@ -364,7 +362,11 @@ setPersistence({
   provider: supabase,
   bindState: (documentName, document) => {
     void ensureDocumentRelay(documentName, document).catch(() => {
-      console.error(`Failed to subscribe to document relay ${documentName}.`);
+      console.error(
+        JSON.stringify({
+          event: "collaboration_subscribe_to_document_relay_failed",
+        }),
+      );
     });
 
     document.on("update", (update, origin) => {
@@ -380,21 +382,40 @@ setPersistence({
           origin?.boardprepUserId,
         ).catch(() => {
           console.error(
-            `Failed to relay collaborative update ${documentName}.`,
+            JSON.stringify({
+              event: "collaboration_relay_collaborative_update_failed",
+            }),
           );
         });
       }
     });
   },
-  writeState: async (documentName, document) => {
-    const timer = persistTimers.get(documentName);
-    if (timer) clearTimeout(timer);
-    persistTimers.delete(documentName);
-
-    await persistDocument(documentName, document);
-    await releaseDocumentRelay(documentName);
-    documentIds.delete(documentName);
-    lastEditors.delete(documentName);
+  writeState: (documentName, document) => {
+    persistence.schedule(documentName, document);
+    const closing = (async () => {
+      await releaseDocumentRelay(documentName).catch(() => {
+        console.error(
+          JSON.stringify({ event: "collaboration_relay_release_failed" }),
+        );
+      });
+      try {
+        await persistence.flush(documentName);
+        persistence.release(documentName, document);
+        documentIds.delete(documentName);
+        lastEditors.delete(documentName);
+      } catch {
+        // y-websocket does not catch writeState rejection. Retain the dirty queue
+        // so an explicit flush/shutdown still retries and reports this failure.
+        console.error(
+          JSON.stringify({ event: "collaboration_close_save_failed" }),
+        );
+      }
+    })().finally(() => {
+      if (closingDocuments.get(documentName) === closing)
+        closingDocuments.delete(documentName);
+    });
+    closingDocuments.set(documentName, closing);
+    return closing;
   },
 });
 
@@ -530,7 +551,11 @@ function relayAwarenessMessage(documentName, data, userId) {
       update,
       userId,
     ).catch(() => {
-      console.error(`Failed to relay awareness update ${documentName}.`);
+      console.error(
+        JSON.stringify({
+          event: "collaboration_relay_awareness_update_failed",
+        }),
+      );
     });
   } catch {
     // Ignore malformed awareness messages; the protocol handler also rejects them.
@@ -538,11 +563,14 @@ function relayAwarenessMessage(documentName, data, userId) {
 }
 
 export async function prepareCollaborationConnection(authorization) {
+  if (stopping) throw new Error("Collaboration is shutting down.");
   if (authorization.channel === "presence") {
     await ensurePresenceRelay(authorization.roomSlug);
     return;
   }
 
+  await closingDocuments.get(authorization.documentName);
+  if (stopping) throw new Error("Collaboration is shutting down.");
   const document = getYDoc(authorization.documentName);
 
   try {
@@ -674,7 +702,7 @@ function ensurePresenceRelay(roomSlug) {
   const relay = { channel, ready: null };
 
   channel.on("broadcast", { event: "presentation" }, ({ payload }) => {
-    if (!payload || payload.source === instanceId) return;
+    if (stopping || !payload || payload.source === instanceId) return;
 
     if (payload.action === "stop") {
       const current = activePresentations.get(roomSlug)?.state;
@@ -743,7 +771,11 @@ export function attachPresenceConnection(websocket, authorization) {
             action: "stop",
             presenterId: userId,
           }).catch(() => {
-            console.error(`Failed to relay presentation stop ${roomSlug}.`);
+            console.error(
+              JSON.stringify({
+                event: "collaboration_relay_presentation_stop_failed",
+              }),
+            );
           });
         }
         return;
@@ -767,7 +799,11 @@ export function attachPresenceConnection(websocket, authorization) {
       broadcastPresentationLocally(roomSlug);
       void publishPresentation(roomSlug, { action: "update", state }).catch(
         () => {
-          console.error(`Failed to relay presentation update ${roomSlug}.`);
+          console.error(
+            JSON.stringify({
+              event: "collaboration_relay_presentation_update_failed",
+            }),
+          );
         },
       );
     } catch {
@@ -786,22 +822,31 @@ export function attachPresenceConnection(websocket, authorization) {
         action: "stop",
         presenterId: userId,
       }).catch(() => {
-        console.error(`Failed to relay presentation close ${roomSlug}.`);
+        console.error(
+          JSON.stringify({
+            event: "collaboration_relay_presentation_close_failed",
+          }),
+        );
       });
     }
 
     if (clients.size === 0) {
-      void releasePresenceRelay(roomSlug);
+      void releasePresenceRelay(roomSlug).catch(() => {
+        console.error(
+          JSON.stringify({ event: "collaboration_presence_release_failed" }),
+        );
+      });
     }
   });
 }
 
 export async function flushCollaborationDocuments() {
-  await Promise.allSettled(
-    Array.from(docs.entries()).map(([documentName, document]) =>
-      persistDocument(documentName, document),
-    ),
-  );
+  await Promise.all([...closingDocuments.values()]);
+  await persistence.flushAll();
+}
+
+export function stopCollaborationUpdates() {
+  stopping = true;
 }
 
 export { docs };

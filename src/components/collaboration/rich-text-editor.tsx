@@ -1,5 +1,13 @@
 "use client";
 
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/button";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { NumberInput } from "@astryxdesign/core/NumberInput";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
+import { Text } from "@astryxdesign/core/Text";
+import { Toolbar } from "@astryxdesign/core/Toolbar";
 import { Mark, mergeAttributes } from "@tiptap/core";
 import type { Editor, JSONContent } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
@@ -9,6 +17,7 @@ import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
   Bold,
+  MoreHorizontal,
   Code2,
   Heading2,
   Italic,
@@ -19,13 +28,19 @@ import {
   RemoveFormatting,
   Strikethrough,
   Undo2,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { Fragment, forwardRef, useEffect, useImperativeHandle } from "react";
+} from "@/components/ui/icons";
+import type { IconComponent } from "@/components/ui/icons";
+import {
+  Fragment,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import type { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
-import { MobileToolsMenu } from "@/components/collaboration/mobile-tools-menu";
+import { LoadingIndicator } from "@/components/ui/LoadingScreen";
 import type { EditorDraft } from "@/lib/collaboration/conflict-review";
 import type { EditorSnapshot } from "@/lib/version-history/types";
 
@@ -52,7 +67,7 @@ export interface RichTextEditorHandle {
 }
 
 interface ToolbarAction {
-  icon: LucideIcon;
+  icon: IconComponent;
   isActive?: (editor: Editor) => boolean;
   isDisabled?: (editor: Editor) => boolean;
   label: string;
@@ -170,45 +185,21 @@ function FontSizeControl({
   applyFontSize: (nextSize: number) => void;
 }): React.ReactElement {
   return (
-    <div className="toolbar-group toolbar-font-size" aria-label="Font size">
-      <button
-        type="button"
-        className="toolbar-button toolbar-font-size__step"
-        aria-label="Decrease font size"
-        title="Decrease font size"
-        onClick={() => applyFontSize(fontSize - 1)}
-        disabled={!editable}
-      >
-        −
-      </button>
-      <input
-        className="toolbar-font-size__value"
-        aria-label="Font size in pixels"
-        inputMode="numeric"
-        type="number"
+    <VStack className="w-24 shrink-0">
+      <NumberInput
+        label="Font size in pixels"
+        isLabelHidden
+        value={fontSize}
+        onChange={applyFontSize}
         min={8}
         max={72}
-        value={fontSize}
-        onChange={(event) => applyFontSize(Number(event.target.value) || 11)}
-        onBlur={() => applyFontSize(fontSize)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.currentTarget.blur();
-          }
-        }}
-        disabled={!editable}
+        isIntegerOnly
+        isWheelEnabled={false}
+        hasNumberSteppers
+        isDisabled={!editable}
+        width="100%"
       />
-      <button
-        type="button"
-        className="toolbar-button toolbar-font-size__step"
-        aria-label="Increase font size"
-        title="Increase font size"
-        onClick={() => applyFontSize(fontSize + 1)}
-        disabled={!editable}
-      >
-        +
-      </button>
-    </div>
+    </VStack>
   );
 }
 
@@ -223,6 +214,7 @@ function EditorToolbar({
   syncLabel?: string;
   syncStatus?: string;
 }): React.ReactElement {
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const toolbarState = useEditorState({
     editor,
     selector: ({ editor: currentEditor }) => {
@@ -275,24 +267,23 @@ function EditorToolbar({
     const isDisabled =
       !editable || !editorReady || (action.isDisabled?.(editor) ?? false);
 
-    return (
-      <button
-        aria-label={action.label}
-        aria-pressed={action.isActive ? isActive : undefined}
-        className={`toolbar-button${isActive ? " toolbar-button--active" : ""}${options?.mobile ? " mobile-editor-action" : ""}${options?.dialog ? " mobile-tool-action" : ""}`}
-        disabled={isDisabled}
-        key={action.label}
-        onClick={() => {
-          if (!editorReady) return;
-          action.run(editor);
-          options?.close?.();
-        }}
-        title={action.label}
-        type="button"
-      >
-        <Icon aria-hidden="true" size={17} strokeWidth={1.9} />
-        {options?.dialog ? <span>{action.label}</span> : null}
-      </button>
+    const sharedProps = {
+      label: action.label,
+      "aria-pressed": action.isActive ? isActive : undefined,
+      isDisabled,
+      variant: "ghost" as const,
+      className: `min-h-11 min-w-11 ${isActive ? "bg-accent-muted! text-accent!" : ""}`,
+      icon: <Icon aria-hidden="true" size={17} strokeWidth={1.9} />,
+      onClick: () => {
+        if (!editorReady) return;
+        action.run(editor);
+        options?.close?.();
+      },
+    };
+    return options?.dialog ? (
+      <Button key={action.label} {...sharedProps} />
+    ) : (
+      <IconButton key={action.label} {...sharedProps} tooltip={action.label} />
     );
   };
 
@@ -307,60 +298,119 @@ function EditorToolbar({
     mobileSecondaryActions.some((action) => action.isActive?.(editor) ?? false);
 
   return (
-    <div className="editor-toolbar" role="toolbar" aria-label="Text formatting">
-      <div className="toolbar-actions">
-        {TOOLBAR_GROUPS.map((group, groupIndex) => (
-          <Fragment key={groupIndex}>
-            {groupIndex === 1 ? (
-              <FontSizeControl
-                editable={editable && editorReady}
-                fontSize={fontSize}
-                applyFontSize={applyFontSize}
-              />
-            ) : null}
-            <div className="toolbar-group">
-              {group.map((action) => renderAction(action))}
-            </div>
-          </Fragment>
-        ))}
-      </div>
-      <div className="mobile-editor-actions">
-        {mobilePrimaryActions.map((action) =>
-          renderAction(action, { mobile: true }),
-        )}
-        <MobileToolsMenu
-          active={mobileSecondaryActionActive || fontSize !== 11}
-          description="Choose additional formatting for your shared notes."
-          title="More note tools"
-        >
-          {(close) => (
-            <div className="mobile-tools-dialog__grid">
-              <div className="mobile-tools-dialog__control mobile-tools-dialog__control--wide">
-                <span>Text size</span>
-                <FontSizeControl
-                  editable={editable && editorReady}
-                  fontSize={fontSize}
-                  applyFontSize={applyFontSize}
+    <VStack
+      className="shrink-0 overflow-x-auto border-b border-border bg-surface"
+      gap={0}
+    >
+      <Toolbar
+        label="Text formatting"
+        size="lg"
+        endContent={
+          <HStack
+            gap={3}
+            className="shrink-0 whitespace-nowrap"
+            vAlign="center"
+          >
+            {syncLabel ? (
+              <HStack
+                gap={1.5}
+                vAlign="center"
+                role="status"
+                className="hidden! md:flex!"
+              >
+                <StatusDot
+                  variant={
+                    syncStatus === "synced"
+                      ? "success"
+                      : syncStatus === "offline"
+                        ? "warning"
+                        : "neutral"
+                  }
+                  label={syncLabel}
                 />
-              </div>
-              {mobileSecondaryActions.map((action) =>
-                renderAction(action, { close, dialog: true }),
+                <Text type="supporting">{syncLabel}</Text>
+              </HStack>
+            ) : (
+              <Text type="supporting" className="hidden! md:block!">
+                Shared notes
+              </Text>
+            )}
+            <Text type="supporting">{toolbarState.wordCount} words</Text>
+          </HStack>
+        }
+        startContent={
+          <>
+            <HStack gap={2} vAlign="center" className="hidden shrink-0 lg:flex">
+              {TOOLBAR_GROUPS.map((group, groupIndex) => (
+                <Fragment key={groupIndex}>
+                  {groupIndex === 1 ? (
+                    <FontSizeControl
+                      editable={editable && editorReady}
+                      fontSize={fontSize}
+                      applyFontSize={applyFontSize}
+                    />
+                  ) : null}
+                  <HStack
+                    gap={0.5}
+                    vAlign="center"
+                    className={
+                      groupIndex > 0 ? "border-l border-border pl-2" : ""
+                    }
+                  >
+                    {group.map((action) => renderAction(action))}
+                  </HStack>
+                </Fragment>
+              ))}
+            </HStack>
+            <HStack gap={1} vAlign="center" className="lg:hidden">
+              {mobilePrimaryActions.map((action) =>
+                renderAction(action, { mobile: true }),
               )}
-            </div>
-          )}
-        </MobileToolsMenu>
-      </div>
-      {syncLabel ? (
-        <span
-          className={`editor-toolbar__sync connection-badge connection-badge--${syncStatus ?? "synced"}`}
-          role="status"
-        >
-          <span className="connection-dot" aria-hidden="true" />
-          {syncLabel}
-        </span>
-      ) : null}
-      <span className="word-count">{toolbarState.wordCount} words</span>
-    </div>
+              <IconButton
+                label="More note tools"
+                tooltip="More note tools"
+                icon={<MoreHorizontal aria-hidden="true" />}
+                variant="ghost"
+                aria-haspopup="dialog"
+                aria-expanded={isToolsOpen}
+                className={`min-h-11 min-w-11 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-accent-muted! text-accent!" : ""}`}
+                onClick={() => setIsToolsOpen(true)}
+              />
+              <Dialog
+                isOpen={isToolsOpen}
+                onOpenChange={setIsToolsOpen}
+                purpose="form"
+                aria-label="More note tools"
+              >
+                <DialogHeader
+                  title="More note tools"
+                  subtitle="Choose additional formatting for your shared notes."
+                  onOpenChange={setIsToolsOpen}
+                />
+                <VStack gap={4} padding={4}>
+                  <HStack gap={3} vAlign="center" hAlign="between">
+                    <Text>Text size</Text>
+                    <FontSizeControl
+                      editable={editable && editorReady}
+                      fontSize={fontSize}
+                      applyFontSize={applyFontSize}
+                    />
+                  </HStack>
+                  <HStack gap={2} wrap="wrap">
+                    {mobileSecondaryActions.map((action) =>
+                      renderAction(action, {
+                        close: () => setIsToolsOpen(false),
+                        dialog: true,
+                      }),
+                    )}
+                  </HStack>
+                </VStack>
+              </Dialog>
+            </HStack>
+          </>
+        }
+      />
+    </VStack>
   );
 }
 
@@ -407,7 +457,8 @@ export const RichTextEditor = forwardRef<
           "aria-label": editable
             ? "Collaborative study notes"
             : "Read-only shared study notes",
-          class: "boardprep-editor",
+          class:
+            "boardprep-editor w-full max-w-5xl! mx-auto! h-full! min-h-0! overflow-x-hidden! overflow-y-auto! overscroll-contain p-5! md:p-8! bg-surface!",
           spellcheck: "true",
         },
       },
@@ -461,12 +512,19 @@ export const RichTextEditor = forwardRef<
 
   if (!editor) {
     return (
-      <div className="editor-initializing">Preparing the rich-text canvas…</div>
+      <LoadingIndicator
+        className="editor-initializing"
+        label="Preparing the rich-text canvas…"
+        size="panel"
+      />
     );
   }
 
   return (
-    <div className="editor-card">
+    <VStack
+      className="editor-card flex! flex-col! flex-1 min-h-0! h-full! w-full! rounded-none! border-0! shadow-none! bg-surface! overflow-hidden"
+      gap={0}
+    >
       {editable ? (
         <EditorToolbar
           editor={editor}
@@ -475,25 +533,54 @@ export const RichTextEditor = forwardRef<
           syncStatus={syncStatus}
         />
       ) : (
-        <div className="read-only-editor-banner" role="status">
+        <Text
+          as="p"
+          role="status"
+          className="shrink-0 border-b border-border p-3 text-secondary"
+        >
           Viewer access · editing controls are disabled
-        </div>
+        </Text>
       )}
-      <EditorContent className="editor-scroll-region" editor={editor} />
-      <footer className="editor-footer">
+      <EditorContent
+        className="editor-scroll-region flex-1 min-h-0! overflow-hidden!"
+        editor={editor}
+      />
+      <HStack
+        as="footer"
+        gap={3}
+        paddingInline={4}
+        paddingBlock={2}
+        hAlign="between"
+        wrap="wrap"
+        className="editor-footer shrink-0 border-t border-border bg-surface! p-2! px-4!"
+      >
         {editable ? (
           <>
-            <span>
-              <span className="keyboard-key">⌘</span>
-              <span className="keyboard-key">Z</span>
-              to undo
-            </span>
-            <span>Changes merge automatically with everyone in this room.</span>
+            <VStack gap={0} className="grid!">
+              <Text
+                type="supporting"
+                className="editor-undo-hint col-start-1 row-start-1 hidden sm:block"
+              >
+                ⌘ / Ctrl Z to undo
+              </Text>
+              <Text
+                type="supporting"
+                color="primary"
+                className="editor-focus-indicator col-start-1 row-start-1"
+              >
+                Notes focused
+              </Text>
+            </VStack>
+            <Text type="supporting">
+              Changes sync automatically with your room.
+            </Text>
           </>
         ) : (
-          <span>Ask the room owner for editor access to make changes.</span>
+          <Text type="supporting">
+            Ask the room owner for editor access to make changes.
+          </Text>
         )}
-      </footer>
-    </div>
+      </HStack>
+    </VStack>
   );
 });

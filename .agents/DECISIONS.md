@@ -288,61 +288,19 @@ Use a focused client-only SVG surface backed by per-element Yjs maps. The origin
 
 ---
 
-## ADR-006: Choose Zustand for State Management
+## ADR-006: Keep state in React and Yjs
 
-**Status**: Accepted
-**Date**: 2024-01-20
-**Decision Makers**: Development Team
+**Status**: Supersedes the unimplemented 2024 Zustand proposal
+**Revised**: 2026-10-02
 
-### Context
+The current application does not install Zustand or contain the previously
+proposed global stores. React state and refs hold transient interaction state;
+Yjs holds collaborative content and awareness; IndexedDB persists editable
+local documents. UI services such as toasts use focused React context.
 
-The application requires:
-
-- Global state management
-- Simple API
-- Good performance
-- TypeScript support
-- Minimal boilerplate
-
-### Decision
-
-Use Zustand for global state management.
-
-### Alternatives Considered
-
-1. **Redux Toolkit**
-   - Pros: Mature, comprehensive, good tooling
-   - Cons: More boilerplate, steeper learning curve
-
-2. **Context API**
-   - Pros: Built-in, no dependencies
-   - Cons: Performance issues with frequent updates, more boilerplate
-
-3. **Recoil**
-   - Pros: React-like API, good performance
-   - Cons: Facebook dependency, less mature
-
-4. **Zustand**
-   - Pros: Simple API, minimal boilerplate, good performance, TypeScript support
-   - Cons: Smaller ecosystem than Redux
-
-### Rationale
-
-- Extremely simple API reduces development time
-- Minimal boilerplate improves code readability
-- Excellent performance with minimal re-renders
-- Great TypeScript support
-- No providers needed
-- Easy to test
-- Good documentation and examples
-
-### Consequences
-
-- Smaller ecosystem than Redux
-- Simpler codebase
-- Better developer experience
-- Good performance
-- Easy onboarding for new developers
+Keep ownership explicit within a feature and share only actual common lifecycle
+behavior. A global store should be introduced only for a demonstrated need, not
+to conform to the historical proposal.
 
 ---
 
@@ -528,7 +486,9 @@ Use the OpenAI Responses API behind a server-only, room-authorized adapter for A
 
 ## ADR-010: Choose Railway for Yjs Server Deployment
 
-**Status**: Accepted
+**Current status (2026-10-02):** Superseded: the implemented deployment uses a same-origin Vercel WebSocket route and the shared Node runtime. The standalone Node entry remains the local development path. The original proposal below is historical, not deployment configuration.
+
+**Original status**: Accepted
 **Date**: 2024-01-24
 **Decision Makers**: Development Team
 
@@ -586,7 +546,9 @@ Use Railway for Yjs WebSocket server deployment.
 
 ## ADR-011: Choose Brand Color System Based on Logo
 
-**Status**: Accepted
+**Current status (2026-10-02):** Superseded: the canonical design is .agents/DESIGN.md and theme/qollab-workshop.ts. The palette and Tailwind example below document a historical proposal and must not be copied into current UI.
+
+**Original status**: Accepted
 **Date**: 2024-01-25
 **Decision Makers**: Development Team
 
