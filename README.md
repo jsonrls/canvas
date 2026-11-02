@@ -24,16 +24,29 @@ and version control. Capacity output can contain disposable account credentials.
 
 ## Run locally
 
-Requirements: Node.js 20.9 or newer, npm, and a Supabase project. `psql` is only required for `verify:schema`.
+Requirements: Node.js 22.9 or newer, npm, and Docker Desktop. `psql` is only required for `verify:schema`.
+
+Development uses a local Supabase stack in Docker; staging, Vercel previews, and the hosted `verify:*` scripts use the cloud project.
 
 ```bash
 npm install
-cp .env.example .env
-# Fill in the Supabase project values, then apply the migrations.
-npx supabase link --project-ref your-project-ref
-npx supabase db push
+cp .env.example .env            # cloud project values (hosted verifiers, db push)
+npx supabase start              # local stack: migrations + supabase/seed.sql
 npm run dev:all
 ```
+
+`.env.local` overrides `.env` for `npm run dev` and `dev:yjs`. Point it at the local stack with the values from `npx supabase status -o env`:
+
+```dotenv
+SUPABASE_URL=http://127.0.0.1:55321
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY from supabase status>
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+YJS_HOST=127.0.0.1
+YJS_PORT=1234
+```
+
+The local stack uses ports 55320–55329 (API 55321, DB 55322, Studio 55323, Mailpit 55324) so it can run beside other Supabase projects on the defaults. Seeded test accounts and their password are listed at the top of `supabase/seed.sql`. `npx supabase db reset` rebuilds the local database from migrations and seed; `npx supabase stop` shuts the stack down. Apply migrations to the cloud project with `npx supabase link --project-ref your-project-ref` and `npx supabase db push`.
 
 Open [http://localhost:3000/rooms](http://localhost:3000/rooms). Unauthenticated requests are redirected to `/login`.
 
