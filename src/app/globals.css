@@ -11,10 +11,11 @@
 @import "../components/shell/legacy-controls.css";
 @import "../components/collaboration/workspace-renderers.css";
 @import "../components/rooms/breakout-directory-compat.css";
+@import "../components/home/landing.css" layer(components);
 
 :root {
   --font-body: var(--font-qollab-body);
-  --font-display: var(--font-qollab-body);
+  --font-display: var(--font-qollab-heading);
   --font-mono: var(--font-qollab-code);
   --brand-primary: var(--color-accent);
   --canvas: var(--color-background-body);

@@ -40,6 +40,7 @@
     "verify:collaboration-persistence": "node scripts/verify-collaboration-persistence.mjs",
     "verify:study-tools": "node --import tsx scripts/verify-study-tools.ts",
     "verify:workspace-shell": "node --require ./scripts/register-css.cjs --import tsx scripts/verify-workspace-shell.ts",
+    "verify:liquid-glass": "node --import tsx scripts/verify-liquid-glass.ts",
     "verify:design-system": "node --import tsx scripts/verify-design-system.ts"
   },
   "dependencies": {

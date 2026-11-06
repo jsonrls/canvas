@@ -1,6 +1,6 @@
 import { Theme } from "@astryxdesign/core/theme";
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -8,10 +8,16 @@ import { qollabWorkshopTheme } from "../../theme/generated/qollab-workshop.js";
 
 import "./globals.css";
 
-const bodyFont = Inter_Tight({
+const bodyFont = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-qollab-body",
+});
+
+const headingFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-qollab-heading",
 });
 
 const codeFont = JetBrains_Mono({
@@ -43,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${codeFont.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${codeFont.variable}`}
       data-astryx-theme="qollab-workshop"
       data-scroll-behavior="smooth"
       data-theme="light"

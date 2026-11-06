@@ -218,9 +218,9 @@
 .breakout-menu__form input {
   min-width: 0;
   height: 39px;
-  padding: 0 11px;
+  padding: 0 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 9px;
+  border-radius: var(--radius-full);
   background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
