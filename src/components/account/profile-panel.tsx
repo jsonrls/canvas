@@ -98,7 +98,7 @@ export function ProfilePanel({
           <FormLayout className="gap-4">
             <Field inputID="profile-display-name" label="Display name">
               <input
-                className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+                className="min-h-11 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 text-primary text-lg focus:outline-accent"
                 aria-describedby={`profile-display-name-help${fieldError ? " profile-display-name-error" : ""}`}
                 aria-invalid={fieldError ? true : undefined}
                 autoComplete="name"

@@ -1187,7 +1187,8 @@
 
 .pdf-reply-form input {
   min-width: 0;
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
 }
 
 .whiteboard-toolbar {
@@ -1198,7 +1199,8 @@
 .whiteboard-toolbar > input:not([type="file"]) {
   min-width: 190px;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
 }
 
 .whiteboard-toolbar .whiteboard-toolbar__actions {

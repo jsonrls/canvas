@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 
 import { requestPasswordReset } from "@/app/reset-password/actions";
-import { Button } from "@/components/ui/button";
+import { AuthSubmit } from "@/components/auth/auth-submit";
 import { Field } from "@astryxdesign/core/Field";
 import { FormLayout } from "@astryxdesign/core/FormLayout";
 import { Text } from "@astryxdesign/core/Text";
@@ -31,7 +31,7 @@ export function ResetPasswordForm({
         <FormLayout className="gap-5">
           <Field inputID="reset-email" label="Email address">
             <input
-              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+              className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 text-primary text-lg focus:outline-accent"
               id="reset-email"
               name="email"
               type="email"
@@ -50,24 +50,16 @@ export function ResetPasswordForm({
             <Text
               as="p"
               role="alert"
-              className="text-primary! bg-error-muted p-3 rounded-md"
+              className="text-primary! bg-error-muted p-3 rounded-2xl"
             >
               {message}
             </Text>
           ) : null}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            width="100%"
-            className="min-h-11 text-on-accent! focus-visible:outline-accent!"
-            isLoading={pending}
-            isDisabled={pending}
-            aria-busy={pending}
-            label={pending ? "Sending secure link…" : "Send reset link"}
-            icon={<Mail aria-hidden="true" size={17} />}
-          />
+          <AuthSubmit isDisabled={pending}>
+            <Mail aria-hidden="true" size={17} />
+            {pending ? "Sending secure link…" : "Send reset link"}
+          </AuthSubmit>
         </FormLayout>
       </form>
 

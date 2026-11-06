@@ -5,7 +5,7 @@ import { Eye as EyeData, EyeOff as EyeOffData } from "lucide";
 import { useActionState, useState } from "react";
 
 import { updatePassword } from "@/app/reset-password/actions";
-import { Button } from "@/components/ui/button";
+import { AuthSubmit } from "@/components/auth/auth-submit";
 import { Field } from "@astryxdesign/core/Field";
 import { IconButton } from "@/components/ui/button";
 import { FormLayout } from "@astryxdesign/core/FormLayout";
@@ -33,7 +33,7 @@ export function UpdatePasswordForm(): React.ReactElement {
         <Field inputID="new-password" label="New password">
           <HStack gap={0} vAlign="center" className="relative w-full">
             <input
-              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 pr-14! text-primary text-lg focus:outline-accent"
+              className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 pr-14! text-primary text-lg focus:outline-accent"
               id="new-password"
               name="password"
               type={inputType}
@@ -69,7 +69,7 @@ export function UpdatePasswordForm(): React.ReactElement {
 
         <Field inputID="new-password-confirmation" label="Confirm new password">
           <input
-            className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+            className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 text-primary text-lg focus:outline-accent"
             id="new-password-confirmation"
             name="passwordConfirmation"
             type={inputType}
@@ -84,24 +84,16 @@ export function UpdatePasswordForm(): React.ReactElement {
           <Text
             as="p"
             role="alert"
-            className="text-primary! bg-error-muted p-3 rounded-md"
+            className="text-primary! bg-error-muted p-3 rounded-2xl"
           >
             {state.message}
           </Text>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          width="100%"
-          className="min-h-11 text-on-accent! focus-visible:outline-accent!"
-          isLoading={pending}
-          isDisabled={pending}
-          aria-busy={pending}
-          label={pending ? "Securing your account…" : "Set new password"}
-          icon={<KeyRound aria-hidden="true" size={17} />}
-        />
+        <AuthSubmit isDisabled={pending}>
+          <KeyRound aria-hidden="true" size={17} />
+          {pending ? "Securing your account…" : "Set new password"}
+        </AuthSubmit>
       </FormLayout>
     </form>
   );

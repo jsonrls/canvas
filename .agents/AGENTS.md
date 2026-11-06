@@ -21,7 +21,7 @@ This document contains instructions and guidelines for AI agents working on the 
 ### UI/UX Development
 - Apply the canonical design system in [DESIGN.md](./DESIGN.md), including its saved blue marketing direction
 - Use Qollab Blue and Soft Blue through the shared Astryx theme; never hardcode brand colors in components
-- Keep Inter Tight for body and headings, and JetBrains Mono for code and room codes
+- Use Inter for body, Bricolage Grotesque for headings, and JetBrains Mono for code and room codes
 - Preserve compact workspace geometry; use the larger display and spacing treatment only on marketing surfaces
 - Use Astryx component props and token-backed utilities for layouts, surfaces, and interactions
 - Preserve accessible focus, 44px touch targets, responsive reading order, and semantic status colors

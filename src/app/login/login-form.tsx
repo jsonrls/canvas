@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { type AuthActionState, signIn, signUp } from "@/app/login/actions";
-import { Button } from "@/components/ui/button";
+import { AuthSubmit } from "@/components/auth/auth-submit";
 import { Field } from "@astryxdesign/core/Field";
 import { IconButton } from "@/components/ui/button";
 import { FormLayout } from "@astryxdesign/core/FormLayout";
@@ -54,7 +54,7 @@ export function LoginForm({
         {isSignUp ? (
           <Field inputID="auth-display-name" label="Display name">
             <input
-              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+              className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 text-primary text-lg focus:outline-accent"
               id="auth-display-name"
               name="displayName"
               type="text"
@@ -68,7 +68,7 @@ export function LoginForm({
 
         <Field inputID="auth-email" label="Email address">
           <input
-            className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+            className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 text-primary text-lg focus:outline-accent"
             id="auth-email"
             name="email"
             type="email"
@@ -81,7 +81,7 @@ export function LoginForm({
         <Field inputID="auth-password" label="Password">
           <HStack gap={0} vAlign="center" className="relative w-full">
             <input
-              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 pr-14! text-primary text-lg focus:outline-accent"
+              className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 pr-14! text-primary text-lg focus:outline-accent"
               id="auth-password"
               name="password"
               type={showPassword ? "text" : "password"}
@@ -131,40 +131,28 @@ export function LoginForm({
           <Text
             as="p"
             role="alert"
-            className="text-primary! bg-error-muted p-3 rounded-md"
+            className="text-primary! bg-error-muted p-3 rounded-2xl"
           >
             {state.message}
           </Text>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          width="100%"
-          className="min-h-11 text-on-accent! focus-visible:outline-accent!"
-          isLoading={isPending}
-          isDisabled={isPending}
-          aria-busy={isPending}
-          label={
-            isSignUp
-              ? isSigningUp
-                ? "Creating your account…"
-                : "Create my Qollab account"
-              : isSigningIn
-                ? "Opening your rooms…"
-                : "Sign in to Qollab"
-          }
-          icon={
-            isSignUp ? (
-              <AppIcon
-                iconData={UserRoundPlusData}
-                aria-hidden="true"
-                size={17}
-              />
-            ) : undefined
-          }
-        />
+        <AuthSubmit isDisabled={isPending}>
+          {isSignUp ? (
+            <AppIcon
+              iconData={UserRoundPlusData}
+              aria-hidden="true"
+              size={17}
+            />
+          ) : null}
+          {isSignUp
+            ? isSigningUp
+              ? "Creating your account…"
+              : "Create my Qollab account"
+            : isSigningIn
+              ? "Opening your rooms…"
+              : "Sign in to Qollab"}
+        </AuthSubmit>
 
         <Text as="p" color="secondary" justify="center">
           {isSignUp ? "Already have an account?" : "New to Qollab?"}{" "}

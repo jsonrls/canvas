@@ -7,6 +7,46 @@ last_updated: 2026-10-09
 
 # Qollab design system
 
+## Current front-end direction (2026-11-06)
+
+The landing page follows the user's fintech reference image ("use this
+instead"), after two earlier directions modelled on https://myboardprep.org/
+were set aside. This section supersedes anything below that conflicts with it,
+including Inter Tight, the warm body colour, 6px and 9px radii, and the flat
+homepage rules. The token table below is historical;
+`theme/qollab-workshop.ts` is the source.
+
+- Look: white page, soft grey rounded cards (`bg-muted`, `rounded-3xl`) holding
+  white insets, one saturated blue panel (`.landing-sky`), pale blue photo
+  fields (`.landing-photo`), navy pill actions (`PillLink`), small label chips
+  above section headings, medium-weight Inter headings with tight tracking.
+- Landing order: top bar (logo, centred links, Log in, Get started pill),
+  centred hero, photo card beside the `LiveRoom` panel, six tool tiles, `#why`
+  three cards, `#workspace` two tall cards and four small ones, `#how` numbered
+  steps beside a photo with a glass figure, study pack rows, `#roles` three
+  cards with the editor card dark, `#faq` numbered accordion, closing panel,
+  footer.
+- Theme colours are unchanged: Qollab Blue `#2563EB`, ink `#0F1B3D`, Bricolage
+  Grotesque headings elsewhere in the app. Only `.landing-root` swaps the
+  heading face to Inter.
+- Sign-in, sign-up and both password pages share this look through
+  `AuthShell`: chip, heading, form in a grey card with white fields, the pill
+  `AuthSubmit` action, and a pale photo panel on desktop.
+- Buttons, app-wide: primary is a blue gradient pill with a darker rim and a
+  soft glow (`--qollab-button-gradient-primary`, `--qollab-button-glow-primary`
+  in the theme). Secondary and destructive are pills too; ghost and link keep
+  12px corners. `.landing-cta` reuses the same tokens for link actions.
+- Fields, app-wide: single-line inputs, number inputs and selectors are pills
+  like the buttons. Text areas keep their corners, since a pill cannot hold
+  several lines.
+- Liquid glass (`src/components/home/liquid-glass.ts`) stays on the room's tool
+  dock and the figure panel in `SessionSteps`.
+- The one photograph is `home-study-collaboration.png`. Its white ground is
+  multiplied onto pale fields, so do not place it on saturated colour.
+- The reference's testimonials, logos, prices, stats and blog are replaced with
+  real content: study packs, roles and product facts. Do not add invented
+  proof or prices. Room fragments are labelled as a sample.
+
 ## Current redesign direction (2026-10-09)
 
 The user requested an app redesign with anti-slop applied during the work.
