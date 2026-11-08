@@ -393,6 +393,7 @@ export function CollaborativeRoom({
                 {activeTool === "notes" ? (
                   <IconButton
                     label="Version history"
+                    tooltip="Version history"
                     aria-controls="version-history-sidebar"
                     aria-expanded={!isVersionHistoryCollapsed}
                     icon={<History aria-hidden="true" size={16} />}

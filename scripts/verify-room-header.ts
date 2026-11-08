@@ -112,4 +112,15 @@ assert.ok(
   (roomSource.match(/followAccessibleLabel/g) ?? []).length >= 2,
   "follow accessible label defined and used",
 );
+assert.match(
+  owner,
+  /<[^>]*aria-label="Organic Chemistry"[^>]*aria-hidden="true"[^>]*>/,
+  "room avatar is aria-hidden",
+);
+assert.match(
+  owner,
+  /<[^>]*(astryx-statusdot[^>]*aria-hidden="true"|aria-hidden="true"[^>]*astryx-statusdot)/,
+  "sync StatusDot is aria-hidden",
+);
+assert.match(roomSource, /tooltip="Version history"/);
 console.log("room header verified");

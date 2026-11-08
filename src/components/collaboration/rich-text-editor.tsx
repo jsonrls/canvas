@@ -202,11 +202,7 @@ function FontSizeControl({
   );
 }
 
-function EditorWordCount({
-  editor,
-}: {
-  editor: Editor;
-}): React.ReactElement {
+function EditorWordCount({ editor }: { editor: Editor }): React.ReactElement {
   const wordCount = useEditorState({
     editor,
     selector: ({ editor: currentEditor }) => {
@@ -505,10 +501,7 @@ export const RichTextEditor = forwardRef<
       gap={0}
     >
       {editable ? (
-        <EditorToolbar
-          editor={editor}
-          editable={editable}
-        />
+        <EditorToolbar editor={editor} editable={editable} />
       ) : (
         <Text
           as="p"
@@ -532,23 +525,21 @@ export const RichTextEditor = forwardRef<
         className="editor-footer shrink-0 border-t border-border bg-surface! p-2! px-4!"
       >
         {editable ? (
-          <>
-            <VStack gap={0} className="grid!">
-              <Text
-                type="supporting"
-                className="editor-undo-hint col-start-1 row-start-1 hidden sm:block"
-              >
-                ⌘ / Ctrl Z to undo
-              </Text>
-              <Text
-                type="supporting"
-                color="primary"
-                className="editor-focus-indicator col-start-1 row-start-1"
-              >
-                Notes focused
-              </Text>
-            </VStack>
-          </>
+          <VStack gap={0} className="grid!">
+            <Text
+              type="supporting"
+              className="editor-undo-hint col-start-1 row-start-1 hidden sm:block"
+            >
+              ⌘ / Ctrl Z to undo
+            </Text>
+            <Text
+              type="supporting"
+              color="primary"
+              className="editor-focus-indicator col-start-1 row-start-1"
+            >
+              Notes focused
+            </Text>
+          </VStack>
         ) : (
           <Text type="supporting">
             Ask the room owner for editor access to make changes.

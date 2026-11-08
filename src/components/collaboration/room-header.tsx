@@ -68,6 +68,7 @@ export function RoomHeader({
             src={roomIconUrl ?? undefined}
             size="sm"
             tooltip={false}
+            aria-hidden
           />
           <VStack gap={0} className="min-w-0">
             <Heading level={1} maxLines={1} className="truncate text-base!">
@@ -121,7 +122,11 @@ export function RoomHeader({
             role="status"
             className="hidden lg:flex"
           >
-            <StatusDot variant={dotVariant[syncStatus]} label={syncLabel} />
+            <StatusDot
+              variant={dotVariant[syncStatus]}
+              label={syncLabel}
+              aria-hidden
+            />
             <Text type="supporting">{syncLabel}</Text>
           </HStack>
           {actions}
