@@ -77,7 +77,7 @@ export function RoomHeader({
               {toolLabel}
             </Text>
           </VStack>
-          <HStack gap={2} vAlign="center" className="hidden md:flex">
+          <HStack gap={2} vAlign="center" className="hidden lg:flex">
             <Token size="sm" label={isPublic ? "Public" : "Private"} />
             {role === "owner" ? null : (
               <Token
@@ -119,7 +119,7 @@ export function RoomHeader({
             gap={2}
             vAlign="center"
             role="status"
-            className="hidden md:flex"
+            className="hidden lg:flex"
           >
             <StatusDot variant={dotVariant[syncStatus]} label={syncLabel} />
             <Text type="supporting">{syncLabel}</Text>

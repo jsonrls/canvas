@@ -47,6 +47,7 @@ import type {
   RoomPdfAsset,
   RoomRole,
 } from "@/lib/rooms/repository";
+import { useMediaQuery } from "@astryxdesign/core/hooks";
 import { useRoomPresentation } from "@/hooks/use-room-presentation";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
@@ -129,6 +130,7 @@ export function CollaborativeRoom({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRoomControlsOpen, setIsRoomControlsOpen] = useState(false);
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const isPhone = useMediaQuery("(max-width: 639px)");
   const [followingPresenterId, setFollowingPresenterId] = useState<
     string | null
   >(null);
@@ -351,6 +353,14 @@ export function CollaborativeRoom({
                     variant="secondary"
                     aria-pressed={isPresenting}
                     icon={<Presentation aria-hidden="true" size={16} />}
+                    isIconOnly={isPhone}
+                    tooltip={
+                      isPhone
+                        ? isPresenting
+                          ? "Stop presenting"
+                          : "Present"
+                        : undefined
+                    }
                     onClick={isPresenting ? stopPresenting : startPresenting}
                   />
                 ) : (
@@ -363,6 +373,15 @@ export function CollaborativeRoom({
                     }
                     variant="ghost"
                     isDisabled={!presentation}
+                    icon={<MousePointer2 aria-hidden="true" size={16} />}
+                    isIconOnly={isPhone}
+                    tooltip={
+                      isPhone
+                        ? isFollowingPresenter
+                          ? "Stop following"
+                          : "Follow"
+                        : undefined
+                    }
                     aria-pressed={isFollowingPresenter}
                     onClick={() => {
                       if (isFollowingPresenter) {

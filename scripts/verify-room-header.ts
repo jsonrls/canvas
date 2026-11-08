@@ -90,7 +90,22 @@ assert.doesNotMatch(
 );
 assert.match(roomSource, /NOTES_SCROLL_REGION_CLASS/);
 assert.doesNotMatch(editorSource, /max-w-5xl/, "document capped at max-w-3xl");
-assert.doesNotMatch(editorSource, /Changes sync automatically with your room\./);
+assert.doesNotMatch(
+  editorSource,
+  /Changes sync automatically with your room\./,
+);
 assert.doesNotMatch(editorSource, /syncLabel/);
 assert.match(editorSource, /function EditorWordCount/);
+assert.doesNotMatch(owner, /md:flex/, "token and sync status hide below lg");
+assert.equal(
+  (owner.match(/lg:flex/g) ?? []).length,
+  2,
+  "token + sync use lg:flex",
+);
+assert.match(
+  owner,
+  /<[^>]*role="status"[^>]*lg:flex|<[^>]*lg:flex[^>]*role="status"/,
+);
+assert.match(roomSource, /useMediaQuery\(\s*"\(max-width: 639px\)"/);
+assert.match(roomSource, /isIconOnly/);
 console.log("room header verified");
