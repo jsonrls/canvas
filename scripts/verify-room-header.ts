@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -74,4 +75,19 @@ assert.doesNotMatch(
   render({ participants: [] }),
   /people in this room|person in this room/,
 );
+const roomSource = readFileSync(
+  "src/components/collaboration/collaborative-room.tsx",
+  "utf8",
+);
+const editorSource = readFileSync(
+  "src/components/collaboration/rich-text-editor.tsx",
+  "utf8",
+);
+assert.doesNotMatch(
+  roomSource,
+  /querySelector<HTMLElement>\(\s*"\.boardprep-editor"/,
+  "follow-scroll targets the scroller, not the editor",
+);
+assert.match(roomSource, /NOTES_SCROLL_REGION_CLASS/);
+assert.doesNotMatch(editorSource, /max-w-5xl/, "document capped at max-w-3xl");
 console.log("room header verified");

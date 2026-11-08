@@ -59,6 +59,8 @@ interface RichTextEditorProps {
   user: StudyUser;
 }
 
+export const NOTES_SCROLL_REGION_CLASS = "editor-scroll-region";
+
 export interface RichTextEditorHandle {
   captureDraft: () => EditorDraft | null;
   captureSnapshot: () => EditorSnapshot | null;
@@ -458,7 +460,7 @@ export const RichTextEditor = forwardRef<
             ? "Collaborative study notes"
             : "Read-only shared study notes",
           class:
-            "boardprep-editor w-full max-w-5xl! mx-auto! h-full! min-h-0! overflow-x-hidden! overflow-y-auto! overscroll-contain p-5! md:p-8! bg-surface!",
+            "boardprep-editor w-full max-w-3xl! mx-auto! min-h-full! p-5! md:p-8! bg-surface!",
           spellcheck: "true",
         },
       },
@@ -542,7 +544,7 @@ export const RichTextEditor = forwardRef<
         </Text>
       )}
       <EditorContent
-        className="editor-scroll-region flex-1 min-h-0! overflow-hidden!"
+        className={`${NOTES_SCROLL_REGION_CLASS} flex-1 min-h-0 overflow-y-auto overscroll-contain`}
         editor={editor}
       />
       <HStack

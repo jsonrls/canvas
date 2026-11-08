@@ -31,7 +31,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import { ConflictReviewPanel } from "@/components/collaboration/conflict-review-panel";
-import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
+import {
+  NOTES_SCROLL_REGION_CLASS,
+  RichTextEditor,
+} from "@/components/collaboration/rich-text-editor";
 import { VersionHistoryPanel } from "@/components/collaboration/version-history-panel";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
 import {
@@ -231,7 +234,7 @@ export function CollaborativeRoom({
       if (
         !canEdit ||
         !(target instanceof HTMLElement) ||
-        !target.classList.contains("boardprep-editor")
+        !target.classList.contains(NOTES_SCROLL_REGION_CLASS)
       ) {
         return;
       }
@@ -257,10 +260,9 @@ export function CollaborativeRoom({
     }
 
     const frame = requestAnimationFrame(() => {
-      const scroller =
-        notesWorkspaceRef.current?.querySelector<HTMLElement>(
-          ".boardprep-editor",
-        );
+      const scroller = notesWorkspaceRef.current?.querySelector<HTMLElement>(
+        `.${NOTES_SCROLL_REGION_CLASS}`,
+      );
       if (!scroller) return;
       const maximumScroll = Math.max(
         0,
