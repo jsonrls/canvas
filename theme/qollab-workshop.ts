@@ -317,5 +317,11 @@ export const qollabTheme = defineTheme({
         fontWeight: "var(--font-weight-medium)",
       },
     },
+    // Astryx's SideNav resize handle overhangs the panel by half a pixel; clip it so the panel never scrolls sideways.
+    "app-shell-sidenav": {
+      base: {
+        overflowX: "clip",
+      },
+    },
   },
 });

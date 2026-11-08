@@ -621,6 +621,11 @@ export const qollabWorkshopTheme = {
         "color": "var(--color-text-primary)",
         "fontWeight": "var(--font-weight-medium)"
       }
+    },
+    "app-shell-sidenav": {
+      "base": {
+        "overflowX": "clip"
+      }
     }
   },
   __onDark: {
