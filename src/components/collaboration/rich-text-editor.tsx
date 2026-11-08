@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/button";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { NumberInput } from "@astryxdesign/core/NumberInput";
-import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
 import { Toolbar } from "@astryxdesign/core/Toolbar";
 import { Mark, mergeAttributes } from "@tiptap/core";
@@ -54,8 +53,6 @@ interface RichTextEditorProps {
   document: Y.Doc;
   editable: boolean;
   provider: WebsocketProvider;
-  syncLabel?: string;
-  syncStatus?: string;
   user: StudyUser;
 }
 
@@ -205,16 +202,33 @@ function FontSizeControl({
   );
 }
 
+function EditorWordCount({
+  editor,
+}: {
+  editor: Editor;
+}): React.ReactElement {
+  const wordCount = useEditorState({
+    editor,
+    selector: ({ editor: currentEditor }) => {
+      if (currentEditor.isDestroyed || !currentEditor.schema) return 0;
+      const text = currentEditor.getText().trim();
+      return text ? text.split(/\s+/u).length : 0;
+    },
+  });
+
+  return (
+    <Text type="supporting">
+      {wordCount} {wordCount === 1 ? "word" : "words"}
+    </Text>
+  );
+}
+
 function EditorToolbar({
   editor,
   editable,
-  syncLabel,
-  syncStatus,
 }: {
   editor: Editor;
   editable: boolean;
-  syncLabel?: string;
-  syncStatus?: string;
 }): React.ReactElement {
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const toolbarState = useEditorState({
@@ -224,15 +238,11 @@ function EditorToolbar({
         return {
           documentSize: 0,
           fontSize: 11,
-          wordCount: 0,
         };
       }
 
-      const editorText = currentEditor.getText().trim();
-
       return {
         documentSize: currentEditor.state.doc.content.size,
-        wordCount: editorText ? editorText.split(/\s+/u).length : 0,
         fontSize: Number.parseInt(
           currentEditor.getAttributes("fontSize").size ?? "11",
           10,
@@ -307,39 +317,6 @@ function EditorToolbar({
       <Toolbar
         label="Text formatting"
         size="lg"
-        endContent={
-          <HStack
-            gap={3}
-            className="shrink-0 whitespace-nowrap"
-            vAlign="center"
-          >
-            {syncLabel ? (
-              <HStack
-                gap={1.5}
-                vAlign="center"
-                role="status"
-                className="hidden! md:flex!"
-              >
-                <StatusDot
-                  variant={
-                    syncStatus === "synced"
-                      ? "success"
-                      : syncStatus === "offline"
-                        ? "warning"
-                        : "neutral"
-                  }
-                  label={syncLabel}
-                />
-                <Text type="supporting">{syncLabel}</Text>
-              </HStack>
-            ) : (
-              <Text type="supporting" className="hidden! md:block!">
-                Shared notes
-              </Text>
-            )}
-            <Text type="supporting">{toolbarState.wordCount} words</Text>
-          </HStack>
-        }
         startContent={
           <>
             <HStack gap={2} vAlign="center" className="hidden shrink-0 lg:flex">
@@ -433,7 +410,7 @@ export const RichTextEditor = forwardRef<
   RichTextEditorHandle,
   RichTextEditorProps
 >(function RichTextEditor(
-  { document, editable, provider, syncLabel, syncStatus, user },
+  { document, editable, provider, user },
   ref,
 ): React.ReactElement {
   const editor = useEditor(
@@ -531,8 +508,6 @@ export const RichTextEditor = forwardRef<
         <EditorToolbar
           editor={editor}
           editable={editable}
-          syncLabel={syncLabel}
-          syncStatus={syncStatus}
         />
       ) : (
         <Text
@@ -573,15 +548,13 @@ export const RichTextEditor = forwardRef<
                 Notes focused
               </Text>
             </VStack>
-            <Text type="supporting">
-              Changes sync automatically with your room.
-            </Text>
           </>
         ) : (
           <Text type="supporting">
             Ask the room owner for editor access to make changes.
           </Text>
         )}
+        <EditorWordCount editor={editor} />
       </HStack>
     </VStack>
   );

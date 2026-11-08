@@ -547,8 +547,6 @@ export function BreakoutRoomWorkspace({
                   document={connection.document}
                   editable={canEdit}
                   provider={connection.provider}
-                  syncLabel={statusCopy[status]}
-                  syncStatus={status}
                   user={connection.user}
                 />
               ) : (

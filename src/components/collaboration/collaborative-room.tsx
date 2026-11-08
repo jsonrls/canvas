@@ -631,12 +631,6 @@ export function CollaborativeRoom({
                   document={connection.document}
                   editable={canEdit}
                   provider={connection.provider}
-                  syncLabel={
-                    remoteStatus === "synced"
-                      ? "Live"
-                      : remoteCopy[remoteStatus]
-                  }
-                  syncStatus={remoteStatus}
                   user={connection.user}
                 />
               ) : (

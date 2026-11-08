@@ -90,4 +90,7 @@ assert.doesNotMatch(
 );
 assert.match(roomSource, /NOTES_SCROLL_REGION_CLASS/);
 assert.doesNotMatch(editorSource, /max-w-5xl/, "document capped at max-w-3xl");
+assert.doesNotMatch(editorSource, /Changes sync automatically with your room\./);
+assert.doesNotMatch(editorSource, /syncLabel/);
+assert.match(editorSource, /function EditorWordCount/);
 console.log("room header verified");
