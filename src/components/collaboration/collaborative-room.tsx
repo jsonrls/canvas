@@ -180,6 +180,9 @@ export function CollaborativeRoom({
   const isFollowingPresenter = Boolean(
     presentation && followingPresenterId === presentation.presenterId,
   );
+  const followAccessibleLabel = presentation
+    ? `${isFollowingPresenter ? "Stop following" : "Follow"} ${presentation.presenterName}`
+    : "No active presenter";
   const presenterId = presentation?.presenterId;
   const presenterWorkspace = presentation?.workspace;
 
@@ -365,23 +368,19 @@ export function CollaborativeRoom({
                   />
                 ) : (
                   <Button
-                    label={isFollowingPresenter ? "Stop following" : "Follow"}
-                    aria-label={
-                      presentation
-                        ? `${isFollowingPresenter ? "Stop following" : "Follow"} ${presentation.presenterName}`
-                        : "No active presenter"
+                    label={
+                      isPhone
+                        ? followAccessibleLabel
+                        : isFollowingPresenter
+                          ? "Stop following"
+                          : "Follow"
                     }
+                    aria-label={isPhone ? undefined : followAccessibleLabel}
                     variant="ghost"
                     isDisabled={!presentation}
                     icon={<MousePointer2 aria-hidden="true" size={16} />}
                     isIconOnly={isPhone}
-                    tooltip={
-                      isPhone
-                        ? isFollowingPresenter
-                          ? "Stop following"
-                          : "Follow"
-                        : undefined
-                    }
+                    tooltip={isPhone ? followAccessibleLabel : undefined}
                     aria-pressed={isFollowingPresenter}
                     onClick={() => {
                       if (isFollowingPresenter) {

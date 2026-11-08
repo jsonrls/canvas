@@ -108,4 +108,8 @@ assert.match(
 );
 assert.match(roomSource, /useMediaQuery\(\s*"\(max-width: 639px\)"/);
 assert.match(roomSource, /isIconOnly/);
+assert.ok(
+  (roomSource.match(/followAccessibleLabel/g) ?? []).length >= 2,
+  "follow accessible label defined and used",
+);
 console.log("room header verified");
