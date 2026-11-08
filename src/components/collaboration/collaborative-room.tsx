@@ -3,7 +3,7 @@
 import { Avatar } from "@astryxdesign/core/Avatar";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Dialog } from "@astryxdesign/core/Dialog";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Selector } from "@astryxdesign/core/Selector";
@@ -12,6 +12,7 @@ import {
   BookOpenText,
   BrainCircuit,
   FileText,
+  History,
   MousePointer2,
   PanelsTopLeft,
   Presentation,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/icons";
 import { QollabAppShell } from "@/components/shell/qollab-app-shell";
 import { QollabSideNavigation } from "@/components/shell/qollab-side-navigation";
-import { QollabWorkspaceHeader } from "@/components/shell/qollab-workspace-header";
+import { RoomHeader } from "@/components/collaboration/room-header";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -328,19 +329,19 @@ export function CollaborativeRoom({
           },
         }}
         header={
-          <QollabWorkspaceHeader
-            label="Room controls"
-            startContent={
-              <VStack gap={0} className="min-w-0">
-                <Text type="label" maxLines={1}>
-                  {roomName}
-                </Text>
-                <Text type="supporting" className="hidden sm:block">
-                  {toolLabels[activeTool]}
-                </Text>
-              </VStack>
+          <RoomHeader
+            roomName={roomName}
+            roomIconUrl={roomIconUrl}
+            isPublic={isPublic}
+            role={currentUserRole}
+            toolLabel={toolLabels[activeTool]}
+            participants={participants}
+            onOpenParticipants={() => setIsRoomControlsOpen(true)}
+            syncStatus={remoteStatus}
+            syncLabel={
+              remoteStatus === "synced" ? "Live" : remoteCopy[remoteStatus]
             }
-            endContent={
+            actions={
               <HStack gap={2} vAlign="center">
                 {canEdit ? (
                   <Button
@@ -369,6 +370,17 @@ export function CollaborativeRoom({
                     }}
                   />
                 )}
+                {activeTool === "notes" ? (
+                  <IconButton
+                    label="Version history"
+                    aria-controls="version-history-sidebar"
+                    aria-expanded={!isVersionHistoryCollapsed}
+                    icon={<History aria-hidden="true" size={16} />}
+                    onClick={() =>
+                      setIsVersionHistoryCollapsed((value) => !value)
+                    }
+                  />
+                ) : null}
                 {currentUserRole === "owner" ? (
                   <Button
                     as={Link}
@@ -376,11 +388,7 @@ export function CollaborativeRoom({
                     label="Manage"
                     variant="ghost"
                   />
-                ) : (
-                  <Text type="supporting" className="hidden sm:block">
-                    {currentUserRole}
-                  </Text>
-                )}
+                ) : null}
               </HStack>
             }
           />
@@ -389,7 +397,7 @@ export function CollaborativeRoom({
           <QollabSideNavigation
             footerIcons={
               <Button
-                label="Room controls"
+                label="People and room"
                 isIconOnly
                 icon={<UsersRound aria-hidden="true" size={16} />}
                 variant="ghost"
@@ -429,9 +437,6 @@ export function CollaborativeRoom({
                       />
                     }
                   />
-                  <Text type="supporting">
-                    {isPublic ? "Public room" : "Private room"}
-                  </Text>
                 </VStack>
               ) : undefined
             }
@@ -572,27 +577,6 @@ export function CollaborativeRoom({
               onScrollCapture={handleNotesScroll}
               ref={notesWorkspaceRef}
             >
-              <HStack
-                gap={3}
-                paddingInline={5}
-                paddingBlock={3}
-                hAlign="between"
-                vAlign="center"
-                className="border-b border-border"
-              >
-                <Heading level={1} className="text-lg!">
-                  Shared notes
-                </Heading>
-                <Button
-                  label="Version history"
-                  aria-controls="version-history-sidebar"
-                  variant="ghost"
-                  aria-expanded={!isVersionHistoryCollapsed}
-                  onClick={() =>
-                    setIsVersionHistoryCollapsed((value) => !value)
-                  }
-                />
-              </HStack>
               {conflictReview ? (
                 <ConflictReviewPanel
                   canUseOfflineDraft={remoteActionsAvailable}
@@ -700,12 +684,12 @@ export function CollaborativeRoom({
       <Dialog
         isOpen={isRoomControlsOpen}
         onOpenChange={setIsRoomControlsOpen}
-        aria-label="Room controls"
+        aria-label="People and room"
         purpose="info"
       >
         <VStack gap={4} padding={4}>
           <HStack hAlign="between" vAlign="center">
-            <Heading level={2}>Room controls</Heading>
+            <Heading level={2}>People and room</Heading>
             <Button
               label="Close"
               variant="ghost"
