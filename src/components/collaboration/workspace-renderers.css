@@ -516,8 +516,6 @@
 
 .study-tool button:focus-visible,
 .study-tool a:focus-visible,
-.study-tool input:focus-visible,
-.study-tool textarea:focus-visible,
 .whiteboard-stage svg:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
   outline-offset: 2px;

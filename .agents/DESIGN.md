@@ -29,9 +29,12 @@ homepage rules. The token table below is historical;
 - Theme colours are unchanged: Qollab Blue `#2563EB`, ink `#0F1B3D`, Bricolage
   Grotesque headings elsewhere in the app. Only `.landing-root` swaps the
   heading face to Inter.
-- Sign-in, sign-up and both password pages share this look through
-  `AuthShell`: chip, heading, form in a grey card with white fields, the pill
-  `AuthSubmit` action, and a pale photo panel on desktop.
+- Sign-in, sign-up and both password pages share `AuthShell`: a centred
+  column (bold heading, one line of intro, pill fields with placeholders and
+  hidden labels, the pill `AuthSubmit` action) beside a tall pale blue panel
+  with the group photo, two floating avatars, a sample room card and a
+  caption. The panel hides below `lg`. No social sign-in buttons: the app has
+  no providers.
 - Buttons, app-wide: primary is a blue gradient pill with a darker rim and a
   soft glow (`--qollab-button-gradient-primary`, `--qollab-button-glow-primary`
   in the theme). Secondary and destructive are pills too; ghost and link keep
@@ -39,6 +42,10 @@ homepage rules. The token table below is historical;
 - Fields, app-wide: single-line inputs, number inputs and selectors are pills
   like the buttons. Text areas keep their corners, since a pill cannot hold
   several lines.
+- Field focus, app-wide: the border turns accent, with a one-pixel accent rim
+  and a soft halo (`--qollab-field-focus-ring`), not an offset outline. A
+  transparent outline remains for forced-colours mode. Fields in a warning or
+  error state keep their status border. Buttons and links keep the outline.
 - Liquid glass (`src/components/home/liquid-glass.ts`) stays on the room's tool
   dock and the figure panel in `SessionSteps`.
 - The one photograph is `home-study-collaboration.png`. Its white ground is
@@ -272,8 +279,10 @@ native children, form attributes, refs, or specialized control semantics.
 - Native `custom`: renderer annotations, switches, quiz/flashcard surfaces,
   or rich interactive rows whose geometry and status colors must remain intact.
 
-Default height is 44px, compact (`sm`) is 36px for dense tools, and large (`lg`)
-is 48px. Preserve mobile touch targets and existing responsive layouts. Presses
+Default height is 36px, compact (`sm`) is 32px for dense tools, and large (`lg`)
+is 40px. Buttons and fields use these compact heights and are exempt from the
+44px touch-target rule; text links, rows and navigation items keep it. Preserve
+existing responsive layouts. Presses
 and hover provide color feedback without movement. Labeled
 buttons use explicit `isLoading`; native controls keep their own busy state and
 spinner rather than inferring loading from `disabled` or `aria-busy`.
@@ -452,7 +461,7 @@ autocomplete, length constraints, error text, pending text, and success toasts.
 ### Composition and visual direction
 
 - Cream body surface, centered frame capped at 1120px, shared blue Qollab logo
-  linked home and a visible “Back home” link. Use `Center`, `VStack`, `HStack`,
+  linked home; no separate “Back home” link. Use `Center`, `VStack`, `HStack`,
   responsive `Grid`, `Card`, `Heading`, and `Text` according to verified APIs.
 - At desktop widths (1024px and above), the form region comes first, with a
   white standalone Card capped at 440px. The companion region is editorial,
@@ -476,11 +485,11 @@ autocomplete, length constraints, error text, pending text, and success toasts.
   permitted when needed to retain IDs, autocomplete, min/max length, hidden
   redirect fields, and password toggles unavailable in the installed TextInput.
   Style with semantic token-backed utilities; do not add CSS or layout div/span.
-- Visible labels precede fields. Inputs and buttons are at least 44px high;
+- Visible labels precede fields. Auth inputs and the submit pill are 40px high;
   input text uses the existing 16px token to avoid mobile focus zoom. Primary
   submit fills the form width. Focus rings contrast on white and cream.
 - The password reveal button sits inside the input border at the trailing edge,
-  with reserved input padding so text never overlaps its 44px target. Keep its current
+  with reserved input padding so text never overlaps its 40px target. Keep its current
   show/hide accessible name, `aria-controls`, and `aria-pressed`. Keep text and
   toggle hit areas separate. Preserve update-password's shared toggle for both
   password fields. Forgot-password is a separate readable link row if needed

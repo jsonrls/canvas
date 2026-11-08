@@ -459,3 +459,12 @@
   background: var(--blue-soft);
   color: var(--brand-primary);
 }
+
+/* Themed fields draw focus on their wrapper; the control inside stays bare. */
+.astryx-text-input input:focus-visible,
+.astryx-number-input input:focus-visible,
+.astryx-textarea textarea:focus-visible,
+.astryx-selector button:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

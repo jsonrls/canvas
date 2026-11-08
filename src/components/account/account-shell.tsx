@@ -83,7 +83,6 @@ export function AccountShell({
                   label={page === "profile" ? "Profile" : "Settings"}
                   variant="ghost"
                   aria-current={activePage === page ? "page" : undefined}
-                  className="min-h-11"
                 />
               ))}
             </HStack>

@@ -62,7 +62,7 @@ export function SignOutButton({
         <Button
           label={isPending ? pendingLabel : label}
           variant="destructive"
-          className="min-h-11 bg-error! text-on-error!"
+          className="bg-error! text-on-error!"
           aria-busy={isPending}
           isLoading={isPending}
           isDisabled={isPending}

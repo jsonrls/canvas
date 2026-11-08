@@ -56,7 +56,7 @@ function formatUpdatedAt(value: string): string {
   }).format(date)}`;
 }
 
-const roomActionClassName = "min-h-11 px-4";
+const roomActionClassName = "px-4";
 
 function PendingButton({
   label,
@@ -81,7 +81,7 @@ function PendingButton({
       className={
         roomName
           ? roomActionClassName
-          : `min-h-11 font-normal! ${primary ? "text-on-accent!" : ""}`
+          : `font-normal! ${primary ? "text-on-accent!" : ""}`
       }
     />
   );
@@ -126,7 +126,6 @@ function LeaveRoomForm({ room }: { room: RoomSummary }) {
         label="Leave"
         aria-label={`Leave room: ${room.name}`}
         variant="danger-ghost"
-        className="min-h-11"
         onClick={() => setIsOpen(true)}
       />
       <Dialog
@@ -155,13 +154,11 @@ function LeaveRoomForm({ room }: { room: RoomSummary }) {
               label="Keep room"
               variant="ghost"
               data-autofocus
-              className="min-h-11"
               onClick={() => setIsOpen(false)}
             />
             <Button
               label={pending ? "Leaving…" : "Leave room"}
               variant="destructive"
-              className="min-h-11"
               isLoading={pending}
               onClick={() => startTransition(() => action(new FormData()))}
             />
@@ -224,7 +221,6 @@ function RoomRow({ room, joined }: { room: RoomSummary; joined: boolean }) {
                   label="Manage"
                   aria-label={`Manage room: ${room.name}`}
                   variant="ghost"
-                  className="min-h-11"
                 />
               ) : (
                 <LeaveRoomForm room={room} />
@@ -325,7 +321,6 @@ export function RoomsDashboard({
                 variant="primary"
                 icon={<Plus aria-hidden="true" />}
                 onClick={openCreate}
-                className="min-h-11"
               />
             </HStack>
           </VStack>
@@ -400,7 +395,7 @@ export function RoomsDashboard({
           title="Create a room"
           subtitle="Give your group a focused place to study together."
           onOpenChange={setIsCreateOpen}
-          className="[&_button]:min-h-11 [&_button]:min-w-11"
+          className="[&_button]:min-w-9"
         />
         <form action={createAction} className="w-full">
           <VStack gap={4} padding={4}>
@@ -411,7 +406,7 @@ export function RoomsDashboard({
                 hasAutoFocus
                 size="lg"
                 width="100%"
-                className="min-h-11 [&_input]:text-lg"
+                className="[&_input]:text-lg"
                 htmlName="name"
                 value={name}
                 onChange={setName}
@@ -449,7 +444,7 @@ export function RoomsDashboard({
             <HStack gap={2} hAlign="end" vAlign="center" wrap="wrap">
               <Button
                 label="Cancel"
-                className="min-h-11 font-normal!"
+                className="font-normal!"
                 onClick={() => setIsCreateOpen(false)}
               />
               <PendingButton

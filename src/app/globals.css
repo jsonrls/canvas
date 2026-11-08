@@ -86,6 +86,31 @@ textarea:focus-visible {
   outline-offset: var(--focus-outline-offset);
 }
 
+/*
+ * Text fields show focus as an accent rim with a soft halo instead of an
+ * offset outline. The transparent outline stays so forced-colours mode still
+ * draws one. `:where` keeps specificity low so feature styles can override.
+ */
+input:where(
+    :not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="color"],
+      [type="file"]
+    )
+  ):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--color-accent);
+  outline-color: transparent;
+  outline-offset: 0;
+  box-shadow: var(--qollab-field-focus-ring);
+  transition:
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

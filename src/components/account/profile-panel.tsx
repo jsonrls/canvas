@@ -98,7 +98,7 @@ export function ProfilePanel({
           <FormLayout className="gap-4">
             <Field inputID="profile-display-name" label="Display name">
               <input
-                className="min-h-11 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 text-primary text-lg focus:outline-accent"
+                className="min-h-10 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 text-primary text-lg"
                 aria-describedby={`profile-display-name-help${fieldError ? " profile-display-name-error" : ""}`}
                 aria-invalid={fieldError ? true : undefined}
                 autoComplete="name"
@@ -140,7 +140,7 @@ export function ProfilePanel({
 
             <ButtonControl
               variant="primary"
-              className="self-start min-h-11"
+              className="self-start"
               aria-busy={pending}
               disabled={pending}
               type="submit"

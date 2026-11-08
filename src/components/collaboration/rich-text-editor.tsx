@@ -272,7 +272,7 @@ function EditorToolbar({
       "aria-pressed": action.isActive ? isActive : undefined,
       isDisabled,
       variant: "ghost" as const,
-      className: `min-h-11 min-w-11 ${isActive ? "bg-accent-muted! text-accent!" : ""}`,
+      className: `min-w-9 ${isActive ? "bg-accent-muted! text-accent!" : ""}`,
       icon: <Icon aria-hidden="true" size={17} strokeWidth={1.9} />,
       onClick: () => {
         if (!editorReady) return;
@@ -373,7 +373,7 @@ function EditorToolbar({
                 variant="ghost"
                 aria-haspopup="dialog"
                 aria-expanded={isToolsOpen}
-                className={`min-h-11 min-w-11 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-accent-muted! text-accent!" : ""}`}
+                className={`min-w-9 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-accent-muted! text-accent!" : ""}`}
                 onClick={() => setIsToolsOpen(true)}
               />
               <Dialog

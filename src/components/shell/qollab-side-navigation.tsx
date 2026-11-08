@@ -102,7 +102,7 @@ function QollabSideNavigationHeader({
         width="100%"
       >
         {header}
-        <SideNavCollapseButton className="min-h-11 min-w-11" size="lg">
+        <SideNavCollapseButton className="min-w-10" size="lg">
           <PanelLeft aria-hidden="true" size={18} />
         </SideNavCollapseButton>
       </HStack>
@@ -143,7 +143,7 @@ function QollabSideNavigationHeader({
           hAlign="center"
           vAlign="center"
         >
-          <SideNavCollapseButton className="min-h-11 min-w-11" size="lg">
+          <SideNavCollapseButton className="min-w-10" size="lg">
             <PanelLeft aria-hidden="true" size={18} />
           </SideNavCollapseButton>
         </HStack>

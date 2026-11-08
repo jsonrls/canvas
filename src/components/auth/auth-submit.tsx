@@ -16,7 +16,7 @@ export function AuthSubmit({
       variant="custom"
       disabled={isDisabled}
       aria-busy={isDisabled}
-      className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 landing-cta rounded-full px-5 font-medium text-surface! disabled:cursor-progress disabled:opacity-70"
+      className="inline-flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 landing-cta rounded-full px-4 font-medium text-surface! disabled:cursor-progress disabled:opacity-70"
     >
       {children}
     </ButtonControl>

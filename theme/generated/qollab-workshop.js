@@ -198,9 +198,10 @@ export const qollabWorkshopTheme = {
     "--qollab-button-edge-secondary": "light-dark(#C5D2E4, #9696A3)",
     "--qollab-button-edge-destructive": "light-dark(#792722, #A14B43)",
     "--qollab-button-secondary": "light-dark(#FFFFFF, #34343F)",
-    "--qollab-button-height-sm": "36px",
-    "--qollab-button-height-md": "44px",
-    "--qollab-button-height-lg": "48px",
+    "--qollab-field-focus-ring": "0 0 0 1px var(--color-accent), 0 0 0 5px color-mix(in srgb, var(--color-accent) 18%, transparent)",
+    "--qollab-button-height-sm": "32px",
+    "--qollab-button-height-md": "36px",
+    "--qollab-button-height-lg": "40px",
     "--qollab-highlight": "light-dark(#FFE45C, #E8C93A)"
   },
   components: {
@@ -561,18 +562,46 @@ export const qollabWorkshopTheme = {
         "borderRadius": "var(--radius-full)",
         "paddingInline": "var(--spacing-4)",
         "backgroundColor": "var(--color-background-surface)",
-        "borderColor": "var(--color-border-emphasized)"
+        "borderColor": "var(--color-border-emphasized)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
       }
     },
     "number-input": {
       "base": {
         "borderRadius": "var(--radius-full)",
-        "--astryx-number-input-padding-inline": "var(--spacing-3)"
+        "--astryx-number-input-padding-inline": "var(--spacing-3)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
       }
     },
     "selector": {
       "base": {
-        "borderRadius": "var(--radius-full)"
+        "borderRadius": "var(--radius-full)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
+      }
+    },
+    "textarea": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
       }
     },
     "side-nav": {

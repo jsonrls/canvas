@@ -1801,8 +1801,9 @@
 }
 
 .createForm input[type="text"]:focus-visible {
-  border-color: var(--rooms-brand);
-  box-shadow: 0 0 0 4px rgb(49 86 216 / 12%);
+  border-color: var(--color-accent);
+  outline-color: transparent;
+  box-shadow: var(--qollab-field-focus-ring);
 }
 
 .visibilityGrid {

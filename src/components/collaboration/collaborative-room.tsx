@@ -346,7 +346,6 @@ export function CollaborativeRoom({
                   <Button
                     label={isPresenting ? "Stop presenting" : "Present"}
                     variant="secondary"
-                    className="min-h-11"
                     aria-pressed={isPresenting}
                     icon={<Presentation aria-hidden="true" size={16} />}
                     onClick={isPresenting ? stopPresenting : startPresenting}
@@ -360,7 +359,6 @@ export function CollaborativeRoom({
                         : "No active presenter"
                     }
                     variant="ghost"
-                    className="min-h-11"
                     isDisabled={!presentation}
                     aria-pressed={isFollowingPresenter}
                     onClick={() => {
@@ -377,7 +375,6 @@ export function CollaborativeRoom({
                     href={`/rooms/${roomId}/settings`}
                     label="Manage"
                     variant="ghost"
-                    className="min-h-11"
                   />
                 ) : (
                   <Text type="supporting" className="hidden sm:block">
@@ -431,7 +428,6 @@ export function CollaborativeRoom({
                         tooltip={false}
                       />
                     }
-                    className="[&_button]:min-h-11"
                   />
                   <Text type="supporting">
                     {isPublic ? "Public room" : "Private room"}
@@ -541,7 +537,6 @@ export function CollaborativeRoom({
                 label,
               }))}
               width="100%"
-              className="[&_button]:min-h-11"
             />
           </HStack>
           {!canEdit &&
@@ -592,7 +587,6 @@ export function CollaborativeRoom({
                   label="Version history"
                   aria-controls="version-history-sidebar"
                   variant="ghost"
-                  className="min-h-11"
                   aria-expanded={!isVersionHistoryCollapsed}
                   onClick={() =>
                     setIsVersionHistoryCollapsed((value) => !value)

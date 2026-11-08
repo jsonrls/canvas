@@ -33,7 +33,7 @@ export function PillLink({
   return (
     <Link
       href={href}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 font-medium whitespace-nowrap transition-colors ${PILL_TONES[tone]}`}
+      className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-full px-4 font-medium whitespace-nowrap transition-colors ${PILL_TONES[tone]}`}
     >
       {label}
       {tone === "primary" ? <ArrowRight size={17} aria-hidden="true" /> : null}

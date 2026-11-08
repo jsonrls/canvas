@@ -501,7 +501,6 @@ export function BreakoutRoomWorkspace({
                 { value: "whiteboard", label: "Whiteboard" },
               ]}
               width="100%"
-              className="[&_button]:min-h-11"
             />
           </HStack>
           {message ? (

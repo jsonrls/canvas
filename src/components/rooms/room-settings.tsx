@@ -33,8 +33,7 @@ import { ArrowLeft, Crown } from "@/components/ui/icons";
 import { useSuccessToast } from "@/components/ui/toast";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
 
-const destructiveClassName =
-  "min-h-11 font-bold! text-error! bg-transparent! bg-none!";
+const destructiveClassName = "font-bold! text-error! bg-transparent! bg-none!";
 const roleOptions = [
   { value: "editor", label: "Editor" },
   { value: "viewer", label: "Viewer" },
@@ -64,7 +63,7 @@ function SettingsSubmitButton({
       variant={variant}
       isLoading={pending}
       isDisabled={disabled}
-      className={`min-h-11 ${variant === "primary" ? "text-on-accent!" : ""} ${className}`}
+      className={`${variant === "primary" ? "text-on-accent!" : ""} ${className}`}
     />
   );
 }
@@ -143,7 +142,6 @@ function MemberRow({
                   options={roleOptions}
                   size="lg"
                   width={128}
-                  className="min-h-11"
                 />
                 <SettingsSubmitButton
                   label="Save"
@@ -189,7 +187,6 @@ function MemberRow({
                 label="Cancel"
                 variant="ghost"
                 data-autofocus
-                className="min-h-11"
                 isDisabled={removing}
                 onClick={() => setRemoveOpen(false)}
               />
@@ -271,7 +268,7 @@ export function RoomSettingsPanel({
             label="Back to room"
             variant="ghost"
             icon={<ArrowLeft aria-hidden="true" size={16} />}
-            className="self-start min-h-11 hover:bg-transparent! hover:bg-none!"
+            className="self-start hover:bg-transparent! hover:bg-none!"
           />
           <VStack gap={2}>
             <Text type="supporting" className="break-words">
@@ -377,7 +374,6 @@ export function RoomSettingsPanel({
                     onChange={setEmail}
                     placeholder="name@example.com"
                     size="lg"
-                    className="min-h-11"
                     isRequired
                     width="100%"
                     {...{ required: true, autoComplete: "email" }}
@@ -393,7 +389,7 @@ export function RoomSettingsPanel({
                       options={roleOptions}
                       size="lg"
                       width="100%"
-                      className="min-h-11 sm:w-32"
+                      className="sm:w-32"
                     />
                   </VStack>
                   <SettingsSubmitButton
@@ -487,7 +483,6 @@ export function RoomSettingsPanel({
                 <Button
                   label="Cancel"
                   variant="ghost"
-                  className="min-h-11"
                   isDisabled={deleting}
                   onClick={() => setDeleteOpen(false)}
                 />

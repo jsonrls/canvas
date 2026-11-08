@@ -55,15 +55,14 @@ function SuccessToast({
         <p>{message}</p>
       </div>
       <ButtonControl
-        variant="ghost"
+        variant="custom"
         aria-label="Dismiss notification"
         className={styles.dismiss}
         onClick={() => onDismiss(id)}
         type="button"
       >
-        <X aria-hidden="true" size={15} />
+        <X aria-hidden="true" size={16} strokeWidth={2.4} />
       </ButtonControl>
-      <span className={styles.progress} aria-hidden="true" />
     </li>
   );
 }

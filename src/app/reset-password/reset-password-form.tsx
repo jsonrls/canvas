@@ -29,15 +29,15 @@ export function ResetPasswordForm({
     <>
       <form action={action}>
         <FormLayout className="gap-5">
-          <Field inputID="reset-email" label="Email address">
+          <Field inputID="reset-email" label="Email address" isLabelHidden>
             <input
-              className="min-h-12 w-full min-w-0 rounded-full border border-border-strong bg-surface px-5 text-primary text-lg focus:outline-accent"
+              className="min-h-10 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 text-primary text-lg"
               id="reset-email"
               name="email"
               type="email"
               autoComplete="email"
               aria-describedby="reset-email-help"
-              placeholder="you@example.com"
+              placeholder="Email address"
               required
             />
           </Field>

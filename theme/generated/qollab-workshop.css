@@ -265,9 +265,10 @@
     --qollab-button-edge-secondary: light-dark(#C5D2E4, #9696A3);
     --qollab-button-edge-destructive: light-dark(#792722, #A14B43);
     --qollab-button-secondary: light-dark(#FFFFFF, #34343F);
-    --qollab-button-height-sm: 36px;
-    --qollab-button-height-md: 44px;
-    --qollab-button-height-lg: 48px;
+    --qollab-field-focus-ring: 0 0 0 1px var(--color-accent), 0 0 0 5px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    --qollab-button-height-sm: 32px;
+    --qollab-button-height-md: 36px;
+    --qollab-button-height-lg: 40px;
     --qollab-highlight: light-dark(#FFE45C, #E8C93A);
   }
 
@@ -685,14 +686,46 @@
     border-color: var(--color-border-emphasized);
   }
 
+  .astryx-text-input:focus-within {
+    box-shadow: var(--qollab-field-focus-ring);
+  }
+
+  .astryx-text-input:focus-within:not([data-status]) {
+    border-color: var(--color-accent);
+  }
+
   .astryx-number-input {
     border-radius: var(--radius-full);
     --astryx-number-input-padding-inline: var(--spacing-3);
     --_field-radius: var(--radius-full);
   }
 
+  .astryx-number-input:focus-within {
+    box-shadow: var(--qollab-field-focus-ring);
+  }
+
+  .astryx-number-input:focus-within:not([data-status]) {
+    border-color: var(--color-accent);
+  }
+
   .astryx-selector {
     border-radius: var(--radius-full);
+  }
+
+  .astryx-selector:focus-within {
+    box-shadow: var(--qollab-field-focus-ring);
+  }
+
+  .astryx-selector:focus-within:not([data-status]) {
+    border-color: var(--color-accent);
+  }
+
+  .astryx-textarea:focus-within {
+    box-shadow: var(--qollab-field-focus-ring);
+  }
+
+  .astryx-textarea:focus-within:not([data-status]) {
+    border-color: var(--color-accent);
   }
 
   .astryx-side-nav {

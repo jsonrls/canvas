@@ -167,7 +167,7 @@ export function VersionHistoryPanel({
             tooltip="Close version history"
             icon={<X aria-hidden="true" />}
             variant="ghost"
-            className="min-h-11 min-w-11"
+            className="min-w-9"
             onClick={() => onOpenChange(false)}
           />
         ) : null}
@@ -196,7 +196,7 @@ export function VersionHistoryPanel({
               variant="primary"
               isDisabled={!remoteActionsAvailable || isBusy}
               isLoading={isPending}
-              className="min-h-11 text-on-accent!"
+              className="text-on-accent!"
             />
           </VStack>
         </form>
@@ -221,7 +221,7 @@ export function VersionHistoryPanel({
               isDisabled={!remoteActionsAvailable || isBusy}
               isLoading={isRefreshing}
               onClick={refreshVersions}
-              className="min-h-11 min-w-11"
+              className="min-w-9"
             />
           </HStack>
           {initialVersions.length > 0 ? (
@@ -253,7 +253,6 @@ export function VersionHistoryPanel({
                       variant="ghost"
                       isDisabled={!remoteActionsAvailable || isBusy}
                       onClick={() => restoreVersion(version)}
-                      className="min-h-11"
                     />
                   </HStack>
                 </VStack>

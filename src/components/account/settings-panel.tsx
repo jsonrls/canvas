@@ -109,7 +109,7 @@ export function SettingsPanel({
                     href={action.href}
                     label={action.label}
                     variant="link"
-                    className="min-h-11 shrink-0 self-start text-accent hover:bg-none!"
+                    className="shrink-0 self-start text-accent hover:bg-none!"
                   />
                 </HStack>
               }
