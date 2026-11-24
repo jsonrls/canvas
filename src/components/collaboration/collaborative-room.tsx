@@ -12,6 +12,7 @@ import { Text } from "@astryxdesign/core/Text";
 import {
   BookOpenText,
   BrainCircuit,
+  ChartColumnBig,
   ChevronsUpDown,
   FileText,
   History,
@@ -52,10 +53,14 @@ import type {
   RoomRole,
 } from "@/lib/rooms/repository";
 import { useMediaQuery } from "@astryxdesign/core/hooks";
-import { useRoomPresentation } from "@/hooks/use-room-presentation";
+import {
+  useRoomPresentation,
+  type PresentedWorkspace,
+} from "@/hooks/use-room-presentation";
+import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
-type WorkspaceTool = RoomDocumentKind | "assistant";
+type WorkspaceTool = RoomDocumentKind | "assistant" | "live";
 
 interface CollaborativeRoomProps {
   availableRooms: Array<{ name: string; slug: string }>;
@@ -86,6 +91,13 @@ const WhiteboardStudyTool = dynamic(
   () => import("@/components/collaboration/whiteboard-study-tool"),
   {
     loading: () => <ToolLoading label="Opening the whiteboard…" />,
+    ssr: false,
+  },
+);
+const LiveActivitiesTool = dynamic(
+  () => import("@/components/collaboration/live/live-activities-tool"),
+  {
+    loading: () => <ToolLoading label="Opening live activities…" />,
     ssr: false,
   },
 );
@@ -131,6 +143,10 @@ export function CollaborativeRoom({
   const canManagePdf = currentUserRole !== "viewer";
   const canEdit = canManagePdf || viewerCanCollaborate;
   const [activeTool, setActiveTool] = useState<WorkspaceTool>("notes");
+  const live = useLiveActivities({
+    roomSlug: roomId,
+    isActive: activeTool === "live",
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isRoomControlsOpen, setIsRoomControlsOpen] = useState(false);
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
@@ -165,7 +181,7 @@ export function CollaborativeRoom({
     initialState: initialDocumentStates.notes,
     roomId,
   });
-  const presentedWorkspace: RoomDocumentKind =
+  const presentedWorkspace: PresentedWorkspace =
     activeTool === "assistant" ? "notes" : activeTool;
   const roomPresentation = useRoomPresentation({
     canPresent: canEdit,
@@ -303,7 +319,14 @@ export function CollaborativeRoom({
     pdf: "PDF annotation",
     whiteboard: "Whiteboard",
     assistant: "AI study assistant",
+    live: "Live activities",
   };
+  const liveSession = live.snapshot?.session;
+  const showLivePrompt =
+    activeTool !== "live" &&
+    live.snapshot?.canHost === false &&
+    Boolean(liveSession?.isAccepting) &&
+    !live.snapshot?.myResponse;
   const collaborationControl =
     currentUserRole === "viewer" ? (
       <ViewerCollaborationStatus compact enabled={viewerCanCollaborate} />
@@ -524,6 +547,14 @@ export function CollaborativeRoom({
                     size: "lg",
                   },
                   {
+                    id: "live",
+                    label: "Live activities",
+                    icon: ChartColumnBig,
+                    isSelected: activeTool === "live",
+                    onClick: () => chooseTool("live"),
+                    size: "lg",
+                  },
+                  {
                     id: "assistant",
                     label: "AI study assistant",
                     icon: BrainCircuit,
@@ -633,6 +664,23 @@ export function CollaborativeRoom({
               <Button label="Follow presenter" onClick={followPresenter} />
             </HStack>
           ) : null}
+          {showLivePrompt ? (
+            <HStack
+              gap={3}
+              padding={3}
+              wrap="wrap"
+              vAlign="center"
+              className="border-b border-border bg-surface"
+              role="status"
+            >
+              <Text className="flex-1">A live question is open.</Text>
+              <Button
+                label="Answer now"
+                icon={<ChartColumnBig aria-hidden="true" size={16} />}
+                onClick={() => chooseTool("live")}
+              />
+            </HStack>
+          ) : null}
           {activeTool === "notes" ? (
             <VStack
               as="section"
@@ -707,7 +755,7 @@ export function CollaborativeRoom({
             <VStack
               as="section"
               className={
-                activeTool === "assistant"
+                activeTool === "assistant" || activeTool === "live"
                   ? "flex-1 min-h-0 overflow-auto bg-surface"
                   : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
               }
@@ -729,6 +777,8 @@ export function CollaborativeRoom({
                   initialState={initialDocumentStates.whiteboard}
                   roomId={roomId}
                 />
+              ) : activeTool === "live" ? (
+                <LiveActivitiesTool live={live} />
               ) : (
                 <AiStudyTool
                   onReturnToNotes={() => chooseTool("notes")}

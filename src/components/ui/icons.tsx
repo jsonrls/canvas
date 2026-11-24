@@ -15,6 +15,10 @@ import {
   BookOpenText as BookOpenTextData,
   Bookmark as BookmarkData,
   BrainCircuit as BrainCircuitData,
+  ChartColumnBig as ChartColumnBigData,
+  EyeOff as EyeOffData,
+  Play as PlayData,
+  Trophy as TrophyData,
   CalendarDays as CalendarDaysData,
   Check as CheckData,
   CheckCircle2 as CheckCircle2Data,
@@ -472,4 +476,20 @@ export function ZoomIn(props: IconProps): React.ReactElement {
 
 export function ZoomOut(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ZoomOutData} />;
+}
+
+export function ChartColumnBig(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChartColumnBigData} />;
+}
+
+export function EyeOff(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={EyeOffData} />;
+}
+
+export function Play(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={PlayData} />;
+}
+
+export function Trophy(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={TrophyData} />;
 }
