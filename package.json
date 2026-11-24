@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "verify:buttons": "node --import tsx scripts/verify-buttons.ts",
     "verify:rooms-directory": "node --import tsx scripts/verify-rooms-directory.ts",
+    "verify:live-activities": "node --import tsx scripts/verify-live-activities.ts",
     "verify:pdf-clear-marks": "node --import tsx scripts/verify-pdf-clear-marks.ts",
     "verify:whiteboard-placement": "node --import tsx scripts/verify-whiteboard-answer-placement.ts",
     "verify:yjs": "node scripts/verify-yjs.mjs",
