@@ -11,6 +11,8 @@ export interface WhiteboardElement {
   authorName: string;
   color: string;
   createdAt: string;
+  /** Text only. Missing means the default board size (28). */
+  fontSize?: number;
   height: number;
   id: string;
   points: WhiteboardPoint[];
@@ -415,11 +417,21 @@ export function readWhiteboardElement(
     return null;
   }
 
+  // Older boards and other clients may not send a size; drop bad values.
+  const fontSize =
+    typeof value.fontSize === "number" &&
+    Number.isFinite(value.fontSize) &&
+    value.fontSize >= 8 &&
+    value.fontSize <= 120
+      ? value.fontSize
+      : undefined;
+
   return {
     authorId: value.authorId,
     authorName,
     color: value.color,
     createdAt: value.createdAt,
+    ...(fontSize === undefined ? {} : { fontSize }),
     height: value.height,
     id: value.id,
     points,

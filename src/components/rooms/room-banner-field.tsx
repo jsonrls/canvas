@@ -1,5 +1,7 @@
 "use client";
 
+import { Avatar } from "@astryxdesign/core/Avatar";
+
 import { ButtonControl } from "@/components/ui/button";
 import { ImagePlus, Trash2, Upload } from "@/components/ui/icons";
 import { useEffect, useId, useRef, useState } from "react";
@@ -13,6 +15,8 @@ interface RoomIconFieldProps {
   compact?: boolean;
   initialIconUrl?: string | null;
   inputId: string;
+  /** Room name being typed; the compact preview shows its initials until an icon is chosen. */
+  previewName?: string;
 }
 
 function roomIconStyle(url: string): React.CSSProperties {
@@ -25,8 +29,10 @@ export function RoomIconField({
   compact = false,
   initialIconUrl = null,
   inputId,
+  previewName = "",
 }: RoomIconFieldProps): React.ReactElement {
   const descriptionId = useId();
+  const initialsName = previewName.trim();
   const inputRef = useRef<HTMLInputElement>(null);
   const localPreviewUrlRef = useRef<string | null>(null);
   const preparationIdRef = useRef(0);
@@ -137,8 +143,10 @@ export function RoomIconField({
       className={`${styles.field}${compact ? ` ${styles.fieldCompact}` : ""}`}
     >
       <div className={styles.labelRow}>
-        <span>Room icon or logo</span>
-        <span className={styles.optional}>Optional</span>
+        <span>{compact ? "Room icon" : "Room icon or logo"}</span>
+        <span className={styles.optional}>
+          {compact ? "· Optional" : "Optional"}
+        </span>
       </div>
 
       <div
@@ -147,10 +155,13 @@ export function RoomIconField({
         role={previewUrl ? "img" : undefined}
         style={previewUrl ? roomIconStyle(previewUrl) : undefined}
       >
-        {previewUrl ? null : (
+        {previewUrl ? null : compact && initialsName ? (
+          // Same avatar the room list shows when a room has no icon.
+          <Avatar name={initialsName} size={64} tooltip={false} />
+        ) : (
           <div className={styles.placeholder}>
             <ImagePlus aria-hidden="true" size={22} />
-            <strong>1:1</strong>
+            {compact ? null : <strong>1:1</strong>}
           </div>
         )}
       </div>

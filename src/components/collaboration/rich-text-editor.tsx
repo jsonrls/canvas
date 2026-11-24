@@ -22,6 +22,8 @@ import {
   Italic,
   List,
   ListOrdered,
+  Minus,
+  Plus,
   Quote,
   Redo2,
   RemoveFormatting,
@@ -173,6 +175,8 @@ const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
 ];
 
 const MOBILE_PRIMARY_NOTE_ACTIONS = new Set(["Undo", "Redo", "Bold", "Italic"]);
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 72;
 
 function FontSizeControl({
   editable,
@@ -183,22 +187,46 @@ function FontSizeControl({
   fontSize: number;
   applyFontSize: (nextSize: number) => void;
 }): React.ReactElement {
+  // Google Docs-style stepper: − 14 + on one white pill. The number stays
+  // typeable; the buttons step by one.
   return (
-    <VStack className="w-24 shrink-0">
-      <NumberInput
-        label="Font size in pixels"
-        isLabelHidden
-        value={fontSize}
-        onChange={applyFontSize}
-        min={8}
-        max={72}
-        isIntegerOnly
-        isWheelEnabled={false}
-        hasNumberSteppers
-        isDisabled={!editable}
-        width="100%"
+    <HStack
+      gap={0.5}
+      vAlign="center"
+      className="font-size-stepper shrink-0 rounded-full bg-surface p-0.5"
+    >
+      <IconButton
+        label="Decrease text size"
+        tooltip="Decrease text size"
+        icon={<Minus aria-hidden="true" size={14} />}
+        size="sm"
+        isDisabled={!editable || fontSize <= MIN_FONT_SIZE}
+        onClick={() => applyFontSize(fontSize - 1)}
       />
-    </VStack>
+      <VStack className="w-10">
+        <NumberInput
+          label="Font size in pixels"
+          isLabelHidden
+          value={fontSize}
+          onChange={applyFontSize}
+          min={MIN_FONT_SIZE}
+          max={MAX_FONT_SIZE}
+          isIntegerOnly
+          isWheelEnabled={false}
+          isDisabled={!editable}
+          size="sm"
+          width="100%"
+        />
+      </VStack>
+      <IconButton
+        label="Increase text size"
+        tooltip="Increase text size"
+        icon={<Plus aria-hidden="true" size={14} />}
+        size="sm"
+        isDisabled={!editable || fontSize >= MAX_FONT_SIZE}
+        onClick={() => applyFontSize(fontSize + 1)}
+      />
+    </HStack>
   );
 }
 
@@ -213,7 +241,7 @@ function EditorWordCount({ editor }: { editor: Editor }): React.ReactElement {
   });
 
   return (
-    <Text type="supporting">
+    <Text type="supporting" className="rounded-full bg-muted px-3 py-1">
       {wordCount} {wordCount === 1 ? "word" : "words"}
     </Text>
   );
@@ -258,7 +286,10 @@ function EditorToolbar({
       return;
     }
 
-    const clampedSize = Math.min(72, Math.max(8, nextSize));
+    const clampedSize = Math.min(
+      MAX_FONT_SIZE,
+      Math.max(MIN_FONT_SIZE, nextSize),
+    );
     editor
       .chain()
       .focus()
@@ -280,7 +311,7 @@ function EditorToolbar({
       "aria-pressed": action.isActive ? isActive : undefined,
       isDisabled,
       variant: "ghost" as const,
-      className: `min-w-9 ${isActive ? "bg-accent-muted! text-accent!" : ""}`,
+      className: `min-w-9 ${isActive ? "bg-surface! text-primary!" : ""}`,
       icon: <Icon aria-hidden="true" size={17} strokeWidth={1.9} />,
       onClick: () => {
         if (!editorReady) return;
@@ -306,86 +337,88 @@ function EditorToolbar({
     mobileSecondaryActions.some((action) => action.isActive?.(editor) ?? false);
 
   return (
-    <VStack
-      className="shrink-0 overflow-x-auto border-b border-border bg-surface"
-      gap={0}
-    >
-      <Toolbar
-        label="Text formatting"
-        size="lg"
-        startContent={
-          <>
-            <HStack gap={2} vAlign="center" className="hidden shrink-0 lg:flex">
-              {TOOLBAR_GROUPS.map((group, groupIndex) => (
-                <Fragment key={groupIndex}>
-                  {groupIndex === 1 ? (
-                    <FontSizeControl
-                      editable={editable && editorReady}
-                      fontSize={fontSize}
-                      applyFontSize={applyFontSize}
-                    />
-                  ) : null}
-                  <HStack
-                    gap={0.5}
-                    vAlign="center"
-                    className={
-                      groupIndex > 0 ? "border-l border-border pl-2" : ""
-                    }
-                  >
-                    {group.map((action) => renderAction(action))}
-                  </HStack>
-                </Fragment>
-              ))}
-            </HStack>
-            <HStack gap={1} vAlign="center" className="lg:hidden">
-              {mobilePrimaryActions.map((action) =>
-                renderAction(action, { mobile: true }),
-              )}
-              <IconButton
-                label="More note tools"
-                tooltip="More note tools"
-                icon={<MoreHorizontal aria-hidden="true" />}
-                variant="ghost"
-                aria-haspopup="dialog"
-                aria-expanded={isToolsOpen}
-                className={`min-w-9 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-accent-muted! text-accent!" : ""}`}
-                onClick={() => setIsToolsOpen(true)}
-              />
-              <Dialog
-                isOpen={isToolsOpen}
-                onOpenChange={setIsToolsOpen}
-                purpose="form"
-                aria-label="More note tools"
+    <HStack hAlign="center" className="shrink-0 overflow-x-auto px-3 pt-3">
+      {/* One muted track holds every tool; the active tool is the white pill. */}
+      <VStack className="editor-toolbar-track qollab-pill-tray max-w-full rounded-full bg-muted px-2">
+        <Toolbar
+          label="Text formatting"
+          size="lg"
+          startContent={
+            <>
+              <HStack
+                gap={2}
+                vAlign="center"
+                className="hidden shrink-0 lg:flex"
               >
-                <DialogHeader
-                  title="More note tools"
-                  subtitle="Choose additional formatting for your shared notes."
-                  onOpenChange={setIsToolsOpen}
+                {TOOLBAR_GROUPS.map((group, groupIndex) => (
+                  <Fragment key={groupIndex}>
+                    {groupIndex === 1 ? (
+                      <FontSizeControl
+                        editable={editable && editorReady}
+                        fontSize={fontSize}
+                        applyFontSize={applyFontSize}
+                      />
+                    ) : null}
+                    <HStack
+                      gap={0.5}
+                      vAlign="center"
+                      className={groupIndex > 0 ? "pl-2" : ""}
+                    >
+                      {group.map((action) => renderAction(action))}
+                    </HStack>
+                  </Fragment>
+                ))}
+              </HStack>
+              <HStack gap={1} vAlign="center" className="lg:hidden">
+                {mobilePrimaryActions.map((action) =>
+                  renderAction(action, { mobile: true }),
+                )}
+                <IconButton
+                  label="More note tools"
+                  tooltip="More note tools"
+                  icon={<MoreHorizontal aria-hidden="true" />}
+                  variant="ghost"
+                  aria-haspopup="dialog"
+                  aria-expanded={isToolsOpen}
+                  className={`min-w-9 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-surface! text-primary!" : ""}`}
+                  onClick={() => setIsToolsOpen(true)}
                 />
-                <VStack gap={4} padding={4}>
-                  <HStack gap={3} vAlign="center" hAlign="between">
-                    <Text>Text size</Text>
-                    <FontSizeControl
-                      editable={editable && editorReady}
-                      fontSize={fontSize}
-                      applyFontSize={applyFontSize}
-                    />
-                  </HStack>
-                  <HStack gap={2} wrap="wrap">
-                    {mobileSecondaryActions.map((action) =>
-                      renderAction(action, {
-                        close: () => setIsToolsOpen(false),
-                        dialog: true,
-                      }),
-                    )}
-                  </HStack>
-                </VStack>
-              </Dialog>
-            </HStack>
-          </>
-        }
-      />
-    </VStack>
+                <Dialog
+                  isOpen={isToolsOpen}
+                  onOpenChange={setIsToolsOpen}
+                  purpose="form"
+                  aria-label="More note tools"
+                >
+                  <DialogHeader
+                    title="More note tools"
+                    subtitle="Choose additional formatting for your shared notes."
+                    onOpenChange={setIsToolsOpen}
+                  />
+                  <VStack gap={4} padding={4}>
+                    <HStack gap={3} vAlign="center" hAlign="between">
+                      <Text>Text size</Text>
+                      <FontSizeControl
+                        editable={editable && editorReady}
+                        fontSize={fontSize}
+                        applyFontSize={applyFontSize}
+                      />
+                    </HStack>
+                    <HStack gap={2} wrap="wrap">
+                      {mobileSecondaryActions.map((action) =>
+                        renderAction(action, {
+                          close: () => setIsToolsOpen(false),
+                          dialog: true,
+                        }),
+                      )}
+                    </HStack>
+                  </VStack>
+                </Dialog>
+              </HStack>
+            </>
+          }
+        />
+      </VStack>
+    </HStack>
   );
 }
 
@@ -506,7 +539,7 @@ export const RichTextEditor = forwardRef<
         <Text
           as="p"
           role="status"
-          className="shrink-0 border-b border-border p-3 text-secondary"
+          className="mx-auto mt-3 w-fit shrink-0 rounded-full bg-muted px-4 py-2 text-secondary"
         >
           Viewer access · editing controls are disabled
         </Text>
@@ -522,7 +555,7 @@ export const RichTextEditor = forwardRef<
         paddingBlock={2}
         hAlign="between"
         wrap="wrap"
-        className="editor-footer shrink-0 border-t border-border bg-surface! p-2! px-4!"
+        className="editor-footer shrink-0 border-0! bg-surface! p-2! px-4!"
       >
         {editable ? (
           <VStack gap={0} className="grid!">

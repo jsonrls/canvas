@@ -729,17 +729,15 @@
   }
 
   .astryx-side-nav {
-    background-color: var(--color-background-surface);
-    border-inline-end-color: var(--color-border);
-    border-inline-end-style: solid;
-    border-inline-end-width: var(--border-width);
+    background-color: var(--color-background-muted);
+    border-inline-end-width: 0;
     color: var(--color-text-primary);
     font-family: var(--font-family-body);
   }
 
   .astryx-side-nav-item.selected {
-    background-color: var(--color-accent-muted);
-    box-shadow: inset 2px 0 0 var(--color-accent);
+    background-color: var(--color-background-surface);
+    box-shadow: none;
     color: var(--color-text-primary);
     font-weight: var(--font-weight-medium);
   }

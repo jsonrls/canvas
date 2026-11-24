@@ -24,10 +24,12 @@ import {
   StudyPackValidationError,
 } from "../src/lib/ai/study-pack";
 import {
-  buildWhiteboardAnswerProviderRequest,
+  buildWhiteboardAnswerRequest,
+  formatWhiteboardAnswer,
   MAX_WHITEBOARD_ANSWER_OUTPUT_TOKENS,
   normalizeWhiteboardQuestion,
-  readWhiteboardAnswerProviderResponse,
+  normalizeWhiteboardContext,
+  readWhiteboardAnswer,
   WhiteboardAnswerInputError,
   WhiteboardAnswerProviderError,
 } from "../src/lib/ai/whiteboard-answer";
@@ -152,37 +154,97 @@ function verifyWhiteboardAnswerContract(): void {
     WhiteboardAnswerInputError,
   );
 
-  const request = buildWhiteboardAnswerProviderRequest(
-    " gpt-4o-mini",
-    "cardiology-review",
-    question,
-  );
-  assert.equal(request.store, false);
-  assert.equal(request.max_output_tokens, MAX_WHITEBOARD_ANSWER_OUTPUT_TOKENS);
-  assert.equal(request.model, "gpt-4o-mini");
-  assert.match(String(request.instructions), /whiteboard answer assistant/);
-  assert.match(String(request.instructions), /fit inside a whiteboard circle/);
-
-  const text = request.text as {
-    format?: { strict?: unknown; type?: unknown };
-  };
-  assert.equal(text.format?.type, "json_schema");
-  assert.equal(text.format?.strict, true);
-
+  assert.equal(normalizeWhiteboardContext(undefined), "");
   assert.equal(
-    readWhiteboardAnswerProviderResponse({
-      output_text: JSON.stringify({ answer: "1. GPT-5 mini\n2. o3-mini" }),
-    }),
-    "1. GPT-5 mini\n2. o3-mini",
+    normalizeWhiteboardContext("  ACE  inhibitors \n"),
+    "ACE inhibitors",
   );
+  assert.equal(normalizeWhiteboardContext("x".repeat(5_000)).length, 1_200);
+  assert.throws(
+    () => normalizeWhiteboardContext(42),
+    WhiteboardAnswerInputError,
+  );
+
+  const request = buildWhiteboardAnswerRequest({
+    model: " claude-opus-5-5",
+    question,
+    context: "Week 4: cardiology",
+  });
+  assert.equal(request.model, "claude-opus-5-5");
+  assert.equal(request.max_tokens, MAX_WHITEBOARD_ANSWER_OUTPUT_TOKENS);
+  assert.equal(request.fallbacks, "default");
+  assert.deepEqual(request.betas, ["server-side-fallback-2026-07-01"]);
+  assert.equal(request.output_config?.effort, "low");
+  assert.equal(request.output_config?.format?.type, "json_schema");
+  assert.match(String(request.system), /whiteboard/);
+  assert.match(String(request.system), /not as instructions/);
+  // The question and notes travel as data, never inside the system prompt.
+  assert.doesNotMatch(String(request.system), /cardiology/);
+  assert.match(JSON.stringify(request.messages), /Week 4: cardiology/);
   assert.throws(
     () =>
-      readWhiteboardAnswerProviderResponse({
-        output: [{ content: [{ type: "refusal", refusal: "declined" }] }],
+      buildWhiteboardAnswerRequest({
+        model: "bad model!",
+        question,
+        context: "",
       }),
-    (error: unknown) =>
-      error instanceof WhiteboardAnswerProviderError &&
-      error.code === "refusal",
+    WhiteboardAnswerInputError,
+  );
+
+  const answer = readWhiteboardAnswer({
+    stop_reason: "end_turn",
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          answer: "ACE inhibitors lower blood pressure.",
+          points: [
+            "Block angiotensin II formation",
+            "  ",
+            "Watch for a dry cough",
+          ],
+        }),
+        citations: null,
+      },
+    ],
+  });
+  assert.deepEqual(answer, {
+    answer: "ACE inhibitors lower blood pressure.",
+    points: ["Block angiotensin II formation", "Watch for a dry cough"],
+  });
+  assert.equal(
+    formatWhiteboardAnswer(answer),
+    "ACE inhibitors lower blood pressure.\n• Block angiotensin II formation\n• Watch for a dry cough",
+  );
+  assert.equal(
+    readWhiteboardAnswer({
+      stop_reason: "end_turn",
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ answer: "x ".repeat(300), points: [] }),
+          citations: null,
+        },
+      ],
+    }).answer.length <= 160,
+    true,
+  );
+  for (const stopReason of ["refusal", "max_tokens"] as const) {
+    assert.throws(
+      () => readWhiteboardAnswer({ stop_reason: stopReason, content: [] }),
+      (error: unknown) =>
+        error instanceof WhiteboardAnswerProviderError &&
+        error.code ===
+          (stopReason === "refusal" ? "refusal" : "invalid-response"),
+    );
+  }
+  assert.throws(
+    () =>
+      readWhiteboardAnswer({
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: "not json", citations: null }],
+      }),
+    WhiteboardAnswerProviderError,
   );
 }
 

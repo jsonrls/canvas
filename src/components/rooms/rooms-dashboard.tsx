@@ -33,7 +33,12 @@ import {
   LockKeyhole,
   Plus,
 } from "@/components/ui/icons";
+import { PANEL_ACCENT, PANEL_MUTED } from "@/components/ui/panel";
 import { useSuccessToast } from "@/components/ui/toast";
+import {
+  formatRoomDate,
+  summarizeJoinedRooms,
+} from "@/lib/rooms/directory-summary";
 import type { RoomDirectory, RoomSummary } from "@/lib/rooms/repository";
 
 interface RoomsDashboardProps {
@@ -47,16 +52,18 @@ async function prepareRoomHomeSignOut(): Promise<void> {
 }
 
 function formatUpdatedAt(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recently active";
-  return `Updated ${new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(date)}`;
+  const date = formatRoomDate(value);
+  return date ? `Updated ${date}` : "Recently active";
 }
 
 const roomActionClassName = "px-4";
+// The public panel is narrow beside the joined one, so its action drops under the name there.
+const roomRowClassName =
+  "w-full flex-col rounded-2xl bg-surface sm:flex-row sm:items-center";
+const publicRoomRowClassName = `${roomRowClassName} lg:flex-col lg:items-start`;
+// Each access choice is a tile; the chosen one takes the Soft Blue selection surface.
+const accessOptionClassName =
+  "min-h-11 min-w-0 flex-1 rounded-2xl bg-muted p-4 has-checked:bg-accent-muted";
 
 function PendingButton({
   label,
@@ -171,25 +178,26 @@ function LeaveRoomForm({ room }: { room: RoomSummary }) {
 
 function RoomRow({ room, joined }: { room: RoomSummary; joined: boolean }) {
   return (
-    <VStack
+    <HStack
       as="li"
-      paddingBlock={5}
-      gap={3}
-      className="w-full border-b border-border last:border-b-0"
+      gap={4}
+      padding={4}
+      vAlign="start"
+      className={joined ? roomRowClassName : publicRoomRowClassName}
     >
-      <HStack gap={4} vAlign="start" className="flex-col md:flex-row">
-        <HStack gap={3} vAlign="start" className="min-w-0 flex-1 w-full">
-          <Avatar
-            name={room.name}
-            src={room.iconUrl ?? undefined}
-            size="md"
-            tooltip={false}
-          />
-          <VStack gap={2} className="min-w-0 flex-1">
-            <Heading level={3} className="break-words text-lg!">
-              {room.name}
-            </Heading>
-            <HStack gap={2} wrap="wrap" vAlign="center">
+      <HStack gap={3} vAlign="center" className="min-w-0 flex-1 w-full">
+        <Avatar
+          name={room.name}
+          src={room.iconUrl ?? undefined}
+          size="md"
+          tooltip={false}
+        />
+        <VStack gap={1} className="min-w-0 flex-1">
+          <Heading level={3} className="break-words text-base!">
+            {room.name}
+          </Heading>
+          <HStack gap={2} wrap="wrap" vAlign="center">
+            {joined ? (
               <Token
                 size="sm"
                 label={room.isPublic ? "Public" : "Private"}
@@ -201,46 +209,46 @@ function RoomRow({ room, joined }: { room: RoomSummary; joined: boolean }) {
                   )
                 }
               />
-              {joined && room.role ? (
-                <Token
-                  size="sm"
-                  label={room.role.charAt(0).toUpperCase() + room.role.slice(1)}
-                />
-              ) : null}
-              <Text type="supporting">{formatUpdatedAt(room.updatedAt)}</Text>
-            </HStack>
-          </VStack>
-        </HStack>
-        <HStack gap={2} wrap="wrap" vAlign="center" className="shrink-0">
-          {joined ? (
-            <>
-              {room.role === "owner" ? (
-                <Button
-                  as={Link}
-                  href={`/rooms/${room.slug}/settings`}
-                  label="Manage"
-                  aria-label={`Manage room: ${room.name}`}
-                  variant="ghost"
-                />
-              ) : (
-                <LeaveRoomForm room={room} />
-              )}
+            ) : null}
+            {joined && room.role ? (
+              <Token
+                size="sm"
+                label={room.role.charAt(0).toUpperCase() + room.role.slice(1)}
+              />
+            ) : null}
+            <Text type="supporting">{formatUpdatedAt(room.updatedAt)}</Text>
+          </HStack>
+        </VStack>
+      </HStack>
+      <HStack gap={2} wrap="wrap" vAlign="center" className="shrink-0">
+        {joined ? (
+          <>
+            {room.role === "owner" ? (
               <Button
                 as={Link}
-                href={`/rooms/${room.slug}`}
-                label="Open room"
-                aria-label={`Open room: ${room.name}`}
-                variant="secondary"
-                endContent={<ArrowRight aria-hidden="true" size={16} />}
-                className={roomActionClassName}
+                href={`/rooms/${room.slug}/settings`}
+                label="Manage"
+                aria-label={`Manage room: ${room.name}`}
+                variant="ghost"
               />
-            </>
-          ) : (
-            <JoinRoomForm room={room} />
-          )}
-        </HStack>
+            ) : (
+              <LeaveRoomForm room={room} />
+            )}
+            <Button
+              as={Link}
+              href={`/rooms/${room.slug}`}
+              label="Open room"
+              aria-label={`Open room: ${room.name}`}
+              variant="secondary"
+              endContent={<ArrowRight aria-hidden="true" size={16} />}
+              className={roomActionClassName}
+            />
+          </>
+        ) : (
+          <JoinRoomForm room={room} />
+        )}
       </HStack>
-    </VStack>
+    </HStack>
   );
 }
 
@@ -258,6 +266,7 @@ export function RoomsDashboard({
   const [visibility, setVisibility] = useState("private");
   useSuccessToast(createState);
   const openCreate = () => setIsCreateOpen(true);
+  const greetingName = displayName.trim();
 
   return (
     <>
@@ -297,91 +306,101 @@ export function RoomsDashboard({
           className="w-full mx-auto md:px-8 md:py-12"
           paddingInline={4}
           paddingBlock={8}
-          gap={10}
+          gap={8}
         >
-          <VStack gap={8}>
-            <HStack gap={4} hAlign="between" vAlign="start" wrap="wrap">
-              <Text weight="semibold">Study commons</Text>
-              <HStack gap={6} wrap="wrap" className="hidden md:flex">
-                <Text type="supporting">Shared notes / PDF annotation</Text>
-                <Text type="supporting">Whiteboard / AI study assistant</Text>
-              </HStack>
-            </HStack>
-            <HStack gap={5} hAlign="between" vAlign="end" wrap="wrap">
-              <VStack gap={3}>
-                <Heading level={1} className="text-2xl! md:text-3xl!">
-                  Your study rooms
-                </Heading>
-                <Text color="secondary">
-                  Return to your group, or join a public room to study together.
-                </Text>
-              </VStack>
-              <Button
-                label="Create room"
-                variant="primary"
-                icon={<Plus aria-hidden="true" />}
-                onClick={openCreate}
-              />
-            </HStack>
-          </VStack>
-          <VStack as="section" gap={0} aria-labelledby="your-rooms-title">
-            <HStack
-              gap={3}
-              vAlign="center"
-              paddingBlock={4}
-              className="border-b border-border-strong"
-            >
-              <Heading level={2} id="your-rooms-title">
-                Joined rooms
+          <HStack gap={5} hAlign="between" vAlign="end" wrap="wrap">
+            <VStack gap={2} className="min-w-0">
+              <Heading
+                level={1}
+                maxLines={2}
+                className="text-2xl! md:text-3xl!"
+              >
+                {greetingName
+                  ? `Your study rooms, ${greetingName}`
+                  : "Your study rooms"}
               </Heading>
-              <Badge label={directory.joinedRooms.length} />
-            </HStack>
-            {directory.joinedRooms.length ? (
-              <List aria-labelledby="your-rooms-title" className="w-full">
-                {directory.joinedRooms.map((room) => (
-                  <RoomRow key={room.id} room={room} joined />
-                ))}
-              </List>
-            ) : (
-              <EmptyState
-                isCompact
-                title="No rooms joined yet"
-                description="Create a room for your group, or join a public room below."
-                icon={<LibraryBig />}
-              />
-            )}
-          </VStack>
-          <VStack as="section" gap={0} aria-labelledby="public-rooms-title">
-            <VStack
-              gap={2}
-              paddingBlock={4}
-              className="border-b border-border-strong"
-            >
-              <HStack gap={2} vAlign="center">
-                <Heading level={2} id="public-rooms-title">
-                  Public rooms
-                </Heading>
-                <Badge label={directory.publicRooms.length} />
-              </HStack>
               <Text color="secondary">
-                Open to anyone. Join a room to add it to your list.
+                {summarizeJoinedRooms(directory.joinedRooms)}
               </Text>
             </VStack>
-            {directory.publicRooms.length ? (
-              <List aria-labelledby="public-rooms-title" className="w-full">
-                {directory.publicRooms.map((room) => (
-                  <RoomRow key={room.id} room={room} joined={false} />
-                ))}
-              </List>
-            ) : (
-              <EmptyState
-                isCompact
-                title="No public rooms available"
-                description="There are no public rooms to join right now. You can create one with the Create room button above."
-                icon={<Globe2 />}
-              />
-            )}
-          </VStack>
+            <Button
+              label="Create room"
+              variant="primary"
+              icon={<Plus aria-hidden="true" />}
+              onClick={openCreate}
+            />
+          </HStack>
+          <HStack gap={4} vAlign="start" className="flex-col lg:flex-row">
+            <VStack
+              as="section"
+              gap={4}
+              aria-labelledby="your-rooms-title"
+              className={`${PANEL_MUTED} lg:flex-3`}
+            >
+              <HStack gap={2} vAlign="center">
+                <Heading level={2} id="your-rooms-title" className="text-base!">
+                  Joined rooms
+                </Heading>
+                <Badge label={directory.joinedRooms.length} />
+              </HStack>
+              {directory.joinedRooms.length ? (
+                <List
+                  aria-labelledby="your-rooms-title"
+                  className="flex w-full flex-col gap-2"
+                >
+                  {directory.joinedRooms.map((room) => (
+                    <RoomRow key={room.id} room={room} joined />
+                  ))}
+                </List>
+              ) : (
+                <EmptyState
+                  isCompact
+                  title="No rooms joined yet"
+                  description="Rooms you create or join appear here."
+                  icon={<LibraryBig />}
+                />
+              )}
+            </VStack>
+            <VStack
+              as="section"
+              gap={4}
+              aria-labelledby="public-rooms-title"
+              className={`${PANEL_ACCENT} lg:flex-2`}
+            >
+              <VStack gap={1}>
+                <HStack gap={2} vAlign="center">
+                  <Heading
+                    level={2}
+                    id="public-rooms-title"
+                    className="text-base!"
+                  >
+                    Open to join
+                  </Heading>
+                  <Badge label={directory.publicRooms.length} />
+                </HStack>
+                <Text type="supporting">
+                  Public rooms. Join one to add it to your list.
+                </Text>
+              </VStack>
+              {directory.publicRooms.length ? (
+                <List
+                  aria-labelledby="public-rooms-title"
+                  className="flex w-full flex-col gap-2"
+                >
+                  {directory.publicRooms.map((room) => (
+                    <RoomRow key={room.id} room={room} joined={false} />
+                  ))}
+                </List>
+              ) : (
+                <EmptyState
+                  isCompact
+                  title="No public rooms right now"
+                  description="When someone opens a room to everyone, it appears here."
+                  icon={<Globe2 />}
+                />
+              )}
+            </VStack>
+          </HStack>
         </VStack>
       </VStack>
       {/* The modal stays mounted across closing and viewport changes to preserve the selected icon file. */}
@@ -415,27 +434,31 @@ export function RoomsDashboard({
                 {...{ maxLength: 120, required: true }}
               />
             </VStack>
-            <RoomIconField compact inputId="room-icon" />
+            <RoomIconField compact inputId="room-icon" previewName={name} />
             <RadioList
               label="Access"
+              description="You can change this anytime."
               htmlName="visibility"
+              orientation="horizontal"
+              width="100%"
               value={visibility}
               onChange={setVisibility}
             >
               <RadioListItem
                 label="Private"
-                className="min-h-11"
+                className={accessOptionClassName}
                 value="private"
                 description="Invite only"
+                endContent={<LockKeyhole aria-hidden="true" size={16} />}
               />
               <RadioListItem
                 label="Public"
-                className="min-h-11"
+                className={accessOptionClassName}
                 value="public"
                 description="Anyone can join"
+                endContent={<Globe2 aria-hidden="true" size={16} />}
               />
             </RadioList>
-            <Text type="supporting">You can change access anytime.</Text>
             {createState.status === "error" && createState.message ? (
               <Text role="alert" className="text-error">
                 {createState.message}

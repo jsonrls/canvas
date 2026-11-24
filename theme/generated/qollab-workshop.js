@@ -606,18 +606,16 @@ export const qollabWorkshopTheme = {
     },
     "side-nav": {
       "base": {
-        "backgroundColor": "var(--color-background-surface)",
-        "borderInlineEndColor": "var(--color-border)",
-        "borderInlineEndStyle": "solid",
-        "borderInlineEndWidth": "var(--border-width)",
+        "backgroundColor": "var(--color-background-muted)",
+        "borderInlineEndWidth": "0",
         "color": "var(--color-text-primary)",
         "fontFamily": "var(--font-family-body)"
       }
     },
     "side-nav-item": {
       "selected": {
-        "backgroundColor": "var(--color-accent-muted)",
-        "boxShadow": "inset 2px 0 0 var(--color-accent)",
+        "backgroundColor": "var(--color-background-surface)",
+        "boxShadow": "none",
         "color": "var(--color-text-primary)",
         "fontWeight": "var(--font-weight-medium)"
       }

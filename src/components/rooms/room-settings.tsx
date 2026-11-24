@@ -12,6 +12,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { Token } from "@astryxdesign/core/Token";
 import { Selector } from "@astryxdesign/core/Selector";
 import { List } from "@astryxdesign/core/List";
+import { useMediaQuery } from "@astryxdesign/core/hooks";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import Link from "next/link";
 import { useActionState, useId, useState } from "react";
@@ -30,10 +31,14 @@ import {
 } from "@/app/rooms/action-state";
 import { RoomIconField } from "@/components/rooms/room-banner-field";
 import { ArrowLeft, Crown } from "@/components/ui/icons";
+import { PANEL_HEADING, PANEL_MUTED, PANEL_ROW } from "@/components/ui/panel";
 import { useSuccessToast } from "@/components/ui/toast";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
 
 const destructiveClassName = "font-bold! text-error! bg-transparent! bg-none!";
+// Each choice is a white tile on the panel; the chosen one takes Soft Blue.
+const visibilityOptionClassName =
+  "min-h-11 min-w-0 flex-1 rounded-2xl bg-surface p-4 has-checked:bg-accent-muted";
 const roleOptions = [
   { value: "editor", label: "Editor" },
   { value: "viewer", label: "Viewer" },
@@ -104,12 +109,7 @@ function MemberRow({
     : `Joined ${joinedAt.toLocaleDateString("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
 
   return (
-    <VStack
-      as="li"
-      gap={2}
-      paddingBlock={4}
-      className="border-b border-border last:border-b-0"
-    >
+    <VStack as="li" gap={2} className={PANEL_ROW}>
       <HStack gap={4} hAlign="between" vAlign="center" wrap="wrap">
         <HStack gap={3} vAlign="center" className="min-w-0 flex-1">
           <Avatar name={member.displayName} size="md" />
@@ -228,11 +228,13 @@ export function RoomSettingsPanel({
   const [email, setEmail] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
+  // The visibility descriptions are long; side-by-side tiles squeeze them on a phone.
+  const isPhone = useMediaQuery("(max-width: 640px)");
   const deleteTitleId = useId();
   const deleteDescriptionId = useId();
 
   return (
-    <>
+    <VStack className="min-h-dvh bg-surface">
       <HStack
         as="header"
         className="border-b border-border bg-surface"
@@ -243,7 +245,10 @@ export function RoomSettingsPanel({
           width="100%"
           maxWidth={1120}
           className="min-h-20"
+          hAlign="between"
           vAlign="center"
+          wrap="wrap"
+          gap={2}
           paddingBlock={3}
         >
           <Link
@@ -253,37 +258,42 @@ export function RoomSettingsPanel({
           >
             <QollabBrandLogo />
           </Link>
-        </HStack>
-      </HStack>
-      <VStack
-        as="main"
-        gap={8}
-        padding={6}
-        className="mx-auto w-full max-w-3xl text-primary sm:py-10"
-      >
-        <VStack as="header" gap={5}>
           <Button
             as={Link}
             href={`/rooms/${room.slug}`}
             label="Back to room"
             variant="ghost"
             icon={<ArrowLeft aria-hidden="true" size={16} />}
-            className="self-start hover:bg-transparent! hover:bg-none!"
           />
-          <VStack gap={2}>
-            <Text type="supporting" className="break-words">
-              {room.name}
-            </Text>
-            <Heading level={1}>Room settings</Heading>
-            <Text as="p" color="secondary">
-              Manage your room’s details, access, and collaborators.
-            </Text>
-          </VStack>
+        </HStack>
+      </HStack>
+      <VStack
+        as="main"
+        gap={4}
+        padding={4}
+        className="mx-auto w-full max-w-3xl text-primary sm:py-10"
+      >
+        <VStack as="header" gap={2} paddingBlockEnd={2}>
+          <Heading level={1} className="text-2xl! md:text-3xl!">
+            Room settings
+          </Heading>
+          <Text as="p" color="secondary" className="break-words">
+            Details, access and collaborators for {room.name}.
+          </Text>
         </VStack>
 
-        <VStack as="section" gap={5} aria-labelledby="room-details-title">
+        <VStack
+          as="section"
+          gap={5}
+          className={PANEL_MUTED}
+          aria-labelledby="room-details-title"
+        >
           <VStack gap={1}>
-            <Heading level={2} id="room-details-title">
+            <Heading
+              level={2}
+              id="room-details-title"
+              className={PANEL_HEADING}
+            >
               Room details
             </Heading>
             <Text as="p" color="secondary">
@@ -303,12 +313,16 @@ export function RoomSettingsPanel({
                 {...{ maxLength: 120, required: true }}
               />
               <RoomIconField
+                compact
                 initialIconUrl={room.roomIconUrl}
                 inputId="settings-room-icon"
+                previewName={name}
               />
               <RadioList
                 label="Visibility"
                 htmlName="visibility"
+                orientation={isPhone ? "vertical" : "horizontal"}
+                width="100%"
                 value={visibility}
                 onChange={setVisibility}
               >
@@ -316,13 +330,13 @@ export function RoomSettingsPanel({
                   label="Private"
                   value="private"
                   description="Only people you add can access this room."
-                  className="min-h-11"
+                  className={visibilityOptionClassName}
                 />
                 <RadioListItem
                   label="Public"
                   value="public"
                   description="Signed-in users can discover and join this room."
-                  className="min-h-11"
+                  className={visibilityOptionClassName}
                 />
               </RadioList>
               <ActionMessage state={settingsState} />
@@ -340,14 +354,17 @@ export function RoomSettingsPanel({
 
         <VStack
           as="section"
-          gap={5}
-          paddingBlockStart={6}
-          className="border-t border-border"
+          gap={4}
+          className={PANEL_MUTED}
           aria-labelledby="collaborators-title"
         >
           <VStack gap={1}>
             <HStack gap={2} vAlign="center">
-              <Heading level={2} id="collaborators-title">
+              <Heading
+                level={2}
+                id="collaborators-title"
+                className={PANEL_HEADING}
+              >
                 Collaborators
               </Heading>
               <Badge label={room.members.length} />
@@ -357,7 +374,7 @@ export function RoomSettingsPanel({
             </Text>
           </VStack>
           <form action={memberAction}>
-            <VStack gap={3}>
+            <VStack gap={3} className={PANEL_ROW}>
               <Text weight="semibold">Add collaborator</Text>
               <HStack
                 gap={3}
@@ -409,7 +426,7 @@ export function RoomSettingsPanel({
           </form>
           <List
             aria-label="Room collaborators"
-            className="border-t border-border"
+            className="flex w-full flex-col gap-2"
           >
             {room.members.map((member) => (
               <MemberRow
@@ -424,15 +441,14 @@ export function RoomSettingsPanel({
         <HStack
           as="section"
           gap={4}
-          paddingBlockStart={6}
-          className="border-t border-border"
+          className={PANEL_MUTED}
           hAlign="between"
           vAlign="center"
           wrap="wrap"
           aria-labelledby="delete-room-title"
         >
           <VStack gap={1} className="flex-1">
-            <Heading level={2} id="delete-room-title">
+            <Heading level={2} id="delete-room-title" className={PANEL_HEADING}>
               Delete room
             </Heading>
             <Text as="p" color="secondary">
@@ -497,6 +513,6 @@ export function RoomSettingsPanel({
           </form>
         </Dialog>
       </VStack>
-    </>
+    </VStack>
   );
 }

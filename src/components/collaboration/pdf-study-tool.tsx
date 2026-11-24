@@ -1,18 +1,14 @@
 "use client";
 import { PdfAnnotationLayer } from "./pdf/pdf-annotation-layer";
 import { PdfComments } from "./pdf/pdf-comments";
+import { visualMarkIds, fitPageWidth } from "@/lib/pdf-annotations/study-tool";
 import { PdfToolbar } from "./pdf/pdf-toolbar";
 import { usePdfAnnotations } from "./pdf/use-pdf-annotations";
 import { usePdfAsset } from "./pdf/use-pdf-asset";
 import { usePdfDocument } from "./pdf/use-pdf-document";
 
 import { ButtonControl } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Upload,
-} from "@/components/ui/icons";
+import { ChevronLeft, ChevronRight, Upload } from "@/components/ui/icons";
 import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
@@ -108,6 +104,7 @@ export default function PdfStudyTool({
     finishDraft,
     saveAnnotationText,
     deleteSelected,
+    clearVisualMarks,
     addReply,
   } = usePdfAnnotations({
     annotations,
@@ -124,7 +121,11 @@ export default function PdfStudyTool({
     selectedTool,
   });
 
-  const [pageWidth, setPageWidth] = useState(720);
+  // Room inside the page host, and the current page's width / height ratio.
+  // 100% zoom fits the whole page in that room, as PDF viewers do with
+  // "fit page", so nobody has to scroll to see the bottom of a slide.
+  const [hostSize, setHostSize] = useState({ width: 720, height: 0 });
+  const [pageAspect, setPageAspect] = useState(612 / 792);
 
   const [zoom, setZoom] = useState(1);
 
@@ -135,63 +136,50 @@ export default function PdfStudyTool({
 
     if (!host) return;
 
-    const updateWidth = (): void => {
-      const horizontalInset = window.matchMedia("(max-width: 760px)").matches
-        ? 0
-        : 24;
-      setPageWidth(
-        Math.max(280, Math.min(820, host.clientWidth - horizontalInset)),
-      );
+    const updateSize = (): void => {
+      const styles = window.getComputedStyle(host);
+      const width =
+        host.clientWidth -
+        Number.parseFloat(styles.paddingLeft) -
+        Number.parseFloat(styles.paddingRight);
+      const height =
+        host.clientHeight -
+        Number.parseFloat(styles.paddingTop) -
+        Number.parseFloat(styles.paddingBottom);
+      setHostSize({ width, height });
     };
-    const observer = new ResizeObserver(updateWidth);
+    const observer = new ResizeObserver(updateSize);
     observer.observe(host);
-    updateWidth();
+    updateSize();
     return () => observer.disconnect();
   }, [asset, isRefreshingAsset]);
+
+  // Phones scroll the page vertically by design, so there it fits the width.
+  const isPhone =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 760px)").matches;
+  const pageWidth = fitPageWidth(hostSize, pageAspect, isPhone);
 
   return (
     <section
       className="study-tool study-tool--visual study-tool--pdf"
       aria-label="PDF annotation workspace"
     >
-      <div className="study-tool__heading">
-        <div className="study-tool__file-actions">
-          {asset && !isRefreshingAsset ? (
-            <a href={asset.signedUrl} download={asset.fileName}>
-              <Download aria-hidden="true" size={16} /> Download
-            </a>
-          ) : null}
-          {canManageAsset ? (
-            <>
-              <input
-                ref={fileInputRef}
-                accept="application/pdf,.pdf"
-                className="visually-hidden"
-                id="room-pdf-upload"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void uploadPdf(file);
-                }}
-                type="file"
-              />
-              <ButtonControl
-                variant="secondary"
-                aria-busy={isUploading}
-                disabled={isUploading}
-                onClick={() => fileInputRef.current?.click()}
-                type="button"
-              >
-                {isUploading ? (
-                  <LoadingIndicator size="icon" />
-                ) : (
-                  <Upload aria-hidden="true" size={16} />
-                )}
-                {asset ? "Replace PDF" : "Upload PDF"}
-              </ButtonControl>
-            </>
-          ) : null}
-        </div>
-      </div>
+      {/* Download and Replace now sit beside the file name in the toolbar
+          (and in the phone "More" menu). Only the file picker lives here. */}
+      {canManageAsset ? (
+        <input
+          ref={fileInputRef}
+          accept="application/pdf,.pdf"
+          className="visually-hidden"
+          id="room-pdf-upload"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadPdf(file);
+          }}
+          type="file"
+        />
+      ) : null}
 
       {fileMessage || collaboration.message ? (
         <p className="study-tool__message" role="status">
@@ -251,6 +239,8 @@ export default function PdfStudyTool({
               isUploading={isUploading}
               fileInputRef={fileInputRef}
               collaboration={collaboration}
+              visualMarkCount={visualMarkIds(annotations).length}
+              onClearVisualMarks={clearVisualMarks}
             />
 
             <div className="pdf-page-host" ref={pageHostRef}>
@@ -279,6 +269,11 @@ export default function PdfStudyTool({
                     renderAnnotationLayer={false}
                     renderTextLayer={false}
                     width={pageWidth * zoom}
+                    onLoadSuccess={({ originalWidth, originalHeight }) => {
+                      if (originalWidth > 0 && originalHeight > 0) {
+                        setPageAspect(originalWidth / originalHeight);
+                      }
+                    }}
                   />
                   <PdfAnnotationLayer
                     scrollMode={scrollMode}
@@ -297,23 +292,27 @@ export default function PdfStudyTool({
 
             <div className="pdf-pagination">
               <ButtonControl
-                variant="secondary"
+                variant="custom"
+                aria-label="Previous page"
                 disabled={page <= 1}
                 onClick={() => setPage((value) => value - 1)}
+                title="Previous page"
                 type="button"
               >
-                <ChevronLeft aria-hidden="true" size={16} /> Previous
+                <ChevronLeft aria-hidden="true" size={16} />
               </ButtonControl>
               <span>
                 Page {page} of {numPages || "…"}
               </span>
               <ButtonControl
-                variant="secondary"
+                variant="custom"
+                aria-label="Next page"
                 disabled={page >= numPages}
                 onClick={() => setPage((value) => value + 1)}
+                title="Next page"
                 type="button"
               >
-                Next <ChevronRight aria-hidden="true" size={16} />
+                <ChevronRight aria-hidden="true" size={16} />
               </ButtonControl>
             </div>
           </div>

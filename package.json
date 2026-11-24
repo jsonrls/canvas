@@ -17,6 +17,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify:buttons": "node --import tsx scripts/verify-buttons.ts",
+    "verify:rooms-directory": "node --import tsx scripts/verify-rooms-directory.ts",
+    "verify:pdf-clear-marks": "node --import tsx scripts/verify-pdf-clear-marks.ts",
+    "verify:whiteboard-placement": "node --import tsx scripts/verify-whiteboard-answer-placement.ts",
     "verify:yjs": "node scripts/verify-yjs.mjs",
     "verify:schema": "node --env-file=.env scripts/verify-schema.mjs",
     "verify:version-history": "node --env-file=.env scripts/verify-version-history.mjs",
@@ -45,6 +48,7 @@
     "verify:design-system": "node --import tsx scripts/verify-design-system.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0",
     "@astryxdesign/cli": "^0.5.0",
     "@astryxdesign/core": "^0.5.0",
     "@astryxdesign/theme-neutral": "^0.5.0",

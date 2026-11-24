@@ -21,6 +21,7 @@ import {
   ChevronDown as ChevronDownData,
   ChevronLeft as ChevronLeftData,
   ChevronRight as ChevronRightData,
+  ChevronsUpDown as ChevronsUpDownData,
   Circle as CircleData,
   CircleCheck as CircleCheckData,
   CircleHelp as CircleHelpData,
@@ -87,6 +88,7 @@ import {
   Type as TypeData,
   Undo2 as Undo2Data,
   Upload as UploadData,
+  FileUp as FileUpData,
   UserMinus as UserMinusData,
   UserPlus as UserPlusData,
   UserRound as UserRoundData,
@@ -170,6 +172,10 @@ export function ChevronLeft(props: IconProps): React.ReactElement {
 
 export function ChevronRight(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ChevronRightData} />;
+}
+
+export function ChevronsUpDown(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChevronsUpDownData} />;
 }
 
 export function Circle(props: IconProps): React.ReactElement {
@@ -434,6 +440,10 @@ export function Undo2(props: IconProps): React.ReactElement {
 
 export function Upload(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={UploadData} />;
+}
+
+export function FileUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={FileUpData} />;
 }
 
 export function UserMinus(props: IconProps): React.ReactElement {

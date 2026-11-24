@@ -8,7 +8,7 @@ import { WhiteboardRenderer } from "./whiteboard/whiteboard-renderer";
 import { WhiteboardToolbar } from "./whiteboard/whiteboard-toolbar";
 
 import { ButtonControl } from "@/components/ui/button";
-import { HelpCircle, RefreshCw } from "@/components/ui/icons";
+
 import { useMemo, useRef, useState } from "react";
 
 import { useCollaborativeTool } from "@/hooks/use-collaborative-tool";
@@ -24,6 +24,25 @@ import {
 } from "@/lib/whiteboard/model";
 
 import { readImage } from "@/lib/whiteboard/geometry";
+import {
+  BOARD_TEXT_FONT_SIZE,
+  BOARD_TEXT_MAX_WIDTH,
+  boardLineHeight,
+  boardTextHeight,
+  fitBoardTextBox,
+  wrapBoardText,
+} from "@/lib/whiteboard/text-layout";
+import { measureBoardText } from "./whiteboard/measure-board-text";
+
+/**
+ * Width text rewraps to when edited. Text sized to fit a circle keeps its
+ * box; ordinary text may grow to the usual limit or a width set by hand.
+ */
+function editWrapWidth(element: WhiteboardElement): number {
+  return element.fontSize
+    ? element.width
+    : Math.max(BOARD_TEXT_MAX_WIDTH, element.width);
+}
 
 interface WhiteboardStudyToolProps {
   breakoutCode?: string;
@@ -180,13 +199,27 @@ export default function WhiteboardStudyTool({
     if (!value) return;
     if (editingTextId) {
       const element = elements.find((item) => item.id === editingTextId);
-      if (element) upsertElement({ ...element, text: value });
+      if (element) {
+        const box = fitBoardTextBox(
+          value,
+          measureBoardText,
+          editWrapWidth(element),
+          element.fontSize,
+        );
+        upsertElement({
+          ...element,
+          height: box.height,
+          text: value,
+          width: box.width,
+        });
+      }
       setEditingTextId(null);
     } else if (textPlacement) {
+      const box = fitBoardTextBox(value, measureBoardText);
       insertElement(
         "text",
         textPlacement,
-        { x: textPlacement.x + 280, y: textPlacement.y + 48 },
+        { x: textPlacement.x + box.width, y: textPlacement.y + box.height },
         [],
         value,
       );
@@ -207,6 +240,41 @@ export default function WhiteboardStudyTool({
     setEditingTextId(element.id);
     setEditingTextValue(element.text);
   };
+
+  // The editor grows with what is typed and wraps where the board text will.
+  const editingElement = editingTextId
+    ? elements.find((element) => element.id === editingTextId)
+    : undefined;
+  const editorOrigin = textPlacement ?? editingElement;
+  const textEditor = editorOrigin
+    ? (() => {
+        const value = editingTextId ? editingTextValue : textValue;
+        const fontSize = editingElement?.fontSize ?? BOARD_TEXT_FONT_SIZE;
+        const wrapWidth = editingElement
+          ? editWrapWidth(editingElement)
+          : BOARD_TEXT_MAX_WIDTH;
+        const box = fitBoardTextBox(
+          value || "Type text…",
+          measureBoardText,
+          wrapWidth,
+          fontSize,
+        );
+        const lineCount = wrapBoardText(
+          value,
+          wrapWidth,
+          measureBoardText,
+          fontSize,
+        ).length;
+        return {
+          fontSize,
+          // Border and padding of `.whiteboard-text-editor`.
+          height: boardTextHeight(lineCount, fontSize) + 12,
+          width: Math.max(200, box.width + 28),
+          x: editorOrigin.x - 8,
+          y: editorOrigin.y - 4,
+        };
+      })()
+    : null;
 
   const deleteSelected = (): void => {
     if (!selectedElement) return;
@@ -301,85 +369,6 @@ export default function WhiteboardStudyTool({
       className="study-tool study-tool--visual study-tool--whiteboard"
       aria-label="Whiteboard workspace"
     >
-      <div className="study-tool__heading">
-        <div className="study-tool__header-right">
-          <div className="tool-status-row" role="status">
-            <span
-              className={`connection-badge connection-badge--${collaboration.status}`}
-            >
-              <span className="connection-dot" aria-hidden="true" />
-              {collaboration.status === "synced"
-                ? "Live"
-                : collaboration.status === "viewing"
-                  ? "Read-only"
-                  : collaboration.status}
-            </span>
-            <span>{collaboration.participants.length} active</span>
-            {(collaboration.status === "error" ||
-              collaboration.status === "offline") &&
-            canEdit ? (
-              <ButtonControl
-                variant="secondary"
-                onClick={collaboration.reconnect}
-                type="button"
-              >
-                <RefreshCw aria-hidden="true" size={14} /> Retry
-              </ButtonControl>
-            ) : null}
-
-            <ButtonControl
-              variant="ghost"
-              size="sm"
-              className="whiteboard-shortcuts-help"
-              type="button"
-              aria-label="Whiteboard keyboard shortcuts"
-            >
-              <HelpCircle size={18} />
-              <div className="whiteboard-shortcuts-tooltip" role="tooltip">
-                <div className="tooltip-title">Keyboard Shortcuts</div>
-                <div className="tooltip-row">
-                  <span>
-                    <kbd>Space</kbd> + Drag / Swipe
-                  </span>
-                  <span className="tooltip-desc">Pan Canvas</span>
-                </div>
-                <div className="tooltip-row">
-                  <span>
-                    <kbd>Middle Click</kbd> + Drag
-                  </span>
-                  <span className="tooltip-desc">Pan Canvas</span>
-                </div>
-                <div className="tooltip-row">
-                  <span>
-                    <kbd>⌘/Ctrl</kbd> + Scroll
-                  </span>
-                  <span className="tooltip-desc">Zoom at cursor</span>
-                </div>
-                <div className="tooltip-row">
-                  <span>
-                    <kbd>Scroll</kbd>
-                  </span>
-                  <span className="tooltip-desc">Pan Canvas</span>
-                </div>
-                <div className="tooltip-row">
-                  <span>Drag selected shape</span>
-                  <span className="tooltip-desc">Move element</span>
-                </div>
-                <div className="tooltip-row">
-                  <span>Drag corner handles</span>
-                  <span className="tooltip-desc">Resize element</span>
-                </div>
-                <p className="tooltip-help-copy">
-                  Select a shape to resize it with the corner handles. Scroll to
-                  zoom, drag with middle mouse or Space+click to pan. Changes
-                  sync live and remain available offline on this device.
-                </p>
-              </div>
-            </ButtonControl>
-          </div>
-        </div>
-      </div>
-
       <WhiteboardToolbar
         canUndo={canUndo}
         canEdit={canEdit}
@@ -534,31 +523,34 @@ export default function WhiteboardStudyTool({
             draftElement={draftElement}
             selectedElement={selectedElement}
           />
-          {textPlacement || editingTextId ? (
+          {textEditor ? (
             <foreignObject
-              height={52}
-              width={320}
-              x={
-                textPlacement?.x ??
-                elements.find((element) => element.id === editingTextId)?.x ??
-                0
-              }
-              y={
-                textPlacement?.y ??
-                elements.find((element) => element.id === editingTextId)?.y ??
-                0
-              }
+              height={textEditor.height}
+              width={textEditor.width}
+              x={textEditor.x}
+              y={textEditor.y}
             >
-              <input
+              {/* Wraps at the same width as the board text, so what you
+                  type is laid out the way it will be drawn. */}
+              <textarea
                 autoFocus
                 className="whiteboard-text-editor"
                 maxLength={600}
+                style={
+                  textEditor.fontSize === BOARD_TEXT_FONT_SIZE
+                    ? undefined
+                    : {
+                        fontSize: textEditor.fontSize,
+                        lineHeight: `${boardLineHeight(textEditor.fontSize)}px`,
+                      }
+                }
                 onChange={(event) => {
                   if (editingTextId) setEditingTextValue(event.target.value);
                   else setTextValue(event.target.value);
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                  // Enter places the text; Shift+Enter starts a new line.
+                  if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
                     commitText();
                   }

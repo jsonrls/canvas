@@ -173,7 +173,6 @@ export function SidebarAccountMenu({
           {initial}
         </span>
         <span className="current-user__copy">
-          {isHeaderMenu ? <small>Signed in as</small> : null}
           <strong>{displayName}</strong>
           {!isHeaderMenu ? <small>You · {role}</small> : null}
         </span>
@@ -215,7 +214,7 @@ export function SidebarAccountMenu({
           <span className="sidebar-account-menu__divider" role="separator" />
           <SignOutButton
             beforeSignOut={beforeSignOut}
-            label="Logout"
+            label="Log out"
             userId={userId}
             variant="menu"
           />

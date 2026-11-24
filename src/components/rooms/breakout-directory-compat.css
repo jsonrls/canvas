@@ -292,193 +292,21 @@
     max-height: calc(100vh - 88px);
   }
 }
+
+/* Breakout room directory: full-height frame on the white surface. The rows
+   and panels are styled with the shared panel classes in the component. */
 .breakout-hub {
   height: 100vh;
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  background: var(--color-background-body);
+  background: var(--color-background-surface);
 }
 
-.breakout-hub > .astryx-layout {
-  background: var(--color-background-body);
-}
-
-.breakout-hub .astryx-layout-content {
-  background: var(--color-background-body);
-}
-
+.breakout-hub > .astryx-layout,
+.breakout-hub .astryx-layout-content,
 .breakout-hub .astryx-layout-panel {
   background: var(--color-background-surface);
-}
-
-.breakout-hub__intro > .astryx-link {
-  margin-block-end: var(--spacing-6);
-}
-
-.breakout-hub__intro section {
-  min-width: 0;
-}
-
-.breakout-hub__intro .astryx-heading[data-level="1"] {
-  margin-block-start: var(--spacing-1);
-  font-size: var(--text-display-2-size);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--text-display-2-leading);
-}
-
-.breakout-hub__eyebrow,
-.breakout-hub__form-heading > p,
-.breakout-hub__meta {
-  margin: 0;
-  color: var(--color-text-accent);
-  font-size: var(--text-supporting-size);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-  line-height: var(--text-supporting-leading);
-  text-transform: uppercase;
-}
-
-.breakout-hub__subtitle {
-  max-width: 52ch;
-  margin: var(--spacing-2) 0 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-size);
-  line-height: var(--text-body-leading);
-}
-
-.breakout-hub__room {
-  min-width: 0;
-  height: 100%;
-}
-
-.breakout-hub__room-card {
-  min-height: calc(var(--spacing-12) * 5);
-  overflow: hidden;
-  border-color: var(--color-border-emphasized);
-  transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
-}
-
-@media (hover: hover) {
-  .breakout-hub__room-card:hover {
-    border-color: var(--color-accent);
-    box-shadow: var(--shadow-med);
-    transform: translateY(calc(var(--spacing-0-5) * -1));
-  }
-
-  .breakout-hub__open:hover {
-    border-color: var(--color-accent);
-    background: var(--color-accent-muted);
-  }
-
-  .breakout-hub__open:hover .astryx-icon {
-    transform: translateX(var(--spacing-1));
-  }
-}
-
-.breakout-hub__card-icon,
-.breakout-hub__panel-icon {
-  display: inline-grid;
-  width: var(--spacing-10);
-  height: var(--spacing-10);
-  flex: 0 0 auto;
-  place-items: center;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-element);
-  background: var(--color-background-surface);
-}
-
-.breakout-hub__code {
-  padding: var(--spacing-1-5) var(--spacing-2);
-  border: var(--border-width) solid var(--color-border-emphasized);
-  border-radius: var(--radius-element);
-  background: var(--color-background-surface);
-  color: var(--color-text-primary);
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-xs);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-}
-
-.breakout-hub__card-copy {
-  min-width: 0;
-  margin-block: var(--spacing-1) var(--spacing-2);
-}
-
-.breakout-hub__card-copy .astryx-heading {
-  margin-block-start: var(--spacing-1);
-}
-
-.breakout-hub__description {
-  display: -webkit-box;
-  min-height: calc(var(--spacing-6) * 2);
-  margin: var(--spacing-2) 0 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-size);
-  -webkit-line-clamp: 3;
-  line-height: var(--text-body-leading);
-}
-
-.breakout-hub__room-card ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.breakout-hub__open {
-  display: block;
-  width: 100%;
-  min-height: var(--size-element-lg);
-  padding: var(--spacing-2) var(--spacing-3);
-  border: var(--border-width) solid var(--color-border-emphasized);
-  border-radius: var(--radius-element);
-  margin-block-start: auto;
-  background: var(--color-background-surface);
-  text-decoration: none;
-  transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
-}
-
-.breakout-hub__open .astryx-icon {
-  transition: transform var(--duration-fast) var(--ease-standard);
-}
-
-.breakout-hub__locked {
-  display: inline-flex;
-  min-height: var(--size-element-lg);
-  align-items: center;
-  gap: var(--spacing-2);
-  margin: auto 0 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-supporting-size);
-  font-weight: var(--font-weight-semibold);
-}
-
-.breakout-hub__form-card {
-  border-color: var(--color-border-emphasized);
-  background: var(--color-background-card);
-}
-
-.breakout-hub__form-heading {
-  min-width: 0;
-}
-
-.breakout-hub__form-heading > p {
-  margin-block-end: var(--spacing-0-5);
-}
-
-.breakout-hub__form-intro {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-size);
-  line-height: var(--text-body-leading);
 }
 
 .breakout-hub__form {
@@ -489,38 +317,15 @@
   gap: var(--spacing-5);
 }
 
-.breakout-hub__message {
-  padding: var(--spacing-3);
-  border: var(--border-width) solid var(--color-error);
+.breakout-hub__code {
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-element);
-  margin: 0;
-  background: var(--color-error-muted);
+  background: var(--color-background-muted);
   color: var(--color-text-primary);
-  font-size: var(--text-supporting-size);
-  line-height: var(--text-supporting-leading);
-}
-
-.breakout-hub__empty {
-  min-height: calc(var(--spacing-12) * 5);
-}
-
-.breakout-hub__empty p {
-  max-width: 42ch;
-  margin: 0;
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
-@media (max-width: 960px) {
-  .breakout-hub__form-card {
-    max-width: 38rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .breakout-hub__room-card,
-  .breakout-hub__open,
-  .breakout-hub__open .astryx-icon {
-    transition: none;
-  }
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
 }

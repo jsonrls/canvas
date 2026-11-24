@@ -11,6 +11,13 @@
   margin: 0;
   list-style: none;
   pointer-events: none;
+  /* Undo the browser's popover box (centred, bordered, filled). */
+  bottom: auto;
+  left: auto;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
 /*

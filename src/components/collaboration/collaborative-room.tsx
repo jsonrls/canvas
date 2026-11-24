@@ -1,8 +1,9 @@
 "use client";
 
 import { Avatar } from "@astryxdesign/core/Avatar";
-import { Badge } from "@astryxdesign/core/Badge";
 import { Dialog } from "@astryxdesign/core/Dialog";
+import { Divider } from "@astryxdesign/core/Divider";
+import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { Button, IconButton } from "@/components/ui/button";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
@@ -11,6 +12,7 @@ import { Text } from "@astryxdesign/core/Text";
 import {
   BookOpenText,
   BrainCircuit,
+  ChevronsUpDown,
   FileText,
   History,
   MousePointer2,
@@ -18,6 +20,7 @@ import {
   Presentation,
   Split,
   UsersRound,
+  X,
 } from "@/components/ui/icons";
 import { QollabAppShell } from "@/components/shell/qollab-app-shell";
 import { QollabSideNavigation } from "@/components/shell/qollab-side-navigation";
@@ -37,6 +40,7 @@ import {
 } from "@/components/collaboration/rich-text-editor";
 import { VersionHistoryPanel } from "@/components/collaboration/version-history-panel";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { WORKSPACE_FLAT_CONTROLS } from "@/components/shell/workspace-controls";
 import {
   ViewerCollaborationStatus,
   ViewerCollaborationToggle,
@@ -293,6 +297,7 @@ export function CollaborativeRoom({
     chooseTool("assistant");
   };
 
+  const otherRooms = availableRooms.filter((room) => room.slug !== roomId);
   const toolLabels: Record<WorkspaceTool, string> = {
     notes: "Shared notes",
     pdf: "PDF annotation",
@@ -342,18 +347,16 @@ export function CollaborativeRoom({
             isPublic={isPublic}
             role={currentUserRole}
             toolLabel={toolLabels[activeTool]}
-            participants={participants}
-            onOpenParticipants={() => setIsRoomControlsOpen(true)}
             syncStatus={remoteStatus}
             syncLabel={
               remoteStatus === "synced" ? "Live" : remoteCopy[remoteStatus]
             }
             actions={
-              <HStack gap={2} vAlign="center">
+              <HStack gap={1} vAlign="center">
                 {canEdit ? (
                   <Button
                     label={isPresenting ? "Stop presenting" : "Present"}
-                    variant="secondary"
+                    variant="ghost"
                     aria-pressed={isPresenting}
                     icon={<Presentation aria-hidden="true" size={16} />}
                     isIconOnly={isPhone}
@@ -417,13 +420,16 @@ export function CollaborativeRoom({
         sideNavigation={
           <QollabSideNavigation
             footerIcons={
-              <Button
-                label="People and room"
-                isIconOnly
-                icon={<UsersRound aria-hidden="true" size={16} />}
-                variant="ghost"
-                onClick={() => setIsRoomControlsOpen(true)}
-              />
+              // Expanded, "People" is a labelled item in the Room group instead.
+              isSidebarCollapsed ? (
+                <Button
+                  label="People and room"
+                  isIconOnly
+                  icon={<UsersRound aria-hidden="true" size={16} />}
+                  variant="ghost"
+                  onClick={() => setIsRoomControlsOpen(true)}
+                />
+              ) : undefined
             }
             collapsedHeader={<QollabBrandLogo variant="mark" />}
             isCollapsed={isSidebarCollapsed}
@@ -440,24 +446,51 @@ export function CollaborativeRoom({
             }
             topContent={
               !isSidebarCollapsed ? (
-                <VStack gap={3} padding={4}>
-                  <Selector
-                    label="Current room"
-                    value={roomId}
-                    onChange={(slug) => router.push(`/rooms/${slug}`)}
-                    options={availableRooms.map((room) => ({
-                      value: room.slug,
-                      label: room.name,
-                    }))}
-                    startIcon={
-                      <Avatar
-                        name={roomName}
-                        src={roomIconUrl ?? undefined}
-                        size="sm"
-                        tooltip={false}
+                <VStack padding={3}>
+                  <HStack
+                    gap={2}
+                    vAlign="center"
+                    className="qollab-room-card rounded-2xl bg-surface p-3"
+                  >
+                    <Avatar
+                      name={roomName}
+                      src={roomIconUrl ?? undefined}
+                      size="md"
+                      tooltip={false}
+                    />
+                    <VStack gap={0} className="min-w-0 flex-1">
+                      <Text
+                        weight="semibold"
+                        maxLines={2}
+                        wordBreak="break-word"
+                      >
+                        {roomName}
+                      </Text>
+                      <Text type="supporting">
+                        {currentUserRole.charAt(0).toUpperCase() +
+                          currentUserRole.slice(1)}{" "}
+                        · {isPublic ? "Public" : "Private"}
+                      </Text>
+                    </VStack>
+                    {otherRooms.length > 0 ? (
+                      <DropdownMenu
+                        button={{
+                          label: "Switch room",
+                          isIconOnly: true,
+                          icon: <ChevronsUpDown aria-hidden="true" size={16} />,
+                          variant: "ghost",
+                          size: "sm",
+                        }}
+                        hasChevron={false}
+                        alignment="end"
+                        menuWidth={240}
+                        items={otherRooms.map((room) => ({
+                          label: room.name,
+                          onClick: () => router.push(`/rooms/${room.slug}`),
+                        }))}
                       />
-                    }
-                  />
+                    ) : null}
+                  </HStack>
                 </VStack>
               ) : undefined
             }
@@ -502,27 +535,38 @@ export function CollaborativeRoom({
               },
               {
                 id: "collaboration",
-                title: "Collaboration",
+                title: "Room",
                 items: [
                   {
                     id: "breakouts",
                     label: "Breakout rooms",
                     icon: Split,
                     href: `/rooms/${roomId}/breakouts`,
-                    endContent: <Badge label={breakoutRoomCount} />,
+                    endContent: (
+                      <Text type="supporting">{breakoutRoomCount}</Text>
+                    ),
+                    size: "lg",
+                  },
+                  {
+                    id: "people",
+                    label: "People",
+                    icon: UsersRound,
+                    onClick: () => setIsRoomControlsOpen(true),
                     size: "lg",
                   },
                 ],
               },
             ]}
+            extraContent={
+              !isSidebarCollapsed ? (
+                <VStack paddingInline={1} className={WORKSPACE_FLAT_CONTROLS}>
+                  {collaborationControl}
+                </VStack>
+              ) : undefined
+            }
             footer={
               !isSidebarCollapsed ? (
-                <VStack
-                  gap={1}
-                  padding={2}
-                  className="border-t border-border [&_.viewer-collaboration-control]:border-0! [&_.viewer-collaboration-control]:shadow-none! [&_.viewer-collaboration-control]:bg-transparent! [&_.viewer-collaboration-control]:p-2! [&_.viewer-collaboration-control]:m-0! [&_.viewer-collaboration-control_small]:hidden [&_.viewer-collaboration-control_strong]:font-normal! [&_.viewer-collaboration-control_strong]:text-sm! [&_.viewer-collaboration-control__icon]:bg-transparent! [&_.viewer-collaboration-control__icon]:text-secondary! [&_.viewer-collaboration-status]:border-0! [&_.viewer-collaboration-status]:shadow-none! [&_.viewer-collaboration-status]:bg-transparent! [&_.current-user]:border-0! [&_.current-user]:shadow-none! [&_.current-user]:bg-transparent! [&_.current-user]:rounded-md! [&_.current-user]:p-2! [&_.current-user:hover]:bg-surface-hover! [&_.current-user_strong]:text-sm! [&_.current-user_small]:text-xs!"
-                >
-                  {collaborationControl}
+                <VStack padding={2} className={WORKSPACE_FLAT_CONTROLS}>
                   <SidebarAccountMenu
                     beforeSignOut={prepareForSignOut}
                     displayName={
@@ -701,13 +745,15 @@ export function CollaborativeRoom({
         onOpenChange={setIsRoomControlsOpen}
         aria-label="People and room"
         purpose="info"
+        width={480}
       >
-        <VStack gap={4} padding={4}>
-          <HStack hAlign="between" vAlign="center">
+        {/* Same flat, spacious layout as the breakout room controls. */}
+        <VStack gap={6} padding={6}>
+          <HStack hAlign="between" vAlign="center" gap={4}>
             <Heading level={2}>People and room</Heading>
-            <Button
+            <IconButton
               label="Close"
-              variant="ghost"
+              icon={<X aria-hidden="true" size={18} />}
               onClick={() => setIsRoomControlsOpen(false)}
             />
           </HStack>
@@ -727,23 +773,23 @@ export function CollaborativeRoom({
               />
             }
           />
-          {collaborationControl}
-          <VStack gap={2}>
-            <Text type="label">{participants.length} active participants</Text>
-            {participants.map((participant) => (
-              <HStack gap={2} vAlign="center" key={participant.clientId}>
-                <Avatar name={participant.name} size="sm" />
-                <Text>{participant.name}</Text>
-              </HStack>
-            ))}
+          <Divider />
+          <VStack gap={4}>
+            <Text type="supporting" size="sm" weight="semibold">
+              {participants.length === 1
+                ? "1 person here now"
+                : `${participants.length} people here now`}
+            </Text>
+            <VStack gap={3}>
+              {participants.map((participant) => (
+                <HStack gap={3} vAlign="center" key={participant.clientId}>
+                  <Avatar name={participant.name} size="md" tooltip={false} />
+                  <Text weight="medium">{participant.name}</Text>
+                </HStack>
+              ))}
+            </VStack>
           </VStack>
-          <SidebarAccountMenu
-            beforeSignOut={prepareForSignOut}
-            displayName={connection?.user.name ?? currentUser.displayName}
-            role={currentUserRole}
-            userColor={connection?.user.color}
-            userId={currentUser.id}
-          />
+          {/* Viewer editing and the account menu live in the sidebar only. */}
         </VStack>
       </Dialog>
       {!canEdit && isFollowingPresenter && presentation?.cursor ? (

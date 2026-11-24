@@ -70,7 +70,8 @@ export function SignOutButton({
         />
       ) : (
         <ButtonControl
-          variant="danger-ghost"
+          // The menu row is styled as a menu item, not a themed button.
+          variant={isMenuItem ? "custom" : "danger-ghost"}
           type="button"
           className={
             isMenuItem

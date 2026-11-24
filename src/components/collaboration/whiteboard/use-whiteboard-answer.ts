@@ -4,13 +4,16 @@ import {
 } from "@/components/collaboration/whiteboard/types";
 import { useToast } from "@/components/ui/toast";
 import {
-  findWhiteboardAnswerPlacement,
-  wrapAnswerForTarget,
-} from "@/lib/whiteboard/answer-placement";
+  formatWhiteboardAnswer,
+  MAX_WHITEBOARD_CONTEXT_CHARACTERS,
+} from "@/lib/ai/whiteboard-answer";
+import { findWhiteboardAnswerPlacement } from "@/lib/whiteboard/answer-placement";
 import {
   type WhiteboardElement,
   type WhiteboardElementType,
 } from "@/lib/whiteboard/model";
+import { fitBoardTextInEllipse } from "@/lib/whiteboard/text-layout";
+import { measureBoardText } from "./measure-board-text";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -76,8 +79,22 @@ export function useWhiteboardAnswer({
       );
 
       try {
+        // Other text on the board tells the assistant the topic and level.
+        const boardNotes = candidateElements
+          .filter(
+            (element) =>
+              element.type === "text" &&
+              element.text.trim() &&
+              element.text.trim() !== placement.question,
+          )
+          .map((element) => element.text.trim())
+          .join("\n")
+          .slice(0, MAX_WHITEBOARD_CONTEXT_CHARACTERS);
         const response = await fetch(`/api/rooms/${roomId}/whiteboard-answer`, {
-          body: JSON.stringify({ question: placement.question }),
+          body: JSON.stringify({
+            question: placement.question,
+            ...(boardNotes ? { context: boardNotes } : {}),
+          }),
           cache: "no-store",
           headers: { "Content-Type": "application/json" },
           method: "POST",
@@ -96,13 +113,22 @@ export function useWhiteboardAnswer({
           throw new Error("The AI answer was empty. Try again.");
         }
 
-        const answerText = wrapAnswerForTarget(
-          payload.answer.trim(),
-          placement.targetBounds.width,
+        const points = Array.isArray(payload.points)
+          ? payload.points.filter(
+              (point): point is string => typeof point === "string",
+            )
+          : [];
+        const answerText = formatWhiteboardAnswer({
+          answer: payload.answer.trim(),
+          points,
+        });
+        // Largest text size that fits the circle, centred in it.
+        const { targetBounds } = placement;
+        const box = fitBoardTextInEllipse(
+          answerText,
+          measureBoardText,
+          targetBounds,
         );
-        const lines = answerText.split("\n").filter(Boolean);
-        const textHeight = Math.max(36, lines.length * 32);
-        const textWidth = Math.max(160, placement.targetBounds.width - 48);
         const id = crypto.randomUUID();
 
         upsertElement({
@@ -110,19 +136,16 @@ export function useWhiteboardAnswer({
           authorName: currentUser.displayName || "Study partner",
           color: "#7352FA",
           createdAt: new Date().toISOString(),
-          height: textHeight,
+          fontSize: box.fontSize,
+          height: box.height,
           id,
           points: [],
           src: "",
           text: answerText,
           type: "text",
-          width: textWidth,
-          x:
-            placement.targetBounds.x +
-            Math.max(18, (placement.targetBounds.width - textWidth) / 2),
-          y:
-            placement.targetBounds.y +
-            Math.max(18, (placement.targetBounds.height - textHeight) / 2),
+          width: box.width,
+          x: targetBounds.x + (targetBounds.width - box.width) / 2,
+          y: targetBounds.y + (targetBounds.height - box.height) / 2,
         });
         setSelectedId(id);
         setTool("select");

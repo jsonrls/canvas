@@ -9,10 +9,7 @@ import {
   getResizeHandles,
   moveWhiteboardElement,
 } from "../src/lib/whiteboard/geometry";
-import {
-  findWhiteboardAnswerPlacement,
-  wrapAnswerForTarget,
-} from "../src/lib/whiteboard/answer-placement";
+import { findWhiteboardAnswerPlacement } from "../src/lib/whiteboard/answer-placement";
 import {
   createInitialCamera,
   getElementBounds,
@@ -139,12 +136,6 @@ assert.equal(
     null,
   ),
   null,
-);
-assert.equal(wrapAnswerForTarget("one\n\n two  three", 500), "one\ntwo three");
-assert.equal(
-  wrapAnswerForTarget(Array(20).fill("line").join("\n"), 500).split("\n")
-    .length,
-  7,
 );
 assert.equal(annotationUsesComments("sticky"), true);
 assert.equal(annotationUsesComments("draw"), false);

@@ -35,6 +35,98 @@ homepage rules. The token table below is historical;
   with the group photo, two floating avatars, a sample room card and a
   caption. The panel hides below `lg`. No social sign-in buttons: the app has
   no providers.
+- Room directory (`/rooms`, 2026-11-23): the title greets the signed-in person
+  ("Your study rooms, {name}") and one sentence below states a fact from the
+  data (rooms joined, and the most recently updated room). The "Study commons"
+  strip is gone. Joined rooms sit in a `bg-muted rounded-3xl` panel and public
+  rooms in a Soft Blue (`bg-accent-muted`) panel headed "Open to join", side by
+  side at 3:2 from `lg` and stacked below it. Rooms are white `rounded-2xl`
+  list rows inside the panel with 8px gaps, not `Card`s. This supersedes the
+  ruled "Room directory" bullet below. Plan:
+  `plan/feature-rooms-directory-greeting-home-1.md`.
+- Account, room settings and breakout directory (2026-11-23): the same panel
+  system as the room directory. Classes live in `src/components/ui/panel.ts`
+  (`PANEL_MUTED`, `PANEL_ACCENT`, `PANEL_ROW`, `PANEL_HEADING`). Each section
+  is a tonal `rounded-3xl` panel with a body-size heading; records and choices
+  are white `rounded-2xl` rows inside it; privacy notes use the Soft Blue
+  panel. Page titles are 24px, 29px from `md`. No dividers between sections,
+  no coloured cards, no icon chips, no small label above a heading. The
+  breakout directory lists rooms as rows beside a 384px form panel. The
+  account menu is a pill trigger with a rounded floating panel and
+  left-aligned 44px rows. This supersedes the divider-led account and
+  settings rules below.
+- Workspace frame and sidebar (2026-11-23, flush frame): the sidebar sits on
+  the muted ground; the workspace is the white surface beside it, edge to
+  edge, split from the sidebar by one hairline. No inset, no rounded sheet
+  (tried and dropped: it left a gap above and below). The selected item is a white pill with no accent bar
+  (muted inside the white phone drawer). A white room card at the top shows
+  the icon, name, role and access, with a "Switch room" menu. Groups are
+  "Study tools" and "Room"; "Room" holds Breakout rooms (plain count),
+  People, and the Viewer editing row, which matches the nav items and has no
+  tinted icon square. The account row is alone at the bottom. This supersedes
+  the white rail, 1px divider and Soft Blue selected row described below.
+- Room header (2026-11-23): identity is one line, "Room / Tool", then the
+  access and role tokens. The sync status sits in a muted pill, and the
+  actions (Present or Follow, version history, Manage; Reconnect, back,
+  people and Q&A in breakouts) share one muted tray as ghost buttons. Height
+  stays 56px. `scripts/verify-room-header.ts` still pins the contract.
+  Colour in the header goes on state only: the sync pill is green when live,
+  amber offline, red on error and grey otherwise. The action tray and its
+  buttons stay neutral; Present shows the theme's pressed style while
+  presenting.
+  The header carries no presence avatars (2026-11-24); people are reached
+  from the sidebar's People item.
+- PDF tool (2026-11-23). References: tldraw, Excalidraw and FigJam (tools in
+  one floating icon pill, labels as tooltips), Google Drive and Acrobat
+  viewers (page controls floating over a grey desk). From 761px: the tools
+  are one centred muted pill of icon-only buttons; the label stays for screen
+  readers and the tooltip comes from `title`. The sync status pill, file
+  name, Download and Replace (a file-up icon) sit to the right of it, so
+  the separate file row is gone. The PDF's sync badge shows only when it is
+  not live; "Live" is said once, in the room header. The page sits on a rounded muted desk. Page controls are a
+  small centred pill with icon-only Previous and Next. From 761px to 1279px
+  the file details drop to a line under the pill. The "More" (ellipsis)
+  overflow menu is phone-only: from 761px its tools are all in the toolbar,
+  so the trigger is hidden. On phones it opens a white bottom sheet of muted
+  tiles; its tiles are `ButtonControl variant="custom"`, because the theme's
+  ghost style forces a transparent fill with `!important`. Same for the
+  whiteboard's "More" sheet.
+- PDF "Clear all marks" (2026-11-24): an eraser button in the tool pill
+  (and a tile in the phone "More" sheet) removes every drawing, highlight
+  and underline on all pages of the current PDF revision, after an
+  alert dialog that states the count and that it can't be undone. Focus
+  starts on "Keep marks". Sticky notes, page comments, replies and bookmarks
+  are kept. Anyone who can edit may use it, as with deleting one mark. The
+  button is disabled when there are no marks.
+- Whiteboard (2026-11-24). References: Excalidraw (tool pill floating at the
+  top centre; zoom and undo bottom-left), tldraw (navigation and zoom in the
+  bottom-left corner; labels as tooltips), FigJam (tools float over the
+  board). From 761px the toolbar is a click-through layer over the board
+  with white floating pills: tools and colour top-centre; undo, redo, zoom,
+  reset and fit bottom-left; help, plus status and Retry when sync is not
+  live, top-right; Delete and Clear all bottom-right. Notices float under
+  the tool pill. The board is white with faint neutral dots. "Live" and the
+  people count are not repeated (the room header and sidebar carry them).
+  Phones keep the single row and the "More" sheet; the groups are
+  `display: contents` there.
+- PDF fit page (2026-11-24): at 100% zoom the whole page fits the page area
+  (the smaller of width and height, using the page's own aspect ratio), like
+  "fit page" in PDF viewers, so slides need no scrolling. Zooming in still
+  scrolls. Phones keep fit-to-width. `fitPageWidth` in
+  `src/lib/pdf-annotations/study-tool.ts`.
+- Notes canvas (2026-11-23): the formatting tools sit in one centred muted
+  pill above the page instead of a ruled bar; groups are separated by space,
+  not dividers. The footer has no rule and the word count sits in a muted
+  pill. The viewer notice is a centred muted pill. The page itself stays on
+  the white sheet.
+- Account frame (2026-11-23): the header holds the logo only. From `md`,
+  "Back to rooms" and the Profile/Settings links sit in a 224px sidebar that
+  starts under the logo; the page content stays capped at 640px beside it.
+  Below `md` the links become a tab track above the title.
+- Breakout workspace (2026-11-23): uses the same `RoomHeader` as the main
+  room (name, presence, sync status, Reconnect on error); the separate status
+  strip above the notes is gone. The error page and both controls dialogs use
+  the muted panel; the loading screen shows its message in a muted pill.
 - Buttons, app-wide: primary is a blue gradient pill with a darker rim and a
   soft glow (`--qollab-button-gradient-primary`, `--qollab-button-glow-primary`
   in the theme). Secondary and destructive are pills too; ghost and link keep
