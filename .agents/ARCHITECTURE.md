@@ -136,14 +136,15 @@ Live activities belong to one room or to one breakout. `LiveScope`
 (`src/lib/live/scope.ts`) names the tables and the id that every live query
 filters by: `live_*` for a main room, `breakout_live_*` for a breakout. The
 repository, route handlers, hook and views are shared; only the scope and the
-path differ, so a main room never reads a breakout table. Clients poll every two
-seconds while the tool is open and every five otherwise, and stop when the tab is
-hidden or the workspace is left.
+path differ, so a main room never reads a breakout table. `src/lib/polling.ts`
+sets how often clients poll: two seconds with the tool open on a question, slower
+otherwise, once a minute when the person is idle. They stop when the tab is hidden
+or the workspace is left.
 
 The AI study assistant captures an explicit note snapshot and sends it to a
 room-authorized server endpoint. Server-side request construction uses bounded
 input/output, structured output validation, provider storage disabled, timeouts,
-and instance-local rate limiting. It produces summaries, quizzes, flashcards,
+and rate limits shared across instances (`consume_ai_allowance`). It produces summaries, quizzes, flashcards,
 recommendations, and cautious misconception signals. Saved guides are creator
 private; source note snapshots are not saved with them. General PDF extraction,
 shared saved-guide libraries, and distributed AI quotas remain future work.

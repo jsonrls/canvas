@@ -37,7 +37,23 @@ import {
   ordinal,
 } from "../src/lib/live/shapes";
 import { answerColor, packWords } from "../src/lib/live/word-cloud";
+import { backoffDelay, IDLE_AFTER_MS, livePollDelay } from "../src/lib/polling";
 import { writeXlsx } from "../src/lib/xlsx";
+
+// Polling: fast only for an open question; slow when idle or failing.
+{
+  const base = { isActive: true, hasQuestion: true, idleMs: 0, failures: 0 };
+  assert.equal(livePollDelay(base), 2_000);
+  assert.equal(livePollDelay({ ...base, idleMs: IDLE_AFTER_MS }), 2_000);
+  assert.equal(livePollDelay({ ...base, hasQuestion: false }), 5_000);
+  assert.equal(livePollDelay({ ...base, isActive: false }), 10_000);
+  assert.equal(
+    livePollDelay({ ...base, isActive: false, idleMs: IDLE_AFTER_MS }),
+    60_000,
+  );
+  assert.equal(livePollDelay({ ...base, failures: 3 }), 16_000);
+  assert.equal(backoffDelay(2_000, 50), 60_000);
+}
 
 // Drafts: trimming, limits, kind-specific normalisation.
 assert.deepEqual(

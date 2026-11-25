@@ -15,7 +15,7 @@ interface UseViewerCollaborationResult {
   viewerCanCollaborate: boolean;
 }
 
-const REFRESH_INTERVAL_MS = 4_000;
+const REFRESH_INTERVAL_MS = 20_000;
 
 export function useViewerCollaboration({
   initialEnabled,

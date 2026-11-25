@@ -12,6 +12,7 @@ import {
   StudyPackProviderError,
   type StudyPackResponse,
 } from "@/lib/ai/study-pack";
+import { consumeSharedAiAllowance } from "@/lib/ai/usage-limit";
 import { getRoomMemberAccess, RoomDomainError } from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
@@ -165,13 +166,13 @@ export async function POST(
       body.flashcardCount,
     );
 
-    const retryAfter = consumeGenerationAllowance(
-      `${context.userId}:${access.id}`,
-    );
+    const retryAfter =
+      consumeGenerationAllowance(context.userId) ??
+      (await consumeSharedAiAllowance(context.userId, "study-pack"));
 
     if (retryAfter !== null) {
       return errorResponse(
-        "You have generated several study packs. Try again in a few minutes.",
+        "The study pack limit has been reached. Try again later.",
         429,
         { "Retry-After": String(retryAfter) },
       );
