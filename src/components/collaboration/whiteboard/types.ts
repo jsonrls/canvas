@@ -51,6 +51,8 @@ export interface MoveSession {
 export interface WhiteboardAnswerPayload {
   answer?: unknown;
   error?: unknown;
+  generatedAt?: unknown;
+  points?: unknown;
 }
 
 export interface HoveredWhiteboardAuthor {

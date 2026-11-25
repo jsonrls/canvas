@@ -459,3 +459,197 @@
   background: var(--blue-soft);
   color: var(--brand-primary);
 }
+
+/* Themed fields draw focus on their wrapper; the control inside stays bare. */
+.astryx-text-input input:focus-visible,
+.astryx-number-input input:focus-visible,
+.astryx-textarea textarea:focus-visible,
+.astryx-selector button:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Account menu, November 2026 look: a quiet pill trigger in the page header,
+   a rounded floating panel and left-aligned rows. Kept last so it wins over
+   the earlier account-menu rules in this file. */
+.sidebar-account-menu--header .sidebar-account-menu__trigger {
+  width: auto;
+  min-height: calc(var(--spacing-1) * 11);
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3) var(--spacing-1) var(--spacing-1);
+  border-radius: var(--radius-full);
+}
+
+.sidebar-account-menu--header .sidebar-account-menu__trigger:hover,
+.sidebar-account-menu--header
+  .sidebar-account-menu__trigger[aria-expanded="true"] {
+  background: var(--color-background-muted);
+}
+
+.sidebar-account-menu--header .current-user__avatar {
+  width: var(--spacing-9);
+  height: var(--spacing-9);
+  border: 0;
+  background: var(--color-accent-muted);
+  box-shadow: none;
+  color: var(--color-text-accent);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.sidebar-account-menu--header .current-user strong {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.sidebar-account-menu__chevron,
+.sidebar-account-menu__trigger:hover .sidebar-account-menu__chevron,
+.sidebar-account-menu__trigger[aria-expanded="true"]
+  .sidebar-account-menu__chevron {
+  color: var(--color-icon-secondary);
+}
+
+.sidebar-account-menu__popover {
+  padding: var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-page);
+  background: var(--color-background-popover);
+  box-shadow: var(--shadow-med);
+}
+
+/* Collapsed sidebar: the avatar alone. Its menu is a popover beside the rail;
+   the resets undo the browser's popover placement. */
+.sidebar-account-menu--rail .sidebar-account-menu__trigger {
+  justify-content: center;
+  width: calc(var(--spacing-1) * 11);
+  min-height: calc(var(--spacing-1) * 11);
+}
+
+.sidebar-account-menu--rail .sidebar-account-menu__popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 220px;
+  transform-origin: bottom left;
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item {
+  justify-content: flex-start;
+  gap: var(--spacing-3);
+  padding: 0 var(--spacing-3);
+  border-radius: var(--radius-container);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item > svg {
+  color: var(--color-icon-secondary);
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item:hover,
+.sidebar-account-menu__popover .sidebar-account-menu__item:focus-visible {
+  background: var(--color-background-muted);
+  color: var(--color-text-primary);
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item:hover > svg,
+.sidebar-account-menu__popover .sidebar-account-menu__item:focus-visible > svg {
+  color: var(--color-icon-primary);
+}
+
+.sidebar-account-menu__divider {
+  margin: var(--spacing-2) var(--spacing-3);
+  background: var(--color-border);
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item--danger,
+.sidebar-account-menu__popover .sidebar-account-menu__item--danger > svg,
+.sidebar-account-menu__popover .sidebar-account-menu__item--danger:hover > svg,
+.sidebar-account-menu__popover
+  .sidebar-account-menu__item--danger:focus-visible
+  > svg {
+  color: var(--color-error);
+}
+
+.sidebar-account-menu__popover .sidebar-account-menu__item--danger:hover,
+.sidebar-account-menu__popover
+  .sidebar-account-menu__item--danger:focus-visible {
+  background: var(--color-error-muted);
+  color: var(--color-error);
+}
+
+/* Viewer editing as a sidebar row: the icon, label and left edge match the
+   navigation items above it. No tinted icon square. */
+.viewer-collaboration-control--compact {
+  display: grid;
+  min-height: calc(var(--spacing-1) * 11);
+  align-content: center;
+}
+
+.viewer-collaboration-control--compact .viewer-collaboration-control__heading {
+  grid-template-columns: var(--spacing-4) minmax(0, 1fr) auto;
+  gap: var(--spacing-2);
+}
+
+.viewer-collaboration-control--compact .viewer-collaboration-control__icon {
+  width: var(--spacing-4);
+  height: var(--spacing-4);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-icon-secondary);
+}
+
+.viewer-collaboration-control--compact strong {
+  font-weight: 400;
+}
+
+/* The viewer's read-only status row, at the same sizes as the navigation items. */
+.viewer-collaboration-status--compact {
+  min-height: calc(var(--spacing-1) * 11);
+  grid-template-columns: var(--spacing-4) minmax(0, 1fr);
+  gap: var(--spacing-2);
+}
+
+.viewer-collaboration-status--compact strong {
+  font-size: var(--font-size-base);
+  font-weight: 400;
+}
+
+.viewer-collaboration-status--compact small {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* The phone drawer's panel is white, so the selected item and the room card
+   step down to the muted tone there instead of white on white. */
+.astryx-mobile-nav .astryx-side-nav-item.selected,
+.astryx-mobile-nav .qollab-room-card {
+  background-color: var(--color-background-muted);
+}
+
+/*
+ * Buttons inside a muted pill tray (room header actions, notes toolbar):
+ * pill-shaped, and the pressed one is a white pill with accent text, like
+ * Google Meet's toggled call controls. It sits in the early `base` layer
+ * because the theme's own pressed rule is `!important` in `astryx-theme`,
+ * and for important declarations an earlier layer wins.
+ */
+@layer base {
+  .qollab-pill-tray .astryx-button {
+    border-radius: var(--radius-full) !important;
+  }
+
+  .qollab-pill-tray
+    .astryx-button.ghost:is(
+      [aria-pressed="true"],
+      [aria-current="page"],
+      .is-active
+    ) {
+    border-color: transparent !important;
+    background-color: var(--color-background-surface) !important;
+    box-shadow: var(--shadow-low) !important;
+    color: var(--color-text-accent) !important;
+  }
+}

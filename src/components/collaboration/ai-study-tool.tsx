@@ -1,28 +1,52 @@
 "use client";
-import { studyTabIndex, toggleRevealedCard } from "@/lib/ai/study-view-state";
-import { SavedGuideLibrary } from "./ai/saved-guide-library";
-import { useSavedGuides } from "./ai/use-saved-guides";
-import { useStudyGeneration } from "./ai/use-study-generation";
 
-import { ButtonControl } from "@/components/ui/button";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { Text } from "@astryxdesign/core/Text";
+import { useEffect, useRef, useState } from "react";
+
+import { SavedGuideLibrary } from "@/components/collaboration/ai/saved-guide-library";
+import { StudyPackConfigDialog } from "@/components/collaboration/ai/study-pack-config-dialog";
 import {
-  AppIcon,
+  FlashcardsView,
+  MisconceptionsView,
+  QuizView,
+  RecommendationsView,
+  SummaryView,
+} from "@/components/collaboration/ai/study-pack-views";
+import { useSavedGuides } from "@/components/collaboration/ai/use-saved-guides";
+import { useStudyGeneration } from "@/components/collaboration/ai/use-study-generation";
+import {
+  MIN_SOURCE_CHARACTERS,
+  VIEW_DEFINITIONS,
+  type StudyView,
+} from "@/components/collaboration/ai/view-definitions";
+import { Button, ButtonControl } from "@/components/ui/button";
+import {
   ArrowLeft,
   Bookmark,
-  BrainCircuit,
-  CheckCircle2,
   RefreshCw,
-  ShieldAlert,
   Sparkles,
-  X,
 } from "@/components/ui/icons";
-import { ArrowLeft as ArrowLeftData, Sparkles as SparklesData } from "lucide";
-import { useState } from "react";
-
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
-import type { StudyPackResponse } from "@/lib/ai/study-pack";
-
+import { PANEL_HEADING, PANEL_MUTED, PANEL_ROW } from "@/components/ui/panel";
+import {
+  DEFAULT_FLASHCARD_COUNT,
+  DEFAULT_QUIZ_COUNT,
+  type StudyPackResponse,
+} from "@/lib/ai/study-pack";
 import { formatGenerationTime } from "@/lib/ai/study-tool-payload";
+import { studyTabIndex, toggleRevealedCard } from "@/lib/ai/study-view-state";
+import { readChoice, replaceQuery } from "@/lib/url-state";
+
+const STUDY_VIEWS: readonly [StudyView, ...StudyView[]] = [
+  "summary",
+  "quiz",
+  "flashcards",
+  "recommendations",
+  "misconceptions",
+];
 
 interface AiStudyToolProps {
   onReturnToNotes(): void;
@@ -30,48 +54,35 @@ interface AiStudyToolProps {
   sourceText: string;
 }
 
-import { StudyPackConfigDialog } from "./ai/study-pack-config-dialog";
-import {
-  FlashcardsView,
-  MisconceptionsView,
-  QuizView,
-  RecommendationsView,
-  SummaryView,
-} from "./ai/study-pack-views";
-import {
-  DEFAULT_FLASHCARD_COUNT,
-  DEFAULT_QUIZ_COUNT,
-  MIN_SOURCE_CHARACTERS,
-  StudyView,
-  VIEW_DEFINITIONS,
-} from "./ai/view-definitions";
+function countWords(text: string): number {
+  return text ? text.split(/\s+/u).length : 0;
+}
+
 export default function AiStudyTool({
   onReturnToNotes,
   roomId,
   sourceText,
 }: AiStudyToolProps): React.ReactElement {
-  const [activeView, setActiveView] = useState<StudyView>("summary");
-
+  // Loaded without SSR. useSearchParams can lag behind a change of tool.
+  const [addressed] = useState(
+    () => new URLSearchParams(window.location.search),
+  );
+  const guideToRestore = addressed.get("guide");
+  const isRestored = useRef(false);
+  const [activeView, setActiveView] = useState<StudyView>(() =>
+    readChoice(addressed.get("view"), STUDY_VIEWS),
+  );
   const [answers, setAnswers] = useState<Record<number, number>>({});
-
   const [result, setResult] = useState<StudyPackResponse | null>(null);
-
   const [revealedCards, setRevealedCards] = useState<Set<number>>(
     () => new Set(),
   );
-
   const [showConfigDialog, setShowConfigDialog] = useState(false);
-
   const [quizCount, setQuizCount] = useState(DEFAULT_QUIZ_COUNT);
-
   const [flashcardCount, setFlashcardCount] = useState(DEFAULT_FLASHCARD_COUNT);
 
   const normalizedSource = sourceText.trim();
-
-  const sourceWordCount = normalizedSource
-    ? normalizedSource.split(/\s+/u).length
-    : 0;
-
+  const sourceWordCount = countWords(normalizedSource);
   const canGenerate = normalizedSource.length >= MIN_SOURCE_CHARACTERS;
 
   const {
@@ -112,6 +123,23 @@ export default function AiStudyTool({
     setRevealedCards,
   });
 
+  // The address keeps the open guide and view, so a refresh comes back to them.
+  useEffect(() => {
+    if (isLoadingSavedGuides || loadingGuideId) return;
+    if (!isRestored.current) {
+      isRestored.current = true;
+      const guide = savedGuides.find(({ id }) => id === guideToRestore);
+      if (guide) {
+        void loadSavedGuide(guide.id, activeView);
+        return;
+      }
+    }
+    replaceQuery({
+      guide: activeSavedGuideId,
+      view: activeView === STUDY_VIEWS[0] ? null : activeView,
+    });
+  });
+
   const handleTabKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
     currentIndex: number,
@@ -133,294 +161,297 @@ export default function AiStudyTool({
     });
   };
 
-  let activeContent: React.ReactElement | null = null;
-
-  if (result) {
-    if (activeView === "summary") {
-      activeContent = <SummaryView pack={result.studyPack} />;
-    } else if (activeView === "quiz") {
-      activeContent = (
-        <QuizView
-          answers={answers}
-          onAnswer={(questionIndex, optionIndex) =>
-            setAnswers((current) => ({
-              ...current,
-              [questionIndex]: optionIndex,
-            }))
-          }
-          onReset={() => setAnswers({})}
-          pack={result.studyPack}
-        />
-      );
-    } else if (activeView === "flashcards") {
-      activeContent = (
-        <FlashcardsView
-          onToggle={(index) =>
-            setRevealedCards((current) => toggleRevealedCard(current, index))
-          }
-          pack={result.studyPack}
-          revealedCards={revealedCards}
-        />
-      );
-    } else if (activeView === "recommendations") {
-      activeContent = <RecommendationsView pack={result.studyPack} />;
-    } else {
-      activeContent = <MisconceptionsView pack={result.studyPack} />;
+  const renderActiveView = (pack: StudyPackResponse["studyPack"]) => {
+    switch (activeView) {
+      case "summary":
+        return <SummaryView pack={pack} />;
+      case "quiz":
+        return (
+          <QuizView
+            answers={answers}
+            onAnswer={(questionIndex, optionIndex) =>
+              setAnswers((current) => ({
+                ...current,
+                [questionIndex]: optionIndex,
+              }))
+            }
+            onReset={() => setAnswers({})}
+            pack={pack}
+          />
+        );
+      case "flashcards":
+        return (
+          <FlashcardsView
+            onToggle={(index) =>
+              setRevealedCards((current) => toggleRevealedCard(current, index))
+            }
+            pack={pack}
+            revealedCards={revealedCards}
+          />
+        );
+      case "recommendations":
+        return <RecommendationsView pack={pack} />;
+      case "misconceptions":
+        return <MisconceptionsView pack={pack} />;
     }
+  };
+
+  if (guideToRestore && !result && (isLoadingSavedGuides || loadingGuideId)) {
+    return <LoadingIndicator label="Opening your study guide…" size="panel" />;
   }
 
   return (
-    <div className="study-tool ai-study-tool">
-      {showConfigDialog ? (
-        <StudyPackConfigDialog
-          flashcardCount={flashcardCount}
-          isGenerating={isGenerating}
-          onClose={() => setShowConfigDialog(false)}
-          onConfirm={(qc, fc) => void generateStudyPack(qc, fc)}
-          quizCount={quizCount}
-          setFlashcardCount={setFlashcardCount}
-          setQuizCount={setQuizCount}
-        />
-      ) : null}
-      <header className="ai-study-heading">
-        <ButtonControl
-          variant="ghost"
-          size="sm"
-          className="ai-back-button"
-          onClick={onReturnToNotes}
-          type="button"
-        >
-          <ArrowLeft aria-hidden="true" size={16} />
-          Back to notes
-        </ButtonControl>
-      </header>
-
-      <section className="ai-source-card" aria-labelledby="ai-source-heading">
-        <span className="ai-source-card__icon" aria-hidden="true">
-          <BrainCircuit size={23} />
-        </span>
-        <div>
-          <span>Source snapshot</span>
-          <h2 id="ai-source-heading">Collaborative notes captured on entry</h2>
-          <p>
-            {canGenerate
-              ? "Later note edits are not included until you reopen the assistant."
-              : "Add a few complete study points before generating."}
-          </p>
-        </div>
-        <dl>
-          <div>
-            <dt>Words</dt>
-            <dd>{sourceWordCount}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{canGenerate ? "Ready" : "Needs notes"}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <SavedGuideLibrary
-        savedGuides={savedGuides}
-        isLoadingSavedGuides={isLoadingSavedGuides}
-        activeSavedGuideId={activeSavedGuideId}
-        loadingGuideId={loadingGuideId}
-        loadSavedGuide={loadSavedGuide}
-        pendingDeleteId={pendingDeleteId}
-        deletingGuideId={deletingGuideId}
-        deleteSavedGuide={deleteSavedGuide}
-        setPendingDeleteId={setPendingDeleteId}
+    <HStack hAlign="center" padding={4} className="md:p-6!">
+      <StudyPackConfigDialog
+        flashcardCount={flashcardCount}
+        isGenerating={isGenerating}
+        isOpen={showConfigDialog}
+        onClose={() => setShowConfigDialog(false)}
+        onConfirm={(quiz, flashcards) =>
+          void generateStudyPack(quiz, flashcards)
+        }
+        quizCount={quizCount}
+        setFlashcardCount={setFlashcardCount}
+        setQuizCount={setQuizCount}
       />
-
-      {errorMessage ? (
-        <div className="ai-error-callout" role="alert">
-          <ShieldAlert aria-hidden="true" size={19} />
-          <div>
-            <strong>Generation needs attention</strong>
-            <p>{errorMessage}</p>
-          </div>
-          <ButtonControl
-            variant="secondary"
-            disabled={isGenerating}
-            onClick={() => void generateStudyPack()}
-            type="button"
-          >
-            Retry
-          </ButtonControl>
-        </div>
-      ) : null}
-
-      {savedError ? (
-        <div className="ai-error-callout" role="alert" aria-live="assertive">
-          <ShieldAlert aria-hidden="true" size={19} />
-          <div>
-            <strong>Saved guides need attention</strong>
-            <p>{savedError}</p>
-          </div>
-          <ButtonControl
-            variant="ghost"
-            size="sm"
-            onClick={() => setSavedError("")}
-            type="button"
-          >
-            <X aria-hidden="true" size={16} />
-            Dismiss
-          </ButtonControl>
-        </div>
-      ) : null}
-
-      {!result ? (
-        <section className="ai-generation-panel">
-          <div className="ai-generation-panel__intro">
-            <span className="ai-orbit-mark" aria-hidden="true">
-              <Sparkles size={25} />
-            </span>
-            <p className="ai-section-kicker">One generation · five tools</p>
-            <h2>
-              {canGenerate ? "Build your room review" : "Start in shared notes"}
-            </h2>
-            <p>
-              {canGenerate
-                ? "The assistant organizes what your group wrote without changing the collaborative document."
-                : "Add mechanisms, comparisons, and exam clues first for a safer, more useful pack."}
-            </p>
-          </div>
-
-          <div
-            className="ai-capability-grid"
-            aria-label="Generated study tools"
-          >
-            {VIEW_DEFINITIONS.map(({ icon: Icon, id, label }, index) => (
-              <div key={id}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <Icon aria-hidden="true" size={20} />
-                <strong>{label}</strong>
-              </div>
-            ))}
-          </div>
-
-          <div className="ai-generation-action">
-            <ButtonControl
-              variant="primary"
-              className="ai-primary-button"
-              aria-busy={isGenerating}
-              disabled={isGenerating}
-              onClick={
-                canGenerate ? () => setShowConfigDialog(true) : onReturnToNotes
-              }
-              type="button"
-            >
-              {isGenerating ? (
-                <LoadingIndicator size="icon" />
-              ) : (
-                <AppIcon
-                  iconData={canGenerate ? SparklesData : ArrowLeftData}
-                  aria-hidden="true"
-                  size={18}
+      {/* Saved guides sit beside the pack from xl and below it before that. */}
+      <HStack
+        width="100%"
+        maxWidth={1180}
+        gap={6}
+        vAlign="start"
+        className="flex-col xl:flex-row"
+      >
+        <VStack gap={6} className="w-full min-w-0 flex-1">
+          <HStack gap={4} hAlign="between" vAlign="start" wrap="wrap">
+            <VStack gap={1} className="min-w-0">
+              <Heading level={2} className="text-2xl! md:text-3xl!">
+                {result
+                  ? "Your study pack"
+                  : canGenerate
+                    ? "Turn your notes into a study pack"
+                    : "Add notes to build a study pack"}
+              </Heading>
+              <Text as="p" color="secondary" className="max-w-prose">
+                {result
+                  ? `Generated ${formatGenerationTime(result.generatedAt)} from ${result.sourceCharacters.toLocaleString()} characters of notes.`
+                  : canGenerate
+                    ? `${sourceWordCount.toLocaleString()} words were captured from Shared notes when you opened this page. Reopen it to include later edits.`
+                    : `A pack needs at least ${MIN_SOURCE_CHARACTERS} characters of shared notes. This room has ${normalizedSource.length} so far.`}
+              </Text>
+            </VStack>
+            <HStack gap={2} wrap="wrap">
+              {result || canGenerate ? (
+                <Button
+                  label="Back to notes"
+                  variant="ghost"
+                  icon={<ArrowLeft aria-hidden="true" size={16} />}
+                  onClick={onReturnToNotes}
                 />
-              )}
-              {isGenerating
-                ? "Building study pack…"
-                : canGenerate
-                  ? "Generate study pack"
-                  : "Add to shared notes"}
-            </ButtonControl>
-            <small>
-              Generated content stays private unless you explicitly save it;
-              saved guides are not added to the shared notes.
-            </small>
-          </div>
-        </section>
-      ) : (
-        <section className="ai-result-shell">
-          <div className="ai-result-toolbar">
-            <div>
-              <CheckCircle2 aria-hidden="true" size={18} />
-              <span>
-                <strong>Study pack ready</strong>
-                Generated {formatGenerationTime(result.generatedAt)} from{" "}
-                {result.sourceCharacters.toLocaleString()} characters
-              </span>
-            </div>
-            <ButtonControl
-              variant="secondary"
-              aria-busy={isGenerating}
-              disabled={isGenerating}
-              onClick={() => void generateStudyPack()}
-              type="button"
-            >
-              {isGenerating ? (
-                <LoadingIndicator size="icon" />
-              ) : (
-                <RefreshCw aria-hidden="true" size={16} />
-              )}
-              {isGenerating ? "Regenerating…" : "Regenerate"}
-            </ButtonControl>
-            <ButtonControl
-              variant="secondary"
-              aria-busy={isSaving}
-              disabled={isSaving || activeSavedGuideId !== null}
-              onClick={() => void saveStudyGuide()}
-              type="button"
-            >
-              {isSaving ? (
-                <LoadingIndicator size="icon" />
-              ) : (
-                <Bookmark aria-hidden="true" size={16} />
-              )}
-              {activeSavedGuideId !== null
-                ? "Saved for later"
-                : isSaving
-                  ? "Saving…"
-                  : "Save guide"}
-            </ButtonControl>
-          </div>
+              ) : null}
+              {result ? (
+                <>
+                  <Button
+                    label="Regenerate"
+                    variant="secondary"
+                    icon={<RefreshCw aria-hidden="true" size={16} />}
+                    isLoading={isGenerating}
+                    isDisabled={!canGenerate}
+                    onClick={() => void generateStudyPack()}
+                  />
+                  <Button
+                    label={activeSavedGuideId !== null ? "Saved" : "Save guide"}
+                    variant="primary"
+                    icon={<Bookmark aria-hidden="true" size={16} />}
+                    isLoading={isSaving}
+                    isDisabled={activeSavedGuideId !== null}
+                    onClick={() => void saveStudyGuide()}
+                  />
+                </>
+              ) : null}
+            </HStack>
+          </HStack>
 
-          <div
-            className="ai-study-tabs"
-            role="tablist"
-            aria-label="AI study pack views"
-          >
-            {VIEW_DEFINITIONS.map(({ icon: Icon, id, shortLabel }, index) => (
-              <ButtonControl
-                variant="ghost"
-                size="sm"
-                aria-controls={`ai-panel-${id}`}
-                aria-selected={activeView === id}
-                id={`ai-tab-${id}`}
-                key={id}
-                onClick={() => setActiveView(id)}
-                onKeyDown={(event) => handleTabKeyDown(event, index)}
-                role="tab"
-                tabIndex={activeView === id ? 0 : -1}
-                type="button"
+          {errorMessage ? (
+            <Banner
+              status="error"
+              title="The study pack was not created"
+              description={errorMessage}
+              endContent={
+                <Button
+                  label="Retry"
+                  variant="secondary"
+                  isDisabled={isGenerating}
+                  onClick={() => void generateStudyPack()}
+                />
+              }
+            />
+          ) : null}
+          {savedError && pendingDeleteId === null ? (
+            <Banner
+              status="error"
+              title="Saved guides need attention"
+              description={savedError}
+              endContent={
+                <Button
+                  label="Dismiss"
+                  variant="ghost"
+                  onClick={() => setSavedError("")}
+                />
+              }
+            />
+          ) : null}
+
+          {result ? (
+            <VStack gap={6}>
+              <VStack className="@container">
+                {/* Three tiles then two on phones; one row of five from 448px. */}
+                <HStack
+                  gap={2}
+                  role="tablist"
+                  aria-label="AI study pack views"
+                  className="grid! grid-cols-6 @md:grid-cols-5"
+                >
+                  {VIEW_DEFINITIONS.map(
+                    ({ icon: Icon, id, shortLabel, tab }, index) => (
+                      <ButtonControl
+                        variant="custom"
+                        aria-controls={
+                          activeView === id ? `ai-panel-${id}` : undefined
+                        }
+                        aria-selected={activeView === id}
+                        className={`col-span-2 flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 px-1 text-center text-sm text-primary transition-colors nth-[n+4]:col-span-3 @md:col-span-1! @2xl:min-h-14 @2xl:flex-row @2xl:gap-2 ${
+                          activeView === id
+                            ? `font-semibold ${tab.selected}`
+                            : "border-transparent bg-muted font-medium hover:border-border"
+                        }`}
+                        id={`ai-tab-${id}`}
+                        key={id}
+                        onClick={() => setActiveView(id)}
+                        onKeyDown={(event) => handleTabKeyDown(event, index)}
+                        role="tab"
+                        tabIndex={activeView === id ? 0 : -1}
+                      >
+                        <Icon
+                          aria-hidden="true"
+                          className={`shrink-0 ${tab.icon}`}
+                          size={20}
+                        />
+                        {shortLabel}
+                        {id === "summary" ? null : (
+                          <Text
+                            type="supporting"
+                            className="hidden @2xl:inline"
+                          >
+                            {result.studyPack[id].length}
+                          </Text>
+                        )}
+                      </ButtonControl>
+                    ),
+                  )}
+                </HStack>
+              </VStack>
+              <VStack
+                aria-labelledby={`ai-tab-${activeView}`}
+                id={`ai-panel-${activeView}`}
+                role="tabpanel"
+                tabIndex={0}
               >
-                <Icon aria-hidden="true" size={17} />
-                {shortLabel}
-              </ButtonControl>
-            ))}
-          </div>
+                {renderActiveView(result.studyPack)}
+              </VStack>
+            </VStack>
+          ) : (
+            <VStack
+              as="section"
+              gap={4}
+              className={PANEL_MUTED}
+              aria-labelledby="ai-pack-contents"
+            >
+              <Heading
+                level={3}
+                id="ai-pack-contents"
+                className={PANEL_HEADING}
+              >
+                What you get
+              </Heading>
+              <VStack as="ul" gap={2}>
+                {VIEW_DEFINITIONS.map(
+                  ({ description, icon: Icon, id, label }) => (
+                    <HStack
+                      as="li"
+                      gap={4}
+                      vAlign="center"
+                      className={PANEL_ROW}
+                      key={id}
+                    >
+                      <Icon aria-hidden="true" size={20} />
+                      <VStack gap={0} className="min-w-0 flex-1">
+                        <Text weight="medium">{label}</Text>
+                        <Text type="supporting">{description}</Text>
+                      </VStack>
+                    </HStack>
+                  ),
+                )}
+              </VStack>
+              <HStack gap={4} vAlign="center" wrap="wrap">
+                <Button
+                  label={
+                    canGenerate ? "Generate study pack" : "Add to shared notes"
+                  }
+                  variant="primary"
+                  size="lg"
+                  icon={
+                    canGenerate ? (
+                      <Sparkles aria-hidden="true" size={18} />
+                    ) : (
+                      <ArrowLeft aria-hidden="true" size={18} />
+                    )
+                  }
+                  isLoading={isGenerating}
+                  onClick={
+                    canGenerate
+                      ? () => setShowConfigDialog(true)
+                      : onReturnToNotes
+                  }
+                />
+                <Text
+                  type="supporting"
+                  className="w-full min-w-0 md:w-auto md:flex-1"
+                  role="status"
+                >
+                  {isGenerating
+                    ? "Building your study pack…"
+                    : "Only you see the pack. It isn’t added to the shared notes."}
+                </Text>
+              </HStack>
+            </VStack>
+          )}
 
-          <div
-            aria-labelledby={`ai-tab-${activeView}`}
-            className="ai-study-panel"
-            id={`ai-panel-${activeView}`}
-            role="tabpanel"
-            tabIndex={0}
-          >
-            {activeContent}
-          </div>
-        </section>
-      )}
+          <Text as="p" type="supporting" className="max-w-prose">
+            Study aid only. AI can miss context or make mistakes. Check claims,
+            answers and corrections against course materials and authoritative
+            sources.
+          </Text>
+        </VStack>
 
-      <aside className="ai-safety-note">
-        <ShieldAlert aria-hidden="true" size={18} />
-        <p>
-          <strong>Study aid, not medical advice.</strong> AI can miss context or
-          make mistakes. Verify clinical claims, answers, and corrections
-          against course materials and authoritative sources.
-        </p>
-      </aside>
-    </div>
+        <VStack as="aside" className="w-full xl:w-80 xl:shrink-0">
+          <SavedGuideLibrary
+            savedGuides={savedGuides}
+            isLoadingSavedGuides={isLoadingSavedGuides}
+            activeSavedGuideId={activeSavedGuideId}
+            loadingGuideId={loadingGuideId}
+            loadSavedGuide={loadSavedGuide}
+            pendingDeleteId={pendingDeleteId}
+            deletingGuideId={deletingGuideId}
+            deleteError={savedError}
+            deleteSavedGuide={deleteSavedGuide}
+            setPendingDeleteId={(id) => {
+              setSavedError("");
+              setPendingDeleteId(id);
+            }}
+          />
+        </VStack>
+      </HStack>
+    </HStack>
   );
 }

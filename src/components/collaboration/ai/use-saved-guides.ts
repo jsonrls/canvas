@@ -154,7 +154,10 @@ export function useSavedGuides({
     }
   };
 
-  const loadSavedGuide = async (guideId: string): Promise<void> => {
+  const loadSavedGuide = async (
+    guideId: string,
+    view: StudyView = "summary",
+  ): Promise<void> => {
     if (loadingGuideId) return;
 
     const request = requests.load.start();
@@ -185,7 +188,7 @@ export function useSavedGuides({
       if (!guide) throw new Error("The saved guide response was incomplete.");
       setResult(guide);
       setActiveSavedGuideId(guideId);
-      setActiveView("summary");
+      setActiveView(view);
       setAnswers({});
       setRevealedCards(new Set());
     } catch (error) {

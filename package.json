@@ -17,6 +17,12 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "verify:buttons": "node --import tsx scripts/verify-buttons.ts",
+    "verify:rooms-directory": "node --import tsx scripts/verify-rooms-directory.ts",
+    "verify:live-activities": "node --import tsx scripts/verify-live-activities.ts",
+    "verify:live-breakouts": "node --require ./scripts/register-server-only.cjs --import tsx scripts/verify-live-breakouts.ts",
+    "verify:pdf-clear-marks": "node --import tsx scripts/verify-pdf-clear-marks.ts",
+    "verify:whiteboard-placement": "node --import tsx scripts/verify-whiteboard-answer-placement.ts",
+    "verify:whiteboard-voice": "node --import tsx scripts/verify-whiteboard-voice.ts",
     "verify:yjs": "node scripts/verify-yjs.mjs",
     "verify:schema": "node --env-file=.env scripts/verify-schema.mjs",
     "verify:version-history": "node --env-file=.env scripts/verify-version-history.mjs",
@@ -29,7 +35,7 @@
     "verify:account-profile": "node --import tsx scripts/verify-account-profile.ts",
     "verify:phase-3": "node --import tsx scripts/verify-phase-3.ts",
     "verify:phase-3-storage": "node --env-file=.env scripts/verify-phase-3-storage.mjs",
-    "verify:phase-4": "node --require ./scripts/register-css.cjs --import tsx scripts/verify-phase-4.ts",
+    "verify:phase-4": "node --require ./scripts/register-css.cjs --require ./scripts/register-server-only.cjs --import tsx scripts/verify-phase-4.ts",
     "verify:saved-study-guides": "node --env-file=.env scripts/verify-saved-study-guides.mjs",
     "verify:serverless-collaboration": "node --env-file=.env scripts/verify-serverless-collaboration.mjs",
     "verify:vercel": "node --env-file=.env scripts/verify-vercel-deployment.mjs",
@@ -39,13 +45,17 @@
     "verify:collaboration-lifecycle": "node --import tsx scripts/verify-collaboration-lifecycle.ts",
     "verify:collaboration-persistence": "node scripts/verify-collaboration-persistence.mjs",
     "verify:study-tools": "node --import tsx scripts/verify-study-tools.ts",
+    "verify:room-header": "node --import tsx scripts/verify-room-header.ts",
     "verify:workspace-shell": "node --require ./scripts/register-css.cjs --import tsx scripts/verify-workspace-shell.ts",
+    "verify:liquid-glass": "node --import tsx scripts/verify-liquid-glass.ts",
     "verify:design-system": "node --import tsx scripts/verify-design-system.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0",
     "@astryxdesign/cli": "^0.5.0",
     "@astryxdesign/core": "^0.5.0",
     "@astryxdesign/theme-neutral": "^0.5.0",
+    "@huggingface/transformers": "4.3.2",
     "@stylexjs/stylex": "^0.19.0",
     "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "2.110.7",
@@ -84,5 +94,10 @@
     "tailwindcss": "4.3.3",
     "tsx": "4.23.1",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@huggingface/transformers": {
+      "onnxruntime-node": "npm:onnxruntime-common@1.31.0-dev.20260911-2a43ec07e"
+    }
   }
 }

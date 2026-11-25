@@ -11,6 +11,7 @@ import {
 import {
   annotationUsesComments,
   getPoint,
+  visualMarkIds,
 } from "@/lib/pdf-annotations/study-tool";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
@@ -210,6 +211,20 @@ export function usePdfAnnotations({
     setSelectedId(null);
   };
 
+  // `annotations` holds only the current PDF revision, so older uploads keep
+  // their marks. Visual marks have no replies, so nothing else is removed.
+  const clearVisualMarks = (): void => {
+    if (!canEdit) return;
+    const ids = visualMarkIds(annotations);
+    if (ids.length === 0) return;
+    transact((document) => {
+      const annotationMap = document.getMap("pdf-annotations");
+      ids.forEach((id) => annotationMap.delete(id));
+    });
+    if (selectedId && ids.includes(selectedId)) setSelectedId(null);
+    setDraft(null);
+  };
+
   const addReply = (): void => {
     const text = replyText.trim();
     if (!selectedAnnotation || !text) return;
@@ -244,6 +259,7 @@ export function usePdfAnnotations({
     finishDraft,
     saveAnnotationText,
     deleteSelected,
+    clearVisualMarks,
     addReply,
   };
 }

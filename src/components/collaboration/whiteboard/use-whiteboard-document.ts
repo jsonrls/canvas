@@ -78,6 +78,17 @@ export function useWhiteboardDocument({
     [transact],
   );
 
+  /** The element as it is now, without waiting for a render. */
+  const readElement = useCallback(
+    (id: string): WhiteboardElement | null =>
+      readWhiteboardElement(
+        collaboration.connection?.document
+          .getMap<unknown>("whiteboard-elements")
+          .get(id),
+      ),
+    [collaboration.connection],
+  );
+
   const handleUndo = (): void => {
     undoManagerRef.current?.undo();
     setCanUndo(undoManagerRef.current?.canUndo() ?? false);
@@ -95,6 +106,7 @@ export function useWhiteboardDocument({
     canRedo,
     transact,
     upsertElement,
+    readElement,
     handleUndo,
     handleRedo,
   };

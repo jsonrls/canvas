@@ -7,6 +7,222 @@ last_updated: 2026-10-09
 
 # Qollab design system
 
+## Current front-end direction (2026-11-06)
+
+The landing page follows the user's fintech reference image ("use this
+instead"), after two earlier directions modelled on https://myboardprep.org/
+were set aside. This section supersedes anything below that conflicts with it,
+including Inter Tight, the warm body colour, 6px and 9px radii, and the flat
+homepage rules. The token table below is historical;
+`theme/qollab-workshop.ts` is the source.
+
+- Look: white page, soft grey rounded cards (`bg-muted`, `rounded-3xl`) holding
+  white insets, one saturated blue panel (`.landing-sky`), pale blue photo
+  fields (`.landing-photo`), navy pill actions (`PillLink`), small label chips
+  above section headings, medium-weight Inter headings with tight tracking.
+- Landing order: top bar (logo, centred links, Log in, Get started pill),
+  centred hero, photo card beside the `ProductTour` panel (a looping screen
+  recording of the real app with a glass chapter dock; selecting the recording
+  pauses it;
+  2026-11-25, section previews are real screenshots in `public/landing/`), eight tool tiles, `#why`
+  three cards, `#workspace` two tall cards, the wide "Ask the whiteboard" card
+  and four small ones, `#live` activity picker beside a blue panel (2026-11-25, redesigned after Notion's product pages: the heading, a row of four activity tab cards, and one large `bg-muted` frame holding a white big screen drawn with the real charts and a phone whose taps change that screen; from `lg` it pins at full height and scrolling steps through the tabs) (after
+  Mentimeter's type list and preview; it draws the room's own charts from
+  `live-charts.tsx` and lists `LIVE_QUESTION_KINDS`), `#how` numbered
+  steps beside a photo with a glass figure, study pack rows, `#roles` three
+  cards with the editor card dark, `#faq` numbered accordion, closing panel,
+  footer.
+- Landing content (2026-11-25): any group, any subject. No landing, sign-in or
+  placeholder copy may assume a medical, exam-board or other single-industry
+  user.
+- Theme colours are unchanged: Qollab Blue `#2563EB`, ink `#0F1B3D`, Bricolage
+  Grotesque headings elsewhere in the app. Only `.landing-root` swaps the
+  heading face to Inter.
+- Sign-in, sign-up and both password pages share `AuthShell`: a centred
+  column (bold heading, one line of intro, pill fields with placeholders and
+  hidden labels, the pill `AuthSubmit` action) beside a tall pale blue panel
+  with the group photo, two floating avatars, a sample room card and a
+  caption. The panel hides below `lg`. No social sign-in buttons: the app has
+  no providers.
+- Room directory (`/rooms`, 2026-11-23): the title greets the signed-in person
+  ("Your study rooms, {name}") and one sentence below states a fact from the
+  data (rooms joined, and the most recently updated room). The "Study commons"
+  strip is gone. Joined rooms sit in a `bg-muted rounded-3xl` panel and public
+  rooms in a Soft Blue (`bg-accent-muted`) panel headed "Open to join", side by
+  side at 3:2 from `lg` and stacked below it. Rooms are white `rounded-2xl`
+  list rows inside the panel with 8px gaps, not `Card`s. This supersedes the
+  ruled "Room directory" bullet below. Plan:
+  `plan/feature-rooms-directory-greeting-home-1.md`.
+- Account, room settings and breakout directory (2026-11-23): the same panel
+  system as the room directory. Classes live in `src/components/ui/panel.ts`
+  (`PANEL_MUTED`, `PANEL_ACCENT`, `PANEL_ROW`, `PANEL_HEADING`). Each section
+  is a tonal `rounded-3xl` panel with a body-size heading; records and choices
+  are white `rounded-2xl` rows inside it; privacy notes use the Soft Blue
+  panel. Page titles are 24px, 29px from `md`. No dividers between sections,
+  no coloured cards, no icon chips, no small label above a heading. The
+  breakout directory lists rooms as rows beside a 384px form panel. The
+  account menu is a pill trigger with a rounded floating panel and
+  left-aligned 44px rows. This supersedes the divider-led account and
+  settings rules below.
+- Workspace frame and sidebar (2026-11-23, flush frame): the sidebar sits on
+  the muted ground; the workspace is the white surface beside it, edge to
+  edge, split from the sidebar by one hairline. No inset, no rounded sheet
+  (tried and dropped: it left a gap above and below). The selected item is a white pill with no accent bar
+  (muted inside the white phone drawer). A white room card at the top shows
+  the icon, name, role and access, with a "Switch room" menu. Groups are
+  "Study tools" and "Room"; "Room" holds Breakout rooms (plain count)
+  and the Viewer editing row, which matches the nav items and has no
+  tinted icon square. The account row is alone at the bottom. This supersedes
+  the white rail, 1px divider and Soft Blue selected row described below.
+- Room header (2026-11-23): identity is one line, "Room / Tool", then the
+  access and role tokens. The sync status sits in a muted pill, and the
+  actions (Present or Follow, version history, Manage; Reconnect, back,
+  people and Q&A in breakouts) share one muted tray as ghost buttons. Height
+  stays 56px. `scripts/verify-room-header.ts` still pins the contract.
+  Colour in the header goes on state only: the sync pill is green when live,
+  amber offline, red on error and grey otherwise. The action tray and its
+  buttons stay neutral; Present shows the theme's pressed style while
+  presenting.
+  The header carries no presence avatars (2026-11-24). People is off the
+  expanded room sidebar (2026-11-25); the collapsed sidebar's icon and the
+  breakout sidebar still open the list. The collapsed sidebar keeps the
+  account avatar at the bottom, below that icon.
+- Notes, PDF and whiteboard toolbars (2026-11-25) share one size: a 40px pill of
+  36×32px buttons on desktop, a 56px bar of 44px buttons on phones, 16px icons.
+- Settings (2026-11-25): "Reset password" opens a dialog that emails the link to
+  the signed-in address; `/reset-password` stays for people who are signed out.
+- PDF tool (2026-11-23). References: tldraw, Excalidraw and FigJam (tools in
+  one floating icon pill, labels as tooltips), Google Drive and Acrobat
+  viewers (page controls floating over a grey desk). From 761px: the tools
+  are one centred muted pill of icon-only buttons; the label stays for screen
+  readers and the tooltip comes from `title`. The sync status pill, file
+  name, Download and Replace (a file-up icon) sit to the right of it, so
+  the separate file row is gone. The PDF's sync badge shows only when it is
+  not live; "Live" is said once, in the room header. The page sits on a rounded muted desk. Page controls are a
+  small centred pill with icon-only Previous and Next. From 761px to 1279px
+  the file details drop to a line under the pill. The "More" (ellipsis)
+  overflow menu is phone-only: from 761px its tools are all in the toolbar,
+  so the trigger is hidden. On phones it opens a white bottom sheet of muted
+  tiles; its tiles are `ButtonControl variant="custom"`, because the theme's
+  ghost style forces a transparent fill with `!important`. Same for the
+  whiteboard's "More" sheet.
+- PDF "Clear all marks" (2026-11-24): an eraser button in the tool pill
+  (and a tile in the phone "More" sheet) removes every drawing, highlight
+  and underline on all pages of the current PDF revision, after an
+  alert dialog that states the count and that it can't be undone. Focus
+  starts on "Keep marks". Sticky notes, page comments, replies and bookmarks
+  are kept. Anyone who can edit may use it, as with deleting one mark. The
+  button is disabled when there are no marks.
+- Whiteboard (2026-11-24). References: Excalidraw (tool pill floating at the
+  top centre; zoom and undo bottom-left), tldraw (navigation and zoom in the
+  bottom-left corner; labels as tooltips), FigJam (tools float over the
+  board). From 761px the toolbar is a click-through layer over the board
+  with white floating pills: tools and colour top-centre; undo, redo, zoom,
+  reset and fit bottom-left; help, plus status and Retry when sync is not
+  live, top-right; Delete and Clear all bottom-right. Notices float under
+  the tool pill. The board is white with faint neutral dots. "Live" and the
+  people count are not repeated (the room header and sidebar carry them).
+  Phones keep the single row and the "More" sheet; the groups are
+  `display: contents` there.
+- Whiteboard voice (2026-11-25). References: Google Docs voice typing (one
+  click turns the microphone on, one click turns it off) and ChatGPT dictation
+  (a recording bar with the time, Cancel and Done). A microphone button sits
+  before AI answer in the tool pill and as "Ask by voice" in the phone "More"
+  sheet. While the microphone may be on, a card under the tools shows
+  "Listening…", the time of one minute, where the voice goes, and the model
+  download the first time; it floats, so the board does not resize. The words
+  appear after Done. The question is placed as a circle with the words, an
+  arrow and a blank circle, in free space in the view, and the usual AI answer
+  fills the blank circle. If the answer fails, AI answer retries it. Whiteboard
+  notices float on phones too, because resizing the board refits the camera.
+- PDF fit page (2026-11-24): at 100% zoom the whole page fits the page area
+  (the smaller of width and height, using the page's own aspect ratio), like
+  "fit page" in PDF viewers, so slides need no scrolling. Zooming in still
+  scrolls. Phones keep fit-to-width. `fitPageWidth` in
+  `src/lib/pdf-annotations/study-tool.ts`.
+- Notes canvas (2026-11-23): the formatting tools sit in one centred muted
+  pill above the page instead of a ruled bar; groups are separated by space,
+  not dividers. The footer has no rule and the word count sits in a muted
+  pill. The viewer notice is a centred muted pill. The page itself stays on
+  the white sheet.
+- AI study assistant (2026-11-25). References: NotebookLM Studio (outputs
+  listed first, saved work in its own list), Quizlet (one large card, click to
+  flip, arrows underneath; study modes in one row of tiles). Saved guides sit
+  in a 320px muted panel beside the pack from `xl` and below it before that.
+  Before generating, the five outputs are white rows in a muted panel with one
+  primary action. The views are five equal tiles across the pack, each with a
+  coloured icon and its item count; the chosen one is tinted and edged in its
+  colour with semibold text. On phones they are three over two, without counts.
+  Quiz answers state right and wrong in words as well as colour. The options
+  dialog is an Astryx `Dialog` with two `Slider`s. Deleting a saved guide opens
+  an alert dialog that names it; focus starts on "Keep guide" and a failed
+  delete shows its error inside the dialog. No small label above a
+  heading, no icon chips, no numbered capability grid.
+- Flashcard colour (2026-11-25). References: Kahoot (a flat colour and plain
+  geometric shapes per choice), Quizlet (one large card that flips). Each card
+  takes one of the six answer colours in turn as a tint (15% for the prompt, 25%
+  for the answer) with corner shapes at 30%. Shapes are decoration: they are
+  hidden from screen readers, and the label still says Prompt or Answer. Dark
+  text over a shape keeps at least 6.8:1. Flipping fades and lifts the text in
+  over 300ms; reduced motion turns it off.
+- Live activities (2026-11-25). Reference: Mentimeter (packed word cloud,
+  upright columns, donut, pie and dots, speech bubbles, one question filling
+  the screen). Answers use six colours, `answer-1` to `answer-6` in the theme,
+  tested for red-green colour blindness; besides flashcards and study pack
+  tabs, this is the one place the app is multicoloured. Every mark keeps its label, and a correct answer has a tick
+  and the word. Full screen draws answers as they arrive, with a Hide button, as
+  Mentimeter does; students' own screens wait for "Show to students". Full
+  screen shows only what a shared screen may:
+  `projectorView` hides secret answers, unshown quiz-style results, form answers and
+  unapproved questions. Scales and guesses are hills over a line; ranking and
+  100 points are thick bars that slide when their order changes; the 2×2 grid
+  uses named circles. A quiz shows a countdown ring; full-screen Q&A shows the
+  top question alone. Above the question, its type is a coloured token (`LiveKindToken`; the
+  question list keeps plain text):
+  ten colours for twelve types, so types with one correct answer share green
+  and types that place a mark share cyan; no red, which means delete or error.
+  Hosts reorder questions with a grip handle (reference: dragging slides in
+  Mentimeter's slide panel); arrow keys on the handle do the same, and a line
+  shows where the question will land. Adding a question is a dialog, opened by a button that
+  stays at the bottom of the host's panel (references: Kahoot's Add question,
+  Mentimeter's New slide); from 672px of tool width (a container query, because
+  a breakout's Q&A rail can sit beside it) the list and the question scroll on
+  their own, and below it the button sits above the list. Motion stops under reduced
+  motion. Plan:
+  `plan/feature-live-visuals-1.md`.
+- Live activities in breakouts (2026-11-25). References: Mentimeter (the same
+  activity views) and Google Meet breakouts (each group works alone; the host
+  can enter any group). The tool is the last item in the breakout's Study tools
+  and phone selector, with the main room's icon, label, views and "Answer now"
+  prompt. Each breakout has its own activities. The Q&A rail stays available
+  beside it and tags its questions "Activities".
+- Account frame (2026-11-23): the header holds the logo only. From `md`,
+  "Back to rooms" and the Profile/Settings links sit in a 224px sidebar that
+  starts under the logo; the page content stays capped at 640px beside it.
+  Below `md` the links become a tab track above the title.
+- Breakout workspace (2026-11-23): uses the same `RoomHeader` as the main
+  room (name, presence, sync status, Reconnect on error); the separate status
+  strip above the notes is gone. The error page and both controls dialogs use
+  the muted panel; the loading screen shows its message in a muted pill.
+- Buttons, app-wide: primary is a blue gradient pill with a darker rim and a
+  soft glow (`--qollab-button-gradient-primary`, `--qollab-button-glow-primary`
+  in the theme). Secondary and destructive are pills too; ghost and link keep
+  12px corners. `.landing-cta` reuses the same tokens for link actions.
+- Fields, app-wide: single-line inputs, number inputs and selectors are pills
+  like the buttons. Text areas keep their corners, since a pill cannot hold
+  several lines.
+- Field focus, app-wide: the border turns accent, with a one-pixel accent rim
+  and a soft halo (`--qollab-field-focus-ring`), not an offset outline. A
+  transparent outline remains for forced-colours mode. Fields in a warning or
+  error state keep their status border. Buttons and links keep the outline.
+- Liquid glass (`src/components/home/liquid-glass.ts`) stays on the room's tool
+  dock and the figure panel in `SessionSteps`.
+- The one photograph is `home-study-collaboration.png`. Its white ground is
+  multiplied onto pale fields, so do not place it on saturated colour.
+- The reference's testimonials, logos, prices, stats and blog are replaced with
+  real content: study packs, roles and product facts. Do not add invented
+  proof or prices. Room fragments are labelled as a sample.
+
 ## Current redesign direction (2026-10-09)
 
 The user requested an app redesign with anti-slop applied during the work.
@@ -232,8 +448,10 @@ native children, form attributes, refs, or specialized control semantics.
 - Native `custom`: renderer annotations, switches, quiz/flashcard surfaces,
   or rich interactive rows whose geometry and status colors must remain intact.
 
-Default height is 44px, compact (`sm`) is 36px for dense tools, and large (`lg`)
-is 48px. Preserve mobile touch targets and existing responsive layouts. Presses
+Default height is 36px, compact (`sm`) is 32px for dense tools, and large (`lg`)
+is 40px. Buttons and fields use these compact heights and are exempt from the
+44px touch-target rule; text links, rows and navigation items keep it. Preserve
+existing responsive layouts. Presses
 and hover provide color feedback without movement. Labeled
 buttons use explicit `isLoading`; native controls keep their own busy state and
 spinner rather than inferring loading from `disabled` or `aria-busy`.
@@ -412,7 +630,7 @@ autocomplete, length constraints, error text, pending text, and success toasts.
 ### Composition and visual direction
 
 - Cream body surface, centered frame capped at 1120px, shared blue Qollab logo
-  linked home and a visible “Back home” link. Use `Center`, `VStack`, `HStack`,
+  linked home; no separate “Back home” link. Use `Center`, `VStack`, `HStack`,
   responsive `Grid`, `Card`, `Heading`, and `Text` according to verified APIs.
 - At desktop widths (1024px and above), the form region comes first, with a
   white standalone Card capped at 440px. The companion region is editorial,
@@ -436,11 +654,11 @@ autocomplete, length constraints, error text, pending text, and success toasts.
   permitted when needed to retain IDs, autocomplete, min/max length, hidden
   redirect fields, and password toggles unavailable in the installed TextInput.
   Style with semantic token-backed utilities; do not add CSS or layout div/span.
-- Visible labels precede fields. Inputs and buttons are at least 44px high;
+- Visible labels precede fields. Auth inputs and the submit pill are 40px high;
   input text uses the existing 16px token to avoid mobile focus zoom. Primary
   submit fills the form width. Focus rings contrast on white and cream.
 - The password reveal button sits inside the input border at the trailing edge,
-  with reserved input padding so text never overlaps its 44px target. Keep its current
+  with reserved input padding so text never overlaps its 40px target. Keep its current
   show/hide accessible name, `aria-controls`, and `aria-pressed`. Keep text and
   toggle hit areas separate. Preserve update-password's shared toggle for both
   password fields. Forgot-password is a separate readable link row if needed

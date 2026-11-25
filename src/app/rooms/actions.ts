@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { listLiveImageFolders, removeLiveImages } from "@/lib/live/repository";
 import {
   readCompressedRoomIcon,
   removeRoomIcon as removeRoomIconAsset,
@@ -316,7 +317,14 @@ export async function deleteRoomAction(
       throw new RoomDomainError(`Type “${room.name}” to confirm deletion.`);
     }
 
+    const liveFolders = await listLiveImageFolders(context.client, room.id);
     await deleteRoom(context.client, roomSlug, context.userId);
+
+    try {
+      await removeLiveImages(createServiceRoleClient(), liveFolders);
+    } catch {
+      // The room deletion succeeded; stale asset cleanup must not undo it.
+    }
 
     if (room.roomIconStoragePath) {
       try {

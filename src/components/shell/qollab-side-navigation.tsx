@@ -52,6 +52,8 @@ export interface QollabSideNavigationProps extends QollabNavigationSectionsProps
   collapseButtonLabel?: string;
   collapsedHeader?: ReactNode;
   defaultIsCollapsed?: boolean;
+  /** Controls that belong with the last section but are not links, such as a switch. */
+  extraContent?: ReactNode;
   footer?: ReactNode;
   footerIcons?: ReactNode;
   header: ReactNode;
@@ -102,7 +104,7 @@ function QollabSideNavigationHeader({
         width="100%"
       >
         {header}
-        <SideNavCollapseButton className="min-h-11 min-w-11" size="lg">
+        <SideNavCollapseButton className="min-w-10" size="lg">
           <PanelLeft aria-hidden="true" size={18} />
         </SideNavCollapseButton>
       </HStack>
@@ -143,7 +145,7 @@ function QollabSideNavigationHeader({
           hAlign="center"
           vAlign="center"
         >
-          <SideNavCollapseButton className="min-h-11 min-w-11" size="lg">
+          <SideNavCollapseButton className="min-w-10" size="lg">
             <PanelLeft aria-hidden="true" size={18} />
           </SideNavCollapseButton>
         </HStack>
@@ -218,6 +220,7 @@ export function QollabSideNavigation({
   collapseButtonLabel,
   collapsedHeader,
   defaultIsCollapsed,
+  extraContent,
   footer,
   footerIcons,
   header,
@@ -270,6 +273,7 @@ export function QollabSideNavigation({
         linkComponent={linkComponent}
         sections={sections}
       />
+      {extraContent}
     </SideNav>
   );
 }

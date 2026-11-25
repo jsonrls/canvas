@@ -18,6 +18,12 @@ import {
   type WhiteboardElementType,
   type WhiteboardPoint,
 } from "@/lib/whiteboard/model";
+import {
+  BOARD_TEXT_MIN_WIDTH,
+  boardTextHeight,
+  wrapBoardText,
+} from "@/lib/whiteboard/text-layout";
+import { measureBoardText } from "./measure-board-text";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -224,11 +230,26 @@ export function useWhiteboardInteraction({
     }
 
     if (resizeSession) {
-      const next = resizeWhiteboardElement(
-        resizeSession.origin,
-        resizeSession.handle,
-        point,
-      );
+      const { handle, origin } = resizeSession;
+      const next = resizeWhiteboardElement(origin, handle, point);
+      if (next.type === "text") {
+        // Text rewraps to the dragged width; its height always fits the lines
+        // and its top edge stays put.
+        const width = Math.max(BOARD_TEXT_MIN_WIDTH, next.width);
+        const keepsRightEdge = handle === "nw" || handle === "sw";
+        upsertElement({
+          ...next,
+          height: boardTextHeight(
+            wrapBoardText(next.text, width, measureBoardText, next.fontSize)
+              .length,
+            next.fontSize,
+          ),
+          width,
+          x: keepsRightEdge ? origin.x + origin.width - width : origin.x,
+          y: origin.y,
+        });
+        return;
+      }
       upsertElement(next);
       return;
     }

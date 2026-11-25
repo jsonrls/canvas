@@ -81,7 +81,7 @@ export const qollabWorkshopTheme = {
     "--duration-slow": "520ms",
     "--duration-slow-max": "720ms",
     "--font-family-body": "var(--font-qollab-body), -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, sans-serif",
-    "--font-family-heading": "var(--font-qollab-body), -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, sans-serif",
+    "--font-family-heading": "var(--font-qollab-heading), -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, sans-serif",
     "--font-family-code": "var(--font-qollab-code), ui-monospace, monospace",
     "--color-syntax-keyword": "light-dark(#700084, #efa8ff)",
     "--color-syntax-string": "light-dark(#005600, #a6d2a2)",
@@ -98,19 +98,19 @@ export const qollabWorkshopTheme = {
     "--color-syntax-punctuation": "light-dark(#a3a3a3, #525252)",
     "--color-syntax-background": "light-dark(#fafafa, #0a0a0a)",
     "--color-background-surface": "light-dark(#FFFFFF, #19191F)",
-    "--color-background-body": "light-dark(#F3F2EF, #111116)",
+    "--color-background-body": "light-dark(#F7F8FC, #111116)",
     "--color-background-card": "light-dark(#FFFFFF, #1F1F25)",
     "--color-background-popover": "light-dark(#FFFFFF, #27272D)",
-    "--color-background-muted": "light-dark(#F5F5F7, #222228)",
+    "--color-background-muted": "light-dark(#F3F5FA, #222228)",
     "--color-accent": "light-dark(#2563EB, #93C5FD)",
     "--color-accent-muted": "light-dark(#EAF2FF, #172D50)",
     "--color-neutral": "light-dark(#2563EB14, #93C5FD24)",
     "--color-overlay": "light-dark(#00000080, #000000CC)",
-    "--color-overlay-hover": "light-dark(#0F0F1408, #FFFFFF0A)",
+    "--color-overlay-hover": "light-dark(#0F1B3D08, #FFFFFF0A)",
     "--color-overlay-pressed": "light-dark(#2563EB14, #93C5FD20)",
-    "--color-text-primary": "light-dark(#0F0F14, #F3F2F7)",
-    "--color-text-secondary": "light-dark(#4A4A56, #BCBBC4)",
-    "--color-text-disabled": "light-dark(#747480, #7D7C87)",
+    "--color-text-primary": "light-dark(#0F1B3D, #F3F2F7)",
+    "--color-text-secondary": "light-dark(#536079, #BCBBC4)",
+    "--color-text-disabled": "light-dark(#7A869C, #7D7C87)",
     "--color-text-accent": "light-dark(#1D4ED8, #BFDBFE)",
     "--color-on-dark": "#ffffff",
     "--color-on-light": "#171717",
@@ -119,8 +119,8 @@ export const qollabWorkshopTheme = {
     "--color-on-error": "light-dark(#ffffff, #171717)",
     "--color-on-warning": "#171717",
     "--color-icon-accent": "light-dark(#2563EB, #93C5FD)",
-    "--color-icon-primary": "light-dark(#0F0F14, #F3F2F7)",
-    "--color-icon-secondary": "light-dark(#4A4A56, #BCBBC4)",
+    "--color-icon-primary": "light-dark(#0F1B3D, #F3F2F7)",
+    "--color-icon-secondary": "light-dark(#536079, #BCBBC4)",
     "--color-icon-disabled": "light-dark(#a3a3a3, #525252)",
     "--color-success": "light-dark(#207A55, #8FD9B0)",
     "--color-error": "light-dark(#B53C36, #FF9B90)",
@@ -128,9 +128,9 @@ export const qollabWorkshopTheme = {
     "--color-success-muted": "light-dark(#E7F6EE, #2B6A4A4D)",
     "--color-error-muted": "light-dark(#F4D9D4, #B94A414D)",
     "--color-warning-muted": "light-dark(#FFF8E6, #D6923440)",
-    "--color-border": "light-dark(#ECEBEF, #34323C)",
-    "--color-border-emphasized": "light-dark(#828691, #9696A3)",
-    "--color-skeleton": "light-dark(#E5E4E9, #3B3944)",
+    "--color-border": "light-dark(#DFE7F2, #34323C)",
+    "--color-border-emphasized": "light-dark(#8291A8, #9696A3)",
+    "--color-skeleton": "light-dark(#E6ECF5, #3B3944)",
     "--color-shadow": "light-dark(#0000001A, #0000004D)",
     "--color-tint-hover": "light-dark(black, white)",
     "--color-background-red": "light-dark(#facecb, #ff9e973D)",
@@ -174,10 +174,10 @@ export const qollabWorkshopTheme = {
     "--color-icon-gray": "light-dark(#525252, #a3a3a3)",
     "--color-text-gray": "light-dark(#262626, #e5e5e5)",
     "--radius-none": "0px",
-    "--radius-inner": "3px",
-    "--radius-element": "6px",
-    "--radius-container": "9px",
-    "--radius-page": "12px",
+    "--radius-inner": "4px",
+    "--radius-element": "8px",
+    "--radius-container": "12px",
+    "--radius-page": "16px",
     "--radius-full": "9999px",
     "--shadow-low": "0 2px 4px light-dark(oklch(0 0 0 / 5%), oklch(0 0 0 / 25%)), 0 4px 8px light-dark(oklch(0 0 0 / 10%), oklch(0 0 0 / 40%)), inset 0 0 0 1px light-dark(transparent, oklch(1 0 0 / 8%))",
     "--shadow-med": "0 2px 4px light-dark(oklch(0 0 0 / 5%), oklch(0 0 0 / 35%)), 0 4px 12px light-dark(oklch(0 0 0 / 10%), oklch(0 0 0 / 50%)), inset 0 0 0 1px light-dark(transparent, oklch(1 0 0 / 12%))",
@@ -187,18 +187,28 @@ export const qollabWorkshopTheme = {
     "--shadow-inset-success": "inset 0px 0px 0px 2px #1981004D",
     "--shadow-inset-warning": "inset 0px 0px 0px 2px #ffce2f4D",
     "--shadow-inset-error": "inset 0px 0px 0px 2px #e33f4a4D",
-    "--radius-chat": "12px",
+    "--radius-chat": "16px",
     "--ease-standard": "cubic-bezier(0.2, 0.8, 0.2, 1)",
-    "--color-background-inverted": "light-dark(#0F0F14, #F3F2F7)",
-    "--color-track": "light-dark(#D8D6DE, #4B4954)",
-    "--qollab-button-radius": "6px",
+    "--color-background-inverted": "light-dark(#0F1B3D, #F3F2F7)",
+    "--color-track": "light-dark(#D5DEEC, #4B4954)",
+    "--qollab-button-radius": "12px",
     "--qollab-button-edge-primary": "light-dark(#1744A2, #507EAF)",
-    "--qollab-button-edge-secondary": "light-dark(#828691, #9696A3)",
+    "--qollab-button-gradient-primary": "linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 84%, var(--color-background-surface)), var(--color-text-accent))",
+    "--qollab-button-glow-primary": "inset 0 1px 0 color-mix(in srgb, var(--color-background-surface) 28%, transparent), 0 8px 20px color-mix(in srgb, var(--color-accent) 28%, transparent)",
+    "--qollab-button-edge-secondary": "light-dark(#C5D2E4, #9696A3)",
     "--qollab-button-edge-destructive": "light-dark(#792722, #A14B43)",
     "--qollab-button-secondary": "light-dark(#FFFFFF, #34343F)",
-    "--qollab-button-height-sm": "36px",
-    "--qollab-button-height-md": "44px",
-    "--qollab-button-height-lg": "48px"
+    "--qollab-field-focus-ring": "0 0 0 1px var(--color-accent), 0 0 0 5px color-mix(in srgb, var(--color-accent) 18%, transparent)",
+    "--qollab-button-height-sm": "32px",
+    "--qollab-button-height-md": "36px",
+    "--qollab-button-height-lg": "40px",
+    "--qollab-highlight": "light-dark(#FFE45C, #E8C93A)",
+    "--qollab-answer-1": "#2563EB",
+    "--qollab-answer-2": "#0F9488",
+    "--qollab-answer-3": "#D97706",
+    "--qollab-answer-4": "#DB2777",
+    "--qollab-answer-5": "#6B21A8",
+    "--qollab-answer-6": "#4D7C0F"
   },
   components: {
     "heading": {
@@ -301,6 +311,8 @@ export const qollabWorkshopTheme = {
         "backgroundColor": "var(--color-error) !important",
         "color": "var(--color-on-error) !important",
         "--qollab-button-edge": "var(--qollab-button-edge-destructive)",
+        "borderRadius": "var(--radius-full) !important",
+        "paddingInline": "var(--spacing-4)",
         ":hover": {
           "backgroundColor": "color-mix(in srgb, var(--color-error), var(--qollab-button-edge-destructive) 12%) !important"
         }
@@ -359,14 +371,20 @@ export const qollabWorkshopTheme = {
       "variant:primary": {
         "--qollab-button-edge": "var(--qollab-button-edge-primary)",
         "backgroundColor": "var(--color-accent) !important",
+        "backgroundImage": "var(--qollab-button-gradient-primary) !important",
+        "boxShadow": "var(--qollab-button-glow-primary) !important",
+        "borderRadius": "var(--radius-full) !important",
+        "paddingInline": "var(--spacing-4)",
         "color": "var(--color-on-accent) !important",
         ":hover": {
-          "backgroundColor": "color-mix(in srgb, var(--color-accent), var(--qollab-button-edge-primary) 12%) !important"
+          "filter": "brightness(1.08)"
         }
       },
       "variant:secondary": {
         "--qollab-button-edge": "var(--qollab-button-edge-secondary)",
         "backgroundColor": "var(--qollab-button-secondary) !important",
+        "borderRadius": "var(--radius-full) !important",
+        "paddingInline": "var(--spacing-4)",
         "color": "var(--color-text-primary) !important",
         ":hover": {
           "backgroundColor": "color-mix(in srgb, var(--qollab-button-secondary), var(--qollab-button-edge-secondary) 12%) !important"
@@ -397,6 +415,16 @@ export const qollabWorkshopTheme = {
         "boxShadow": "none !important",
         ":hover": {
           "backgroundColor": "var(--color-error-muted) !important"
+        }
+      },
+      "variant:accent-soft": {
+        "--qollab-button-edge": "transparent",
+        "backgroundColor": "var(--color-accent-muted) !important",
+        "borderRadius": "var(--radius-full) !important",
+        "paddingInline": "var(--spacing-4)",
+        "color": "var(--color-text-accent) !important",
+        ":hover": {
+          "backgroundColor": "color-mix(in srgb, var(--color-accent-muted), var(--color-accent) 12%) !important"
         }
       },
       "variant:link": {
@@ -547,27 +575,70 @@ export const qollabWorkshopTheme = {
     },
     "text-input": {
       "base": {
-        "borderRadius": "var(--radius-element)",
+        "borderRadius": "var(--radius-full)",
+        "paddingInline": "var(--spacing-4)",
         "backgroundColor": "var(--color-background-surface)",
-        "borderColor": "var(--color-border-emphasized)"
+        "borderColor": "var(--color-border-emphasized)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
+      }
+    },
+    "number-input": {
+      "base": {
+        "borderRadius": "var(--radius-full)",
+        "--astryx-number-input-padding-inline": "var(--spacing-3)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
+      }
+    },
+    "selector": {
+      "base": {
+        "borderRadius": "var(--radius-full)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
+      }
+    },
+    "textarea": {
+      "base": {
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
       }
     },
     "side-nav": {
       "base": {
-        "backgroundColor": "var(--color-background-surface)",
-        "borderInlineEndColor": "var(--color-border)",
-        "borderInlineEndStyle": "solid",
-        "borderInlineEndWidth": "var(--border-width)",
+        "backgroundColor": "var(--color-background-muted)",
+        "borderInlineEndWidth": "0",
         "color": "var(--color-text-primary)",
         "fontFamily": "var(--font-family-body)"
       }
     },
     "side-nav-item": {
       "selected": {
-        "backgroundColor": "var(--color-accent-muted)",
-        "boxShadow": "inset 2px 0 0 var(--color-accent)",
+        "backgroundColor": "var(--color-background-surface)",
+        "boxShadow": "none",
         "color": "var(--color-text-primary)",
         "fontWeight": "var(--font-weight-medium)"
+      }
+    },
+    "app-shell-sidenav": {
+      "base": {
+        "overflowX": "clip"
       }
     }
   },

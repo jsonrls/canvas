@@ -1,9 +1,12 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import {
   buildStudyPackProviderRequest,
+  DEFAULT_STUDY_PACK_MODEL,
   MAX_STUDY_PACK_REQUEST_BYTES,
   normalizeStudySource,
+  readStudyCounts,
   readStudyPackProviderResponse,
   StudyPackInputError,
   StudyPackProviderError,
@@ -23,7 +26,6 @@ const PRIVATE_HEADERS = {
 const GENERATION_WINDOW_MS = 10 * 60 * 1_000;
 const GENERATION_LIMIT = 5;
 const PROVIDER_TIMEOUT_MS = 55_000;
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const generationBuckets = new Map<string, number[]>();
 
 // Keep the platform request window slightly above the provider abort so the
@@ -113,49 +115,31 @@ async function callStudyPackProvider(
   sourceText: string,
   quizCount: number,
   flashcardCount: number,
-): Promise<unknown> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+): Promise<Anthropic.Beta.Messages.BetaMessage> {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
 
   if (!apiKey) {
     throw new Error("AI_CONFIGURATION_MISSING");
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
-  const abortProviderRequest = (): void => controller.abort();
-  request.signal.addEventListener("abort", abortProviderRequest, {
-    once: true,
-  });
+  const client = new Anthropic({ apiKey, maxRetries: 1 });
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      body: JSON.stringify(
-        buildStudyPackProviderRequest(
-          process.env.OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL,
-          roomSlug,
-          sourceText,
-          quizCount,
-          flashcardCount,
-        ),
-      ),
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error("AI_PROVIDER_UNAVAILABLE");
-    }
-
-    return await response.json();
-  } finally {
-    clearTimeout(timeoutId);
-    request.signal.removeEventListener("abort", abortProviderRequest);
-  }
+  return client.beta.messages.create(
+    buildStudyPackProviderRequest(
+      process.env.ANTHROPIC_STUDY_MODEL ?? DEFAULT_STUDY_PACK_MODEL,
+      roomSlug,
+      sourceText,
+      quizCount,
+      flashcardCount,
+    ),
+    {
+      // One deadline for every attempt; also stops if the student leaves.
+      signal: AbortSignal.any([
+        request.signal,
+        AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+      ]),
+    },
+  );
 }
 
 export async function POST(
@@ -176,22 +160,9 @@ export async function POST(
     ]);
     const sourceText = normalizeStudySource(body.sourceText);
 
-    // Clamp and validate the user-chosen counts.
-    const quizCount = Math.min(
-      10,
-      Math.max(
-        3,
-        Number.isInteger(body.quizCount) ? (body.quizCount as number) : 5,
-      ),
-    );
-    const flashcardCount = Math.min(
-      15,
-      Math.max(
-        4,
-        Number.isInteger(body.flashcardCount)
-          ? (body.flashcardCount as number)
-          : 8,
-      ),
+    const { quizCount, flashcardCount } = readStudyCounts(
+      body.quizCount,
+      body.flashcardCount,
     );
 
     const retryAfter = consumeGenerationAllowance(
@@ -206,7 +177,7 @@ export async function POST(
       );
     }
 
-    const providerPayload = await callStudyPackProvider(
+    const providerMessage = await callStudyPackProvider(
       request,
       access.slug,
       sourceText,
@@ -217,7 +188,7 @@ export async function POST(
       generatedAt: new Date().toISOString(),
       sourceCharacters: sourceText.length,
       studyPack: readStudyPackProviderResponse(
-        providerPayload,
+        providerMessage,
         quizCount,
         flashcardCount,
       ),
@@ -242,10 +213,34 @@ export async function POST(
       );
     }
 
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (
+      error instanceof Anthropic.APIConnectionTimeoutError ||
+      error instanceof Anthropic.APIUserAbortError ||
+      (error instanceof DOMException && error.name === "AbortError")
+    ) {
       return errorResponse(
         "Study-pack generation took too long. Try again.",
         504,
+      );
+    }
+
+    if (error instanceof Anthropic.RateLimitError) {
+      return errorResponse(
+        "The AI assistant is busy right now. Try again in a minute.",
+        503,
+      );
+    }
+
+    if (
+      error instanceof Anthropic.AuthenticationError ||
+      error instanceof Anthropic.PermissionDeniedError
+    ) {
+      console.error("[qollab:ai-study-pack] AI credential rejected", {
+        status: error.status,
+      });
+      return errorResponse(
+        "The AI assistant is not configured correctly. Check the server AI credential.",
+        503,
       );
     }
 

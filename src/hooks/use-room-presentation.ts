@@ -8,7 +8,7 @@ import {
 } from "@/lib/collaboration/websocket-endpoint";
 import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
-export type PresentedWorkspace = RoomDocumentKind;
+export type PresentedWorkspace = RoomDocumentKind | "live";
 
 export interface RoomPresentation {
   cursor?: { x: number; y: number };
@@ -57,7 +57,7 @@ function readPresentation(value: unknown): RoomPresentation | null {
     typeof candidate.presenterId !== "string" ||
     typeof candidate.presenterName !== "string" ||
     typeof candidate.updatedAt !== "string" ||
-    !["notes", "pdf", "whiteboard"].includes(candidate.workspace ?? "")
+    !["notes", "pdf", "whiteboard", "live"].includes(candidate.workspace ?? "")
   ) {
     return null;
   }

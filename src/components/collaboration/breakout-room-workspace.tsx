@@ -4,24 +4,26 @@ import { Button, IconButton } from "@/components/ui/button";
 import {
   ArrowLeft,
   BookOpenText,
+  ChartColumnBig,
   Copy,
   FileText,
   MessageCircleQuestion,
   PanelsTopLeft,
   RefreshCw,
   UsersRound,
+  X,
 } from "@/components/ui/icons";
 import { Avatar } from "@astryxdesign/core/Avatar";
 import { Dialog } from "@astryxdesign/core/Dialog";
+import { Divider } from "@astryxdesign/core/Divider";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Selector } from "@astryxdesign/core/Selector";
-import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
 import { Token } from "@astryxdesign/core/Token";
 import { VStack } from "@astryxdesign/core/VStack";
+import { useMediaQuery } from "@astryxdesign/core/hooks";
 import { QollabAppShell } from "@/components/shell/qollab-app-shell";
-import { QollabWorkspaceHeader } from "@/components/shell/qollab-workspace-header";
 import { QollabSideNavigation } from "@/components/shell/qollab-side-navigation";
 import { ResponsiveContextPanel } from "@/components/shell/responsive-context-panel";
 import dynamic from "next/dynamic";
@@ -36,19 +38,26 @@ import * as Y from "yjs";
 
 import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
-import { BreakoutQaPanel } from "@/components/collaboration/breakout-qa-panel";
+import {
+  BreakoutQaPanel,
+  type BreakoutTool,
+} from "@/components/collaboration/breakout-qa-panel";
+import { LivePrompt } from "@/components/collaboration/live/live-prompt";
+import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
 import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
+import { RoomHeader } from "@/components/collaboration/room-header";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { WORKSPACE_FLAT_CONTROLS } from "@/components/shell/workspace-controls";
 import { useToast } from "@/components/ui/toast";
 import {
   ViewerCollaborationStatus,
   ViewerCollaborationToggle,
 } from "@/components/rooms/viewer-collaboration-toggle";
+import { useActiveTool } from "@/hooks/use-active-tool";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 import { buildBreakoutCollaborativeDocumentName } from "@/lib/collaboration/document-name";
 import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import type { BreakoutRoomWorkspace as BreakoutWorkspace } from "@/lib/breakout-rooms/repository";
-import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
 interface BreakoutRoomWorkspaceProps {
   breakout: BreakoutWorkspace;
@@ -86,6 +95,21 @@ const WhiteboardStudyTool = dynamic(
     ssr: false,
   },
 );
+
+const LiveActivitiesTool = dynamic(
+  () => import("@/components/collaboration/live/live-activities-tool"),
+  {
+    loading: () => <BreakoutToolLoading label="Opening live activities…" />,
+    ssr: false,
+  },
+);
+
+const BREAKOUT_TOOLS: readonly [BreakoutTool, ...BreakoutTool[]] = [
+  "notes",
+  "pdf",
+  "whiteboard",
+  "live",
+];
 
 const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
@@ -132,7 +156,12 @@ export function BreakoutRoomWorkspace({
     });
   const canManagePdf = breakout.role !== "viewer";
   const canEdit = canManagePdf || viewerCanCollaborate;
-  const [activeTool, setActiveTool] = useState<RoomDocumentKind>("notes");
+  const [activeTool, setActiveTool] = useActiveTool(BREAKOUT_TOOLS);
+  const live = useLiveActivities({
+    roomSlug: breakout.parentRoomSlug,
+    breakoutCode: breakout.code,
+    isActive: activeTool === "live",
+  });
   const [connection, setConnection] = useState<Connection | null>(null);
   const [participants, setParticipants] = useState<StudyUser[]>([]);
   const [status, setStatus] = useState<SyncStatus>(
@@ -288,7 +317,16 @@ export function BreakoutRoomWorkspace({
     viewing: "Read-only breakout access",
   };
 
-  const chooseTool = (tool: RoomDocumentKind): void => {
+  // The labelled button would push the breakout name out of the phone header.
+  const isPhone = useMediaQuery("(max-width: 639px)");
+  const toolLabels: Record<BreakoutTool, string> = {
+    notes: "Shared notes",
+    pdf: "PDF annotation",
+    whiteboard: "Whiteboard",
+    live: "Live activities",
+  };
+
+  const chooseTool = (tool: BreakoutTool): void => {
     setActiveTool(tool);
     setIsMobileNavigationOpen(false);
   };
@@ -307,8 +345,11 @@ export function BreakoutRoomWorkspace({
         roomSlug={breakout.parentRoomSlug}
       />
     );
-  const accountMenu = (
+  const renderAccountMenu = (
+    appearance: "rail" | "sidebar",
+  ): React.ReactElement => (
     <SidebarAccountMenu
+      appearance={appearance}
       beforeSignOut={prepareBreakoutSignOut}
       displayName={connection?.user.name ?? currentUser.displayName}
       role={breakout.role}
@@ -329,23 +370,32 @@ export function BreakoutRoomWorkspace({
           },
         }}
         header={
-          <QollabWorkspaceHeader
-            label="Breakout controls"
-            startContent={
-              <HStack gap={2} vAlign="center" className="min-w-0">
+          <RoomHeader
+            roomName={breakout.name}
+            roomIconUrl={null}
+            isPublic={false}
+            role={breakout.role}
+            toolLabel={`${toolLabels[activeTool]} · ${breakout.parentRoomName}`}
+            syncStatus={status}
+            syncLabel={status === "synced" ? "Live" : statusCopy[status]}
+            actions={
+              <HStack gap={1} vAlign="center">
+                {status === "error" ? (
+                  <Button
+                    label="Reconnect"
+                    variant="ghost"
+                    icon={<RefreshCw aria-hidden="true" size={16} />}
+                    isIconOnly={isPhone}
+                    tooltip={isPhone ? "Reconnect" : undefined}
+                    onClick={reconnect}
+                  />
+                ) : null}
                 <IconButton
                   as={Link}
                   href={`/rooms/${breakout.parentRoomSlug}`}
                   label={`Back to ${breakout.parentRoomName}`}
                   icon={<ArrowLeft aria-hidden="true" size={18} />}
                 />
-                <Text weight="semibold" maxLines={1}>
-                  {breakout.parentRoomName}
-                </Text>
-              </HStack>
-            }
-            endContent={
-              <HStack gap={1}>
                 <IconButton
                   label="Breakout room controls"
                   icon={<UsersRound aria-hidden="true" size={18} />}
@@ -381,17 +431,25 @@ export function BreakoutRoomWorkspace({
             linkComponent={Link}
             topContent={
               !isSidebarCollapsed ? (
-                <VStack padding={4} gap={2}>
-                  <Text type="supporting">Breakout code</Text>
-                  <Text className="font-mono" weight="semibold">
-                    {breakout.code}
-                  </Text>
-                  <Button
-                    label="Copy code"
-                    variant="secondary"
-                    icon={<Copy aria-hidden="true" size={16} />}
-                    onClick={() => void copyCode()}
-                  />
+                <VStack padding={3}>
+                  <HStack
+                    gap={3}
+                    vAlign="center"
+                    className="qollab-room-card rounded-2xl bg-surface p-3"
+                  >
+                    <VStack gap={0} className="min-w-0 flex-1">
+                      <Text type="supporting">Breakout code</Text>
+                      <Text className="font-mono" weight="semibold">
+                        {breakout.code}
+                      </Text>
+                    </VStack>
+                    <IconButton
+                      label="Copy breakout code"
+                      tooltip="Copy code"
+                      icon={<Copy aria-hidden="true" size={16} />}
+                      onClick={() => void copyCode()}
+                    />
+                  </HStack>
                 </VStack>
               ) : undefined
             }
@@ -405,6 +463,13 @@ export function BreakoutRoomWorkspace({
                     label: "Main room",
                     href: `/rooms/${breakout.parentRoomSlug}`,
                     icon: ArrowLeft,
+                    size: "lg",
+                  },
+                  {
+                    id: "people",
+                    label: "People",
+                    icon: UsersRound,
+                    onClick: () => setIsRoomControlsOpen(true),
                     size: "lg",
                   },
                 ],
@@ -437,23 +502,47 @@ export function BreakoutRoomWorkspace({
                     onClick: () => chooseTool("whiteboard"),
                     size: "lg",
                   },
+                  {
+                    id: "live",
+                    label: "Live activities",
+                    icon: ChartColumnBig,
+                    isSelected: activeTool === "live",
+                    onClick: () => chooseTool("live"),
+                    size: "lg",
+                  },
                 ],
               },
             ]}
+            extraContent={
+              !isSidebarCollapsed ? (
+                <VStack paddingInline={1} className={WORKSPACE_FLAT_CONTROLS}>
+                  {collaborationControl}
+                </VStack>
+              ) : undefined
+            }
             footer={
               !isSidebarCollapsed ? (
-                <VStack padding={2} gap={2}>
-                  {collaborationControl}
-                  {accountMenu}
+                <VStack padding={2} className={WORKSPACE_FLAT_CONTROLS}>
+                  {renderAccountMenu("sidebar")}
                 </VStack>
               ) : undefined
             }
             footerIcons={
-              <IconButton
-                label="Breakout room controls"
-                icon={<UsersRound aria-hidden="true" size={18} />}
-                onClick={() => setIsRoomControlsOpen(true)}
-              />
+              // Expanded, "People" is a labelled item in the Breakout room group instead.
+              isSidebarCollapsed ? (
+                <VStack
+                  gap={1}
+                  hAlign="center"
+                  className={WORKSPACE_FLAT_CONTROLS}
+                >
+                  <IconButton
+                    label="Breakout room controls"
+                    icon={<UsersRound aria-hidden="true" size={18} />}
+                    onClick={() => setIsRoomControlsOpen(true)}
+                  />
+                  {renderAccountMenu("rail")}
+                </VStack>
+              ) : undefined
             }
           />
         }
@@ -494,20 +583,21 @@ export function BreakoutRoomWorkspace({
               label="Breakout workspace"
               isLabelHidden
               value={activeTool}
-              onChange={(value) => chooseTool(value as RoomDocumentKind)}
-              options={[
-                { value: "notes", label: "Shared notes" },
-                { value: "pdf", label: "PDF annotation" },
-                { value: "whiteboard", label: "Whiteboard" },
-              ]}
+              onChange={(value) => chooseTool(value as BreakoutTool)}
+              options={Object.entries(toolLabels).map(([value, label]) => ({
+                value,
+                label,
+              }))}
               width="100%"
-              className="[&_button]:min-h-11"
             />
           </HStack>
           {message ? (
-            <Text role="alert" className="shrink-0 border-b border-border p-3">
+            <Text role="alert" className="shrink-0 bg-muted px-4 py-2">
               {message}
             </Text>
+          ) : null}
+          {activeTool !== "live" ? (
+            <LivePrompt live={live} onAnswer={() => chooseTool("live")} />
           ) : null}
           {activeTool === "notes" ? (
             <VStack
@@ -516,40 +606,11 @@ export function BreakoutRoomWorkspace({
               className="flex-1 min-h-0 overflow-hidden"
               gap={0}
             >
-              <HStack
-                gap={2}
-                padding={3}
-                wrap="wrap"
-                vAlign="center"
-                className="shrink-0 border-b border-border"
-              >
-                <StatusDot
-                  variant={
-                    status === "error"
-                      ? "error"
-                      : status === "synced"
-                        ? "success"
-                        : "neutral"
-                  }
-                  label={statusCopy[status]}
-                />
-                <Text className="flex-1">{statusCopy[status]}</Text>
-                {status === "error" ? (
-                  <Button
-                    label="Reconnect"
-                    variant="secondary"
-                    icon={<RefreshCw aria-hidden="true" size={16} />}
-                    onClick={reconnect}
-                  />
-                ) : null}
-              </HStack>
               {connection ? (
                 <RichTextEditor
                   document={connection.document}
                   editable={canEdit}
                   provider={connection.provider}
-                  syncLabel={statusCopy[status]}
-                  syncStatus={status}
                   user={connection.user}
                 />
               ) : (
@@ -562,9 +623,15 @@ export function BreakoutRoomWorkspace({
               aria-label={
                 activeTool === "pdf"
                   ? "Breakout PDF Annotation"
-                  : "Breakout Whiteboard"
+                  : activeTool === "live"
+                    ? "Breakout live activities"
+                    : "Breakout Whiteboard"
               }
-              className="workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+              className={
+                activeTool === "live"
+                  ? "flex-1 min-h-0 overflow-auto bg-surface"
+                  : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+              }
             >
               {activeTool === "pdf" ? (
                 <PdfStudyTool
@@ -577,9 +644,16 @@ export function BreakoutRoomWorkspace({
                   pdfApiPath={`/api/rooms/${breakout.parentRoomSlug}/breakouts/${breakout.code}/pdf`}
                   roomId={breakout.parentRoomSlug}
                 />
+              ) : activeTool === "live" ? (
+                <LiveActivitiesTool
+                  breakoutCode={breakout.code}
+                  live={live}
+                  roomSlug={breakout.parentRoomSlug}
+                />
               ) : (
                 <WhiteboardStudyTool
                   breakoutCode={breakout.code}
+                  canAskAi={canManagePdf}
                   canEdit={canEdit}
                   currentUser={currentUser}
                   initialState={breakout.initialDocumentStates.whiteboard}
@@ -595,36 +669,71 @@ export function BreakoutRoomWorkspace({
         onOpenChange={setIsRoomControlsOpen}
         aria-label="Breakout room controls"
         purpose="info"
+        width={480}
       >
-        <VStack padding={4} gap={4}>
-          <HStack hAlign="between" vAlign="center">
-            <Heading level={2}>Breakout room</Heading>
+        {/* Flat sections split by quiet rules, like Google Meet's meeting
+            details: no boxes inside the box, room to breathe. */}
+        <VStack padding={6} gap={6}>
+          <HStack hAlign="between" vAlign="start" gap={4}>
+            <VStack gap={1.5} className="min-w-0">
+              <Heading level={2} maxLines={2}>
+                {breakout.name}
+              </Heading>
+              <Text type="supporting">
+                Breakout room in {breakout.parentRoomName}
+              </Text>
+            </VStack>
             <IconButton
               label="Close room controls"
-              icon={<ArrowLeft aria-hidden="true" size={18} />}
+              icon={<X aria-hidden="true" size={18} />}
               onClick={() => setIsRoomControlsOpen(false)}
             />
           </HStack>
-          <Token label={breakout.role} />
-          <Text className="font-mono">{breakout.code}</Text>
-          <Button
-            label="Copy breakout code"
-            variant="secondary"
-            onClick={() => void copyCode()}
-          />
-          {collaborationControl}
+
           <VStack gap={2}>
-            <Text weight="semibold">
-              {participants.length} active participants
+            <Text type="supporting" size="sm" weight="semibold">
+              Breakout code
             </Text>
-            {participants.map((participant) => (
-              <HStack gap={2} vAlign="center" key={participant.clientId}>
-                <Avatar name={participant.name} size="sm" />
-                <Text>{participant.name}</Text>
-              </HStack>
-            ))}
+            <HStack hAlign="between" vAlign="center" gap={4}>
+              <Text
+                size="2xl"
+                weight="semibold"
+                className="font-mono tracking-widest"
+              >
+                {breakout.code}
+              </Text>
+              <IconButton
+                label="Copy breakout code"
+                icon={<Copy aria-hidden="true" size={18} />}
+                onClick={() => void copyCode()}
+              />
+            </HStack>
           </VStack>
-          {accountMenu}
+
+          <Divider />
+
+          <VStack gap={4}>
+            <HStack gap={2} vAlign="center" hAlign="between" wrap="wrap">
+              <Text type="supporting" size="sm" weight="semibold">
+                {participants.length === 1
+                  ? "1 person here now"
+                  : `${participants.length} people here now`}
+              </Text>
+              <Token
+                size="sm"
+                label={`You are ${breakout.role === "owner" ? "the owner" : breakout.role === "editor" ? "an editor" : "a viewer"}`}
+              />
+            </HStack>
+            <VStack gap={3}>
+              {participants.map((participant) => (
+                <HStack gap={3} vAlign="center" key={participant.clientId}>
+                  <Avatar name={participant.name} size="md" tooltip={false} />
+                  <Text weight="medium">{participant.name}</Text>
+                </HStack>
+              ))}
+            </VStack>
+          </VStack>
+          {/* Viewer editing and the account menu live in the sidebar only. */}
         </VStack>
       </Dialog>
     </VStack>

@@ -75,7 +75,7 @@ Lifecycle hook present: `pretypecheck`; inspect it before running the related co
 
 Keep credentials, local environment values, databases, session files, and user data out of documentation and commits. Preserve existing environment files. Check local versus hosted targets before starting services or tests.
 
-- `.env.example`: variable names include `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_PASSWORD`, `SUPABASE_DB_POOLER_HOST`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_YJS_WS_URL`, `YJS_HOST`, `YJS_PORT`, `OPENAI_API_KEY`.
+- `.env.example`: variable names include `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_PASSWORD`, `SUPABASE_DB_POOLER_HOST`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_YJS_WS_URL`, `YJS_HOST`, `YJS_PORT`, `ANTHROPIC_API_KEY`.
 
 ## Continuation notes
 

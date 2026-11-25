@@ -15,12 +15,19 @@ import {
   BookOpenText as BookOpenTextData,
   Bookmark as BookmarkData,
   BrainCircuit as BrainCircuitData,
+  ChartColumnBig as ChartColumnBigData,
+  ChevronUp as ChevronUpData,
+  ThumbsUp as ThumbsUpData,
+  EyeOff as EyeOffData,
+  Play as PlayData,
+  Trophy as TrophyData,
   CalendarDays as CalendarDaysData,
   Check as CheckData,
   CheckCircle2 as CheckCircle2Data,
   ChevronDown as ChevronDownData,
   ChevronLeft as ChevronLeftData,
   ChevronRight as ChevronRightData,
+  ChevronsUpDown as ChevronsUpDownData,
   Circle as CircleData,
   CircleCheck as CircleCheckData,
   CircleHelp as CircleHelpData,
@@ -41,6 +48,7 @@ import {
   Highlighter as HighlighterData,
   History as HistoryData,
   House as HouseData,
+  GripVertical as GripVerticalData,
   ImagePlus as ImagePlusData,
   Italic as ItalicData,
   KeyRound as KeyRoundData,
@@ -54,6 +62,7 @@ import {
   Maximize2 as Maximize2Data,
   MessageCircleQuestion as MessageCircleQuestionData,
   MessageSquare as MessageSquareData,
+  Mic as MicData,
   Minus as MinusData,
   MoreHorizontal as MoreHorizontalData,
   MousePointer2 as MousePointer2Data,
@@ -87,6 +96,7 @@ import {
   Type as TypeData,
   Undo2 as Undo2Data,
   Upload as UploadData,
+  FileUp as FileUpData,
   UserMinus as UserMinusData,
   UserPlus as UserPlusData,
   UserRound as UserRoundData,
@@ -172,6 +182,10 @@ export function ChevronRight(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ChevronRightData} />;
 }
 
+export function ChevronsUpDown(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChevronsUpDownData} />;
+}
+
 export function Circle(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={CircleData} />;
 }
@@ -252,6 +266,10 @@ export function House(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={HouseData} />;
 }
 
+export function GripVertical(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={GripVerticalData} />;
+}
+
 export function ImagePlus(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ImagePlusData} />;
 }
@@ -302,6 +320,10 @@ export function MessageCircleQuestion(props: IconProps): React.ReactElement {
 
 export function MessageSquare(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={MessageSquareData} />;
+}
+
+export function Mic(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={MicData} />;
 }
 
 export function Minus(props: IconProps): React.ReactElement {
@@ -436,6 +458,10 @@ export function Upload(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={UploadData} />;
 }
 
+export function FileUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={FileUpData} />;
+}
+
 export function UserMinus(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={UserMinusData} />;
 }
@@ -462,4 +488,28 @@ export function ZoomIn(props: IconProps): React.ReactElement {
 
 export function ZoomOut(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ZoomOutData} />;
+}
+
+export function ChartColumnBig(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChartColumnBigData} />;
+}
+
+export function EyeOff(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={EyeOffData} />;
+}
+
+export function Play(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={PlayData} />;
+}
+
+export function Trophy(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={TrophyData} />;
+}
+
+export function ChevronUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChevronUpData} />;
+}
+
+export function ThumbsUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ThumbsUpData} />;
 }
