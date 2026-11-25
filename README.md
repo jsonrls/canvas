@@ -95,6 +95,16 @@ vercel --prod
 
 Vercel WebSockets follow the Function maximum duration. The existing Yjs and presenter clients reconnect automatically and reload durable state after a Function rotation.
 
+## Auth email
+
+Sign-up confirmation and password reset emails come from Supabase Auth. Its built-in sender only delivers to project team members and is rate limited, so the hosted project needs all of these:
+
+- **SMTP:** a custom SMTP provider with a verified sending domain (Authentication > Emails > SMTP Settings). Then raise the email limit under Authentication > Rate Limits.
+- **Templates:** copy `supabase/templates/confirmation.html` to "Confirm signup" and `supabase/templates/recovery.html` to "Reset password", with the subjects from `supabase/config.toml`. They link with a token hash, so the link also works in a different browser or device.
+- **URLs:** the Site URL and `NEXT_PUBLIC_SITE_URL` must use the same host. Add `http://localhost:3000/**` to the redirect allow list for local development.
+
+Do not run `supabase config push`: `supabase/config.toml` holds local values and would replace the hosted Site URL.
+
 ## Room lifecycle behavior
 
 - Room creation atomically creates the room, immutable owner membership, and separate notes, PDF, and whiteboard documents. Server-generated slugs are normalized and collision resistant.

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Confirm your email address</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;600&family=Lexend:wght@600&display=swap");
+  :root { color-scheme: light only; }
+  @media (max-width: 480px) {
+    .outer { padding: 16px 12px !important; }
+    .pad { padding-left: 24px !important; padding-right: 24px !important; }
+  }
+</style>
+</head>
+<body style="margin:0; padding:0; background-color:#F2F3FA;">
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">One click and your Qollab account is ready. The link expires in 1 hour.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F2F3FA">
+<tr><td class="outer" align="center" style="padding:40px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="max-width:560px; border-radius:24px; border-collapse:separate; overflow:hidden;">
+  <tr><td bgcolor="#2B4BFF" style="border-radius:24px 24px 0 0; font-size:0; line-height:0;">
+    <img src="{{ .SiteURL }}/brand/qollab-email-header.png" width="560" alt="Qollab" style="display:block; width:100%; max-width:560px; height:auto; border:0; border-radius:24px 24px 0 0; color:#FFFFFF; font:600 28px/80px Lexend, 'Trebuchet MS', Arial, sans-serif; text-align:center;">
+  </td></tr>
+  <tr><td class="pad" style="padding:40px 40px 0;">
+    <h1 style="margin:0; color:#0E1024; font:600 28px/34px Lexend, 'Trebuchet MS', Arial, sans-serif; letter-spacing:-0.02em;">Confirm your email address</h1>
+    <p style="margin:16px 0 0; color:#4B4F6B; font:400 16px/25px Figtree, 'Helvetica Neue', Arial, sans-serif;">Your room is one step away. Confirm <strong style="color:#0E1024; font-weight:600;">{{ .Email }}</strong> to finish creating your Qollab account.</p>
+  </td></tr>
+  <tr><td class="pad" style="padding:28px 40px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" bgcolor="#0E1024" style="border-radius:999px;">
+      <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="display:inline-block; padding:14px 28px; color:#FFFFFF; font:600 16px/20px Figtree, 'Helvetica Neue', Arial, sans-serif; text-decoration:none; border-radius:999px;">Confirm email address</a>
+    </td></tr></table>
+  </td></tr>
+  <tr><td class="pad" style="padding:28px 40px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#E8ECFF" style="padding:16px 20px; border-radius:16px; color:#0E1024; font:400 14px/21px Figtree, 'Helvetica Neue', Arial, sans-serif;">The link works once and expires in 1 hour. If you did not create a Qollab account, ignore this email.</td></tr></table>
+  </td></tr>
+  <tr><td class="pad" style="padding:24px 40px 40px;">
+    <p style="margin:0; color:#4B4F6B; font:400 13px/20px Figtree, 'Helvetica Neue', Arial, sans-serif;">Button not working? Open this link:<br><a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="color:#1F3BE0; word-break:break-all;">{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=email</a></p>
+  </td></tr>
+  </table>
+  <p style="margin:24px 0 0; color:#4B4F6B; font:600 13px/20px Figtree, 'Helvetica Neue', Arial, sans-serif;">Qollab. Same room. Same page.</p>
+</td></tr>
+</table>
+</body>
+</html>
