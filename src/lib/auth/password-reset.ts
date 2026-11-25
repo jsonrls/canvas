@@ -1,3 +1,5 @@
+import { buildConfirmUrl } from "@/lib/auth/redirects";
+
 export interface PasswordResetActionState {
   message: string;
   status: "idle" | "error" | "success";
@@ -57,15 +59,5 @@ export function readNewPassword(
 }
 
 export function buildRecoveryRedirectUrl(siteUrl: string): string {
-  const redirectUrl = new URL(siteUrl);
-
-  if (redirectUrl.protocol !== "http:" && redirectUrl.protocol !== "https:") {
-    throw new Error("The configured site URL must use HTTP or HTTPS.");
-  }
-
-  redirectUrl.pathname = "/auth/confirm";
-  redirectUrl.search = "";
-  redirectUrl.hash = "";
-  redirectUrl.searchParams.set("next", "/reset-password/update");
-  return redirectUrl.toString();
+  return buildConfirmUrl(siteUrl, "/reset-password/update");
 }

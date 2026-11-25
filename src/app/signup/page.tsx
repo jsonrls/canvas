@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { LoginForm } from "@/app/login/login-form";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { safeNextPath } from "@/lib/auth/redirects";
 
 export const metadata: Metadata = {
   title: "Create an account",
@@ -15,8 +16,7 @@ export default async function SignUpPage({
   searchParams,
 }: SignUpPageProps): Promise<React.ReactElement> {
   const { next } = await searchParams;
-  const nextPath =
-    next?.startsWith("/") && !next.startsWith("//") ? next : "/rooms";
+  const nextPath = safeNextPath(next);
 
   return (
     <AuthShell

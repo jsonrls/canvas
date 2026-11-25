@@ -1,7 +1,13 @@
 "use server";
 
+import type { AuthError } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
+import {
+  buildConfirmUrl,
+  configuredSiteUrl,
+  safeNextPath,
+} from "@/lib/auth/redirects";
 import { createServerAuthClient } from "@/lib/supabase/server";
 
 export interface AuthActionState {
@@ -29,17 +35,45 @@ function readCredentials(formData: FormData): {
 }
 
 function readNextPath(formData: FormData): string {
-  const nextPath = formData.get("next");
+  return safeNextPath(formData.get("next"));
+}
 
-  if (
-    typeof nextPath === "string" &&
-    nextPath.startsWith("/") &&
-    !nextPath.startsWith("//")
-  ) {
-    return nextPath;
+function confirmRedirectUrl(formData: FormData): string {
+  return buildConfirmUrl(configuredSiteUrl(), readNextPath(formData));
+}
+
+function logAuthError(action: string, error: AuthError): void {
+  console.error(`[qollab:auth] ${action} failed`, {
+    code: error.code,
+    status: error.status,
+  });
+}
+
+function signInErrorMessage(error: AuthError): string {
+  if (error.code === "invalid_credentials") {
+    return "We could not sign you in with those credentials.";
   }
 
-  return "/rooms";
+  return error.status === 429
+    ? "Too many sign-in attempts. Wait a few minutes, then try again."
+    : "We could not sign you in right now. Please try again shortly.";
+}
+
+function signUpErrorMessage(error: AuthError): string {
+  if (error.status === 429) {
+    return "Too many confirmation emails were sent. Wait a few minutes, then try again.";
+  }
+
+  switch (error.code) {
+    case "weak_password":
+      return "Choose a stronger password.";
+    case "email_address_invalid":
+    case "email_exists":
+    case "user_already_exists":
+      return "We could not create that account. Try another email address.";
+    default:
+      return "We could not create that account right now. Please try again shortly.";
+  }
 }
 
 function readDisplayName(formData: FormData): string | null {
@@ -69,11 +103,29 @@ export async function signIn(
   const supabase = await createServerAuthClient();
   const { error } = await supabase.auth.signInWithPassword(credentials);
 
-  if (error) {
+  // Supabase checks the password first, so only the account holder reaches this.
+  if (error?.code === "email_not_confirmed") {
+    const { error: resendError } = await supabase.auth.resend({
+      email: credentials.email,
+      options: { emailRedirectTo: confirmRedirectUrl(formData) },
+      type: "signup",
+    });
+
+    if (resendError) logAuthError("confirmation resend", resendError);
+
     return {
-      message: "We could not sign you in with those credentials.",
+      message: !resendError
+        ? "Confirm your email first. We sent you a new link."
+        : resendError.status === 429
+          ? "Confirm your email first. Check your inbox and spam folder for the link, or try again in a few minutes to get a new one."
+          : "Confirm your email first. A new link could not be sent right now. Please try again shortly.",
       status: "error",
     };
+  }
+
+  if (error) {
+    if (error.code !== "invalid_credentials") logAuthError("sign in", error);
+    return { message: signInErrorMessage(error), status: "error" };
   }
 
   redirect(readNextPath(formData));
@@ -99,15 +151,13 @@ export async function signUp(
     ...credentials,
     options: {
       data: { display_name: displayName },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/confirm?next=${encodeURIComponent(readNextPath(formData))}`,
+      emailRedirectTo: confirmRedirectUrl(formData),
     },
   });
 
   if (error) {
-    return {
-      message: "We could not create that account. Try another email address.",
-      status: "error",
-    };
+    logAuthError("sign up", error);
+    return { message: signUpErrorMessage(error), status: "error" };
   }
 
   if (data.session) {
