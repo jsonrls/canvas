@@ -24,11 +24,13 @@ const INITIAL_STATE: AuthActionState = {
 };
 
 interface LoginFormProps {
+  initialError?: string;
   mode?: "signin" | "signup";
   nextPath: string;
 }
 
 export function LoginForm({
+  initialError,
   mode = "signin",
   nextPath,
 }: LoginFormProps): React.ReactElement {
@@ -43,6 +45,12 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const isSignUp = mode === "signup";
   const state = isSignUp ? signUpState : signInState;
+  const errorMessage =
+    state.status === "error"
+      ? state.message
+      : state.status === "idle"
+        ? initialError
+        : undefined;
   const isPending = isSignUp ? isSigningUp : isSigningIn;
   const submitAction = isSignUp ? signUpAction : signInAction;
   useSuccessToast(state);
@@ -122,13 +130,13 @@ export function LoginForm({
           </Text>
         ) : null}
 
-        {state.status === "error" && state.message ? (
+        {errorMessage ? (
           <Text
             as="p"
             role="alert"
             className="text-primary! bg-error-muted p-3 rounded-2xl"
           >
-            {state.message}
+            {errorMessage}
           </Text>
         ) : null}
 
