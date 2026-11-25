@@ -1,9 +1,11 @@
 "use client";
+import { useVoiceQuestion } from "./whiteboard/use-voice-question";
 import { useWhiteboardAnswer } from "./whiteboard/use-whiteboard-answer";
 import { useWhiteboardCamera } from "./whiteboard/use-whiteboard-camera";
 import { useWhiteboardDocument } from "./whiteboard/use-whiteboard-document";
 import { useWhiteboardInteraction } from "./whiteboard/use-whiteboard-interaction";
 import { useWhiteboardPresence } from "./whiteboard/use-whiteboard-presence";
+import { VoicePanel } from "./whiteboard/voice-panel";
 import { WhiteboardRenderer } from "./whiteboard/whiteboard-renderer";
 import { WhiteboardToolbar } from "./whiteboard/whiteboard-toolbar";
 
@@ -46,6 +48,8 @@ function editWrapWidth(element: WhiteboardElement): number {
 
 interface WhiteboardStudyToolProps {
   breakoutCode?: string;
+  /** Owners and editors, as the answer route requires. */
+  canAskAi: boolean;
   canEdit: boolean;
   currentUser: { displayName: string; id: string };
   initialState: string | null;
@@ -59,6 +63,7 @@ import {
 } from "./whiteboard/types";
 export default function WhiteboardStudyTool({
   breakoutCode,
+  canAskAi,
   canEdit,
   currentUser,
   initialState,
@@ -79,6 +84,7 @@ export default function WhiteboardStudyTool({
     canRedo,
     transact,
     upsertElement,
+    readElement,
     handleUndo,
     handleRedo,
   } = useWhiteboardDocument({ collaboration, canEdit });
@@ -92,20 +98,26 @@ export default function WhiteboardStudyTool({
     type: WhiteboardElementType;
   } | null>(null);
 
-  const { aiAnswerMessage, aiAnswerLoading, answerWhiteboardQuestion } =
-    useWhiteboardAnswer({
-      elements,
-      selectedId,
-      canEdit,
-      roomId,
-      upsertElement,
-      currentUser,
-      setSelectedId,
-      setTool,
-      autoAnswerTriggerRef,
-    });
+  const {
+    aiAnswerMessage,
+    aiAnswerLoading,
+    answerPlacedQuestion,
+    answerWhiteboardQuestion,
+    setAiAnswerMessage,
+  } = useWhiteboardAnswer({
+    elements,
+    selectedId,
+    canEdit,
+    roomId,
+    upsertElement,
+    readElement,
+    currentUser,
+    setSelectedId,
+    setTool,
+    autoAnswerTriggerRef,
+  });
 
-  const [drawingColor, setDrawingColor] = useState("#7352FA");
+  const [drawingColor, setDrawingColor] = useState("#121212");
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -140,6 +152,26 @@ export default function WhiteboardStudyTool({
   const [pendingImage, setPendingImage] = useState("");
 
   const [imageMessage, setImageMessage] = useState("");
+
+  const canUseVoice = canEdit && canAskAi && Boolean(collaboration.connection);
+
+  const voice = useVoiceQuestion({
+    answerPlacedQuestion,
+    camera,
+    color: drawingColor,
+    currentUser,
+    elements,
+    enabled: canUseVoice,
+    hasInteractedWithBoardRef,
+    setCamera,
+    setMessage: (message) => {
+      setImageMessage("");
+      setAiAnswerMessage(message);
+    },
+    setSelectedId,
+    transact,
+    viewport,
+  });
 
   const {
     draft,
@@ -383,6 +415,9 @@ export default function WhiteboardStudyTool({
         aiAnswerLoading={aiAnswerLoading}
         elements={elements}
         answerWhiteboardQuestion={answerWhiteboardQuestion}
+        canUseVoice={canUseVoice}
+        voiceStatus={voice.status}
+        toggleVoice={voice.toggle}
         chooseImage={chooseImage}
         setDrawingColor={setDrawingColor}
         drawingColor={drawingColor}
@@ -397,7 +432,15 @@ export default function WhiteboardStudyTool({
         collaboration={collaboration}
       />
 
-      {imageMessage || aiAnswerMessage || collaboration.message ? (
+      {voice.status !== "idle" ? (
+        <VoicePanel
+          download={voice.download}
+          onCancel={voice.cancel}
+          onDone={voice.toggle}
+          seconds={voice.seconds}
+          status={voice.status}
+        />
+      ) : imageMessage || aiAnswerMessage || collaboration.message ? (
         <p className="study-tool__message" role="status">
           {imageMessage || aiAnswerMessage || collaboration.message}
         </p>

@@ -423,6 +423,8 @@ Use PostgreSQL as the primary database.
 
 ## ADR-009: Choose OpenAI API for AI Features
 
+**Current status (2026-11-25):** Superseded: the study assistant and whiteboard answers both use the Claude API with one `ANTHROPIC_API_KEY`. The decision below is historical.
+
 **Status**: Accepted
 **Date**: 2024-01-23
 **Decision Makers**: Development Team

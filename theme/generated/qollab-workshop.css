@@ -270,6 +270,12 @@
     --qollab-button-height-md: 36px;
     --qollab-button-height-lg: 40px;
     --qollab-highlight: light-dark(#FFE45C, #E8C93A);
+    --qollab-answer-1: #2563EB;
+    --qollab-answer-2: #0F9488;
+    --qollab-answer-3: #D97706;
+    --qollab-answer-4: #DB2777;
+    --qollab-answer-5: #6B21A8;
+    --qollab-answer-6: #4D7C0F;
   }
 
   .astryx-heading.level-1 {
@@ -512,6 +518,19 @@
 
   .astryx-button.danger-ghost:hover:where(:not(:disabled,[aria-disabled="true"])) {
     background-color: var(--color-error-muted) !important;
+  }
+
+  .astryx-button.accent-soft {
+    --qollab-button-edge: transparent;
+    background-color: var(--color-accent-muted) !important;
+    border-radius: var(--radius-full) !important;
+    padding-inline: var(--spacing-4);
+    color: var(--color-text-accent) !important;
+    --_button-radius: var(--radius-full) !important;
+  }
+
+  .astryx-button.accent-soft:hover:where(:not(:disabled,[aria-disabled="true"])) {
+    background-color: color-mix(in srgb, var(--color-accent-muted), var(--color-accent) 12%) !important;
   }
 
   .astryx-button.link {

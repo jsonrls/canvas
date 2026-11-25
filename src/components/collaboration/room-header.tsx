@@ -100,6 +100,7 @@ export function RoomHeader({
             <StatusDot
               variant={dotVariant[syncStatus]}
               label={syncLabel}
+              isPulsing={syncStatus === "synced"}
               aria-hidden
             />
             <Text type="supporting">{syncLabel}</Text>

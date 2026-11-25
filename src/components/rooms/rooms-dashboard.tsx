@@ -287,7 +287,7 @@ export function RoomsDashboard({
             vAlign="center"
             gap={4}
           >
-            <Link href="/rooms" aria-label="Qollab rooms">
+            <Link href="/" aria-label="Qollab home">
               <QollabBrandLogo />
             </Link>
             <SidebarAccountMenu
@@ -429,7 +429,7 @@ export function RoomsDashboard({
                 htmlName="name"
                 value={name}
                 onChange={setName}
-                placeholder="e.g. Cardiovascular pharmacology"
+                placeholder="e.g. World history"
                 isRequired
                 {...{ maxLength: 120, required: true }}
               />

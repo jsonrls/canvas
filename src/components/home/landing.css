@@ -87,6 +87,12 @@
   filter: brightness(1.08);
 }
 
+/* The active step's bar fills as the page scrolls through that step. */
+.landing-step-fill {
+  transform: scaleX(var(--landing-step-progress, 1));
+  transform-origin: left;
+}
+
 .landing-float {
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--color-text-primary) 8%, transparent),

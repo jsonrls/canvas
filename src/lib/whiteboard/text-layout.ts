@@ -146,6 +146,10 @@ export function fitBoardTextInEllipse(
 ): BoardTextBox {
   const innerWidth = ellipse.width * 0.9;
   const innerHeight = ellipse.height * 0.9;
+  const longestWord = Math.max(
+    0,
+    ...text.split(/\s+/u).map((word) => measure(word)),
+  );
   const fits = (box: BoardTextBox): boolean =>
     (box.width / innerWidth) ** 2 + (box.height / innerHeight) ** 2 <= 1;
 
@@ -156,7 +160,10 @@ export function fitBoardTextInEllipse(
   ) {
     // Wider lines suit flat ellipses, narrower ones tall circles: try both.
     for (let share = 0.95; share >= 0.4; share -= 0.05) {
-      const box = fitBoardTextBox(text, measure, innerWidth * share, fontSize);
+      const width = innerWidth * share;
+      // Smaller text reads better than a word split across lines.
+      if (longestWord * sizeRatio(fontSize) > width) continue;
+      const box = fitBoardTextBox(text, measure, width, fontSize);
       if (fits(box)) return box;
     }
   }

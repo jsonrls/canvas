@@ -30,7 +30,7 @@ import {
   type RoomActionState,
 } from "@/app/rooms/action-state";
 import { RoomIconField } from "@/components/rooms/room-banner-field";
-import { ArrowLeft, Crown } from "@/components/ui/icons";
+import { Crown } from "@/components/ui/icons";
 import { PANEL_HEADING, PANEL_MUTED, PANEL_ROW } from "@/components/ui/panel";
 import { useSuccessToast } from "@/components/ui/toast";
 import type { RoomMember, RoomSettings } from "@/lib/rooms/repository";
@@ -245,10 +245,7 @@ export function RoomSettingsPanel({
           width="100%"
           maxWidth={1120}
           className="min-h-20"
-          hAlign="between"
           vAlign="center"
-          wrap="wrap"
-          gap={2}
           paddingBlock={3}
         >
           <Link
@@ -258,13 +255,6 @@ export function RoomSettingsPanel({
           >
             <QollabBrandLogo />
           </Link>
-          <Button
-            as={Link}
-            href={`/rooms/${room.slug}`}
-            label="Back to room"
-            variant="ghost"
-            icon={<ArrowLeft aria-hidden="true" size={16} />}
-          />
         </HStack>
       </HStack>
       <VStack

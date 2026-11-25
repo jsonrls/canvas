@@ -21,11 +21,20 @@ homepage rules. The token table below is historical;
   fields (`.landing-photo`), navy pill actions (`PillLink`), small label chips
   above section headings, medium-weight Inter headings with tight tracking.
 - Landing order: top bar (logo, centred links, Log in, Get started pill),
-  centred hero, photo card beside the `LiveRoom` panel, six tool tiles, `#why`
-  three cards, `#workspace` two tall cards and four small ones, `#how` numbered
+  centred hero, photo card beside the `ProductTour` panel (a looping screen
+  recording of the real app with a glass chapter dock; selecting the recording
+  pauses it;
+  2026-11-25, section previews are real screenshots in `public/landing/`), eight tool tiles, `#why`
+  three cards, `#workspace` two tall cards, the wide "Ask the whiteboard" card
+  and four small ones, `#live` activity picker beside a blue panel (2026-11-25, redesigned after Notion's product pages: the heading, a row of four activity tab cards, and one large `bg-muted` frame holding a white big screen drawn with the real charts and a phone whose taps change that screen; from `lg` it pins at full height and scrolling steps through the tabs) (after
+  Mentimeter's type list and preview; it draws the room's own charts from
+  `live-charts.tsx` and lists `LIVE_QUESTION_KINDS`), `#how` numbered
   steps beside a photo with a glass figure, study pack rows, `#roles` three
   cards with the editor card dark, `#faq` numbered accordion, closing panel,
   footer.
+- Landing content (2026-11-25): any group, any subject. No landing, sign-in or
+  placeholder copy may assume a medical, exam-board or other single-industry
+  user.
 - Theme colours are unchanged: Qollab Blue `#2563EB`, ink `#0F1B3D`, Bricolage
   Grotesque headings elsewhere in the app. Only `.landing-root` swaps the
   heading face to Inter.
@@ -61,8 +70,8 @@ homepage rules. The token table below is historical;
   (tried and dropped: it left a gap above and below). The selected item is a white pill with no accent bar
   (muted inside the white phone drawer). A white room card at the top shows
   the icon, name, role and access, with a "Switch room" menu. Groups are
-  "Study tools" and "Room"; "Room" holds Breakout rooms (plain count),
-  People, and the Viewer editing row, which matches the nav items and has no
+  "Study tools" and "Room"; "Room" holds Breakout rooms (plain count)
+  and the Viewer editing row, which matches the nav items and has no
   tinted icon square. The account row is alone at the bottom. This supersedes
   the white rail, 1px divider and Soft Blue selected row described below.
 - Room header (2026-11-23): identity is one line, "Room / Tool", then the
@@ -74,8 +83,14 @@ homepage rules. The token table below is historical;
   amber offline, red on error and grey otherwise. The action tray and its
   buttons stay neutral; Present shows the theme's pressed style while
   presenting.
-  The header carries no presence avatars (2026-11-24); people are reached
-  from the sidebar's People item.
+  The header carries no presence avatars (2026-11-24). People is off the
+  expanded room sidebar (2026-11-25); the collapsed sidebar's icon and the
+  breakout sidebar still open the list. The collapsed sidebar keeps the
+  account avatar at the bottom, below that icon.
+- Notes, PDF and whiteboard toolbars (2026-11-25) share one size: a 40px pill of
+  36×32px buttons on desktop, a 56px bar of 44px buttons on phones, 16px icons.
+- Settings (2026-11-25): "Reset password" opens a dialog that emails the link to
+  the signed-in address; `/reset-password` stays for people who are signed out.
 - PDF tool (2026-11-23). References: tldraw, Excalidraw and FigJam (tools in
   one floating icon pill, labels as tooltips), Google Drive and Acrobat
   viewers (page controls floating over a grey desk). From 761px: the tools
@@ -109,6 +124,17 @@ homepage rules. The token table below is historical;
   people count are not repeated (the room header and sidebar carry them).
   Phones keep the single row and the "More" sheet; the groups are
   `display: contents` there.
+- Whiteboard voice (2026-11-25). References: Google Docs voice typing (one
+  click turns the microphone on, one click turns it off) and ChatGPT dictation
+  (a recording bar with the time, Cancel and Done). A microphone button sits
+  before AI answer in the tool pill and as "Ask by voice" in the phone "More"
+  sheet. While the microphone may be on, a card under the tools shows
+  "Listening…", the time of one minute, where the voice goes, and the model
+  download the first time; it floats, so the board does not resize. The words
+  appear after Done. The question is placed as a circle with the words, an
+  arrow and a blank circle, in free space in the view, and the usual AI answer
+  fills the blank circle. If the answer fails, AI answer retries it. Whiteboard
+  notices float on phones too, because resizing the board refits the camera.
 - PDF fit page (2026-11-24): at 100% zoom the whole page fits the page area
   (the smaller of width and height, using the page's own aspect ratio), like
   "fit page" in PDF viewers, so slides need no scrolling. Zooming in still
@@ -119,6 +145,57 @@ homepage rules. The token table below is historical;
   not dividers. The footer has no rule and the word count sits in a muted
   pill. The viewer notice is a centred muted pill. The page itself stays on
   the white sheet.
+- AI study assistant (2026-11-25). References: NotebookLM Studio (outputs
+  listed first, saved work in its own list), Quizlet (one large card, click to
+  flip, arrows underneath; study modes in one row of tiles). Saved guides sit
+  in a 320px muted panel beside the pack from `xl` and below it before that.
+  Before generating, the five outputs are white rows in a muted panel with one
+  primary action. The views are five equal tiles across the pack, each with a
+  coloured icon and its item count; the chosen one is tinted and edged in its
+  colour with semibold text. On phones they are three over two, without counts.
+  Quiz answers state right and wrong in words as well as colour. The options
+  dialog is an Astryx `Dialog` with two `Slider`s. Deleting a saved guide opens
+  an alert dialog that names it; focus starts on "Keep guide" and a failed
+  delete shows its error inside the dialog. No small label above a
+  heading, no icon chips, no numbered capability grid.
+- Flashcard colour (2026-11-25). References: Kahoot (a flat colour and plain
+  geometric shapes per choice), Quizlet (one large card that flips). Each card
+  takes one of the six answer colours in turn as a tint (15% for the prompt, 25%
+  for the answer) with corner shapes at 30%. Shapes are decoration: they are
+  hidden from screen readers, and the label still says Prompt or Answer. Dark
+  text over a shape keeps at least 6.8:1. Flipping fades and lifts the text in
+  over 300ms; reduced motion turns it off.
+- Live activities (2026-11-25). Reference: Mentimeter (packed word cloud,
+  upright columns, donut, pie and dots, speech bubbles, one question filling
+  the screen). Answers use six colours, `answer-1` to `answer-6` in the theme,
+  tested for red-green colour blindness; besides flashcards and study pack
+  tabs, this is the one place the app is multicoloured. Every mark keeps its label, and a correct answer has a tick
+  and the word. Full screen draws answers as they arrive, with a Hide button, as
+  Mentimeter does; students' own screens wait for "Show to students". Full
+  screen shows only what a shared screen may:
+  `projectorView` hides secret answers, unshown quiz-style results, form answers and
+  unapproved questions. Scales and guesses are hills over a line; ranking and
+  100 points are thick bars that slide when their order changes; the 2×2 grid
+  uses named circles. A quiz shows a countdown ring; full-screen Q&A shows the
+  top question alone. Above the question, its type is a coloured token (`LiveKindToken`; the
+  question list keeps plain text):
+  ten colours for twelve types, so types with one correct answer share green
+  and types that place a mark share cyan; no red, which means delete or error.
+  Hosts reorder questions with a grip handle (reference: dragging slides in
+  Mentimeter's slide panel); arrow keys on the handle do the same, and a line
+  shows where the question will land. Adding a question is a dialog, opened by a button that
+  stays at the bottom of the host's panel (references: Kahoot's Add question,
+  Mentimeter's New slide); from 672px of tool width (a container query, because
+  a breakout's Q&A rail can sit beside it) the list and the question scroll on
+  their own, and below it the button sits above the list. Motion stops under reduced
+  motion. Plan:
+  `plan/feature-live-visuals-1.md`.
+- Live activities in breakouts (2026-11-25). References: Mentimeter (the same
+  activity views) and Google Meet breakouts (each group works alone; the host
+  can enter any group). The tool is the last item in the breakout's Study tools
+  and phone selector, with the main room's icon, label, views and "Answer now"
+  prompt. Each breakout has its own activities. The Q&A rail stays available
+  beside it and tags its questions "Activities".
 - Account frame (2026-11-23): the header holds the logo only. From `md`,
   "Back to rooms" and the Profile/Settings links sit in a 224px sidebar that
   starts under the logo; the page content stays capped at 640px beside it.

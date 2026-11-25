@@ -1,78 +1,50 @@
 import { NextResponse } from "next/server";
 
-import { LiveInputError, readQuestionDraft } from "@/lib/live/activities";
 import {
+  isQaStatus,
+  LiveInputError,
+  MAX_LIVE_QUESTIONS,
+  readQuestionDraft,
+} from "@/lib/live/activities";
+import {
+  jsonError,
+  LiveForbiddenError,
+  liveErrorResponse,
+  loadLiveAccess,
+  type LiveRouteProps,
+  PRIVATE_HEADERS,
+  readLiveId,
+} from "@/lib/live/http";
+import {
+  askLiveQuestion,
   buildLiveSnapshot,
   createLiveQuestion,
   deleteLiveQuestion,
-  LiveConflictError,
-  LiveNotFoundError,
   presentLiveQuestion,
+  reorderLiveQuestions,
   resetLiveResults,
   setLiveAccepting,
+  setLiveLayout,
+  setLiveQaStatus,
   setLiveResultsVisible,
   submitLiveResponse,
+  voteLiveQuestion,
 } from "@/lib/live/repository";
-import { getRoomMemberAccess, RoomDomainError } from "@/lib/rooms/repository";
-import {
-  createServiceRoleClient,
-  getAuthenticatedContext,
-} from "@/lib/supabase/server";
-
-interface LiveRouteProps {
-  params: Promise<{ roomId: string }>;
-}
-
-const PRIVATE_HEADERS = {
-  "Cache-Control": "private, no-store",
-  "X-Content-Type-Options": "nosniff",
-};
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 const HOST_ACTIONS = new Set([
   "create_question",
   "delete_question",
+  "reorder_questions",
   "present",
   "set_accepting",
   "set_results",
   "reset_results",
+  "set_layout",
+  "qa_set_status",
 ]);
 
-class LiveForbiddenError extends Error {}
-
-function jsonError(message: string, status: number): NextResponse {
-  return NextResponse.json(
-    { error: message },
-    { headers: PRIVATE_HEADERS, status },
-  );
-}
-
-function errorResponse(error: unknown): NextResponse {
-  if (error instanceof LiveInputError) return jsonError(error.message, 400);
-  if (error instanceof LiveForbiddenError) {
-    return jsonError(
-      "Only the room owner or an editor can run live activities.",
-      403,
-    );
-  }
-  if (error instanceof RoomDomainError) {
-    return jsonError("The room could not be found.", 404);
-  }
-  if (error instanceof LiveNotFoundError) {
-    return jsonError("That live question no longer exists.", 404);
-  }
-  if (error instanceof LiveConflictError) return jsonError(error.message, 409);
-  console.error("Live activities request failed", {
-    code: error instanceof Error ? error.message : "UNKNOWN",
-  });
-  return jsonError("Live activities are temporarily unavailable.", 502);
-}
-
-function readId(value: unknown): string {
-  if (typeof value !== "string" || !/^[0-9a-f-]{36}$/i.test(value)) {
-    throw new LiveInputError("The live question is invalid.");
-  }
-  return value;
-}
+const MAX_BODY_BYTES = 3 * 1024 * 1024;
 
 function readBoolean(value: unknown): boolean {
   if (typeof value !== "boolean") {
@@ -81,33 +53,41 @@ function readBoolean(value: unknown): boolean {
   return value;
 }
 
-async function readBody(request: Request): Promise<Record<string, unknown>> {
-  try {
-    const body: unknown = await request.json();
-    if (body && typeof body === "object" && !Array.isArray(body)) {
-      return body as Record<string, unknown>;
-    }
-  } catch {
-    // Fall through to the shared invalid-request error.
+function readIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length > MAX_LIVE_QUESTIONS) {
+    throw new LiveInputError("The live activity request is invalid.");
+  }
+  return value.map(readLiveId);
+}
+
+function asBody(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
   }
   throw new LiveInputError("The live activity request is invalid.");
 }
 
-async function loadAccess(params: LiveRouteProps["params"]) {
-  const context = await getAuthenticatedContext();
-  if (!context) return null;
-  const { roomId } = await params;
-  const access = await getRoomMemberAccess(
-    context.client,
-    roomId,
-    context.userId,
-  );
-  return {
-    roomId: access.id,
-    userId: context.userId,
-    // Hosting follows the room role, not the viewer-collaboration toggle.
-    canHost: access.role !== "viewer",
-  };
+/** JSON, or a form with the same JSON in `payload` plus one `image`. */
+async function readBody(
+  request: Request,
+): Promise<{ body: Record<string, unknown>; image: File | null }> {
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    throw new LiveInputError("Add a JPEG image smaller than 2 MB.");
+  }
+  const isForm = request.headers
+    .get("content-type")
+    ?.startsWith("multipart/form-data");
+  try {
+    if (!isForm) return { body: asBody(await request.json()), image: null };
+    const form = await request.formData();
+    const image = form.get("image");
+    return {
+      body: asBody(JSON.parse(String(form.get("payload")))),
+      image: image instanceof File ? image : null,
+    };
+  } catch {
+    throw new LiveInputError("The live activity request is invalid.");
+  }
 }
 
 export async function GET(
@@ -115,12 +95,12 @@ export async function GET(
   { params }: LiveRouteProps,
 ): Promise<NextResponse> {
   try {
-    const access = await loadAccess(params);
+    const access = await loadLiveAccess(params);
     if (!access) return jsonError("Authentication required.", 401);
     const snapshot = await buildLiveSnapshot(createServiceRoleClient(), access);
     return NextResponse.json(snapshot, { headers: PRIVATE_HEADERS });
   } catch (error) {
-    return errorResponse(error);
+    return liveErrorResponse(error);
   }
 }
 
@@ -129,11 +109,9 @@ export async function POST(
   { params }: LiveRouteProps,
 ): Promise<NextResponse> {
   try {
-    const [access, body] = await Promise.all([
-      loadAccess(params),
-      readBody(request),
-    ]);
+    const access = await loadLiveAccess(params);
     if (!access) return jsonError("Authentication required.", 401);
+    const { body, image } = await readBody(request);
 
     const action = body.action;
     if (typeof action !== "string") {
@@ -144,43 +122,82 @@ export async function POST(
     }
 
     const admin = createServiceRoleClient();
-    const { roomId, userId } = access;
+    const { scope, userId } = access;
 
     switch (action) {
       case "create_question":
         await createLiveQuestion(
           admin,
-          roomId,
+          scope,
           userId,
           readQuestionDraft(body.draft),
+          image,
         );
         break;
       case "delete_question":
-        await deleteLiveQuestion(admin, roomId, readId(body.questionId));
+        await deleteLiveQuestion(admin, scope, readLiveId(body.questionId));
+        break;
+      case "reorder_questions":
+        await reorderLiveQuestions(admin, scope, readIds(body.questionIds));
         break;
       case "present":
         await presentLiveQuestion(
           admin,
-          roomId,
-          body.questionId === null ? null : readId(body.questionId),
+          scope,
+          body.questionId === null ? null : readLiveId(body.questionId),
         );
         break;
       case "set_accepting":
-        await setLiveAccepting(admin, roomId, readBoolean(body.value));
+        await setLiveAccepting(admin, scope, readBoolean(body.value));
         break;
       case "set_results":
-        await setLiveResultsVisible(admin, roomId, readBoolean(body.value));
+        await setLiveResultsVisible(admin, scope, readBoolean(body.value));
         break;
       case "reset_results":
-        await resetLiveResults(admin, roomId);
+        await resetLiveResults(admin, scope);
+        break;
+      case "set_layout":
+        await setLiveLayout(
+          admin,
+          scope,
+          readLiveId(body.questionId),
+          body.layout,
+        );
         break;
       case "respond":
         await submitLiveResponse(admin, {
-          roomId,
+          scope,
           userId,
-          questionId: readId(body.questionId),
+          questionId: readLiveId(body.questionId),
           value: body.value,
         });
+        break;
+      case "qa_ask":
+        await askLiveQuestion(admin, {
+          scope,
+          userId,
+          questionId: readLiveId(body.questionId),
+          text: body.text,
+        });
+        break;
+      case "qa_vote":
+        await voteLiveQuestion(admin, {
+          scope,
+          userId,
+          itemId: readLiveId(body.itemId),
+          value: readBoolean(body.value),
+        });
+        break;
+      case "qa_set_status":
+        if (!isQaStatus(body.status)) {
+          throw new LiveInputError("The live activity request is invalid.");
+        }
+        await setLiveQaStatus(
+          admin,
+          scope,
+          readLiveId(body.itemId),
+          body.status,
+        );
         break;
       default:
         throw new LiveInputError("The live activity request is invalid.");
@@ -189,6 +206,6 @@ export async function POST(
     const snapshot = await buildLiveSnapshot(admin, access);
     return NextResponse.json(snapshot, { headers: PRIVATE_HEADERS });
   } catch (error) {
-    return errorResponse(error);
+    return liveErrorResponse(error);
   }
 }

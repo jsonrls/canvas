@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "qollab-dev-all",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["YJS_PORT=1234", "YJS_HOST=127.0.0.1", "npm", "run", "dev:all"],
+      "port": 3000
+    }
+  ]
+}

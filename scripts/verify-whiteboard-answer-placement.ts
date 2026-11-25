@@ -255,6 +255,13 @@ const QUESTION =
   assert.ok(short.fontSize > long.fontSize, "short answers get bigger text");
   assert.ok(short.fontSize > 28, "a short answer grows past the default");
 
+  // One long word gets smaller text before it is ever split across lines.
+  const word = fitBoardTextInEllipse("Mitochondria", measure, {
+    width: 280,
+    height: 160,
+  });
+  assert.deepEqual(word.lines, ["Mitochondria"], "the word stays whole");
+
   const tiny = fitBoardTextInEllipse("x".repeat(400), measure, {
     width: 90,
     height: 60,

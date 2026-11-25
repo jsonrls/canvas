@@ -13,6 +13,15 @@
 @import "../components/rooms/breakout-directory-compat.css";
 @import "../components/home/landing.css" layer(components);
 
+@theme inline {
+  --color-answer-1: var(--qollab-answer-1);
+  --color-answer-2: var(--qollab-answer-2);
+  --color-answer-3: var(--qollab-answer-3);
+  --color-answer-4: var(--qollab-answer-4);
+  --color-answer-5: var(--qollab-answer-5);
+  --color-answer-6: var(--qollab-answer-6);
+}
+
 :root {
   --font-body: var(--font-qollab-body);
   --font-display: var(--font-qollab-heading);

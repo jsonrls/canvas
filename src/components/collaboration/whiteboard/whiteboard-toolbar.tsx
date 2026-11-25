@@ -9,6 +9,7 @@ import {
   Eraser,
   HelpCircle,
   Maximize2,
+  Mic,
   Minus,
   Plus,
   Radio,
@@ -27,6 +28,7 @@ import {
   type WhiteboardElement,
 } from "@/lib/whiteboard/model";
 import type { Dispatch, RefObject, SetStateAction } from "react";
+import type { VoiceStatus } from "./use-voice-input";
 
 export function WhiteboardToolbar({
   canUndo,
@@ -42,6 +44,9 @@ export function WhiteboardToolbar({
   aiAnswerLoading,
   elements,
   answerWhiteboardQuestion,
+  canUseVoice,
+  voiceStatus,
+  toggleVoice,
   chooseImage,
   setDrawingColor,
   drawingColor,
@@ -72,6 +77,9 @@ export function WhiteboardToolbar({
     candidateSelectedId?: string | null,
     mode?: "auto" | "manual",
   ) => Promise<void>;
+  canUseVoice: boolean;
+  voiceStatus: VoiceStatus;
+  toggleVoice: () => void;
   chooseImage: (file: File) => Promise<void>;
   setDrawingColor: Dispatch<SetStateAction<string>>;
   drawingColor: string;
@@ -85,6 +93,12 @@ export function WhiteboardToolbar({
   clearAllDrawings: () => void;
   collaboration: ReturnType<typeof useCollaborativeTool>;
 }) {
+  const isVoiceOn = voiceStatus !== "idle";
+  const voiceDisabled =
+    !canUseVoice ||
+    voiceStatus === "finishing" ||
+    (aiAnswerLoading && !isVoiceOn);
+
   return (
     // Desktop: three floating groups over the canvas (tools top-centre, history
     // and view bottom-left, board actions bottom-right), after Excalidraw and
@@ -201,6 +215,20 @@ export function WhiteboardToolbar({
         <ButtonControl
           variant="ghost"
           size="sm"
+          aria-label="Ask by voice"
+          aria-pressed={isVoiceOn}
+          className={`whiteboard-toolbar__mobile-secondary${isVoiceOn ? " is-active" : ""}`}
+          disabled={voiceDisabled}
+          onClick={toggleVoice}
+          title={isVoiceOn ? "Turn off the microphone" : "Ask by voice"}
+          type="button"
+        >
+          <Mic aria-hidden="true" size={17} />
+          <span>Ask by voice</span>
+        </ButtonControl>
+        <ButtonControl
+          variant="ghost"
+          size="sm"
           aria-busy={aiAnswerLoading}
           className="whiteboard-ai-answer whiteboard-toolbar__mobile-secondary"
           disabled={!canEdit || aiAnswerLoading || elements.length === 0}
@@ -242,6 +270,7 @@ export function WhiteboardToolbar({
           active={
             !MOBILE_PRIMARY_WHITEBOARD_TOOLS.has(tool) ||
             laserEnabled ||
+            isVoiceOn ||
             camera.zoom !== 1
           }
           description="Add shapes and media, change the view, or manage the board."
@@ -288,6 +317,23 @@ export function WhiteboardToolbar({
               >
                 <Radio aria-hidden="true" size={18} />
                 <span>{laserEnabled ? "Turn laser off" : "Laser pointer"}</span>
+              </ButtonControl>
+              <ButtonControl
+                variant="custom"
+                size="sm"
+                aria-pressed={isVoiceOn}
+                className={`mobile-tool-action${isVoiceOn ? " is-active" : ""}`}
+                disabled={voiceDisabled}
+                onClick={() => {
+                  toggleVoice();
+                  close();
+                }}
+                type="button"
+              >
+                <Mic aria-hidden="true" size={18} />
+                <span>
+                  {isVoiceOn ? "Turn off the microphone" : "Ask by voice"}
+                </span>
               </ButtonControl>
               <ButtonControl
                 variant="custom"

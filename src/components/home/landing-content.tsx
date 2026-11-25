@@ -9,17 +9,19 @@ import Image from "next/image";
 import {
   FaqList,
   FlashcardDemo,
-  LiveRoom,
   OfflineDemo,
+  ProductTour,
   SessionSteps,
 } from "./landing-demos";
 import {
-  NotesFragment,
-  PdfFragment,
-  QuizFragment,
-  SummaryFragment,
-  WhiteboardFragment,
-} from "./landing-fragments";
+  AskArt,
+  BoardArt,
+  FactArt,
+  type FactArtName,
+  PdfArt,
+  QuestionKindArt,
+} from "./landing-art";
+import { LiveActivitiesDemo } from "./landing-live";
 import {
   FRAME,
   LandingSection,
@@ -30,6 +32,7 @@ import {
 import {
   Bookmark,
   BrainCircuit,
+  ChartColumnBig,
   Check,
   Crown,
   DoorOpen,
@@ -40,6 +43,7 @@ import {
   type IconComponent,
   Layers3,
   MessageCircleQuestion,
+  Mic,
   PenTool,
   Pencil,
   Presentation,
@@ -50,6 +54,8 @@ import {
   Split,
 } from "@/components/ui/icons";
 
+import { LIVE_KIND_LABELS, LIVE_QUESTION_KINDS } from "@/lib/live/activities";
+
 interface LandingAction {
   destination: string;
   action: string;
@@ -59,6 +65,46 @@ const STUDENTS = "/images/home-study-collaboration.png";
 
 /* The photo's white ground is pushed to pure white, then multiplied away. */
 const PHOTO = "object-cover brightness-105 contrast-105 mix-blend-multiply";
+
+/** Screenshots of the real app, taken in the sample room of the hero recording. */
+const SHOTS = {
+  notes: {
+    width: 860,
+    height: 1120,
+    alt: "Shared notes on the printing press, with Lea Tan’s cursor at the end of a line.",
+  },
+  summary: {
+    width: 796,
+    height: 1080,
+    alt: "A study pack summary with an overview and numbered key points.",
+  },
+  quiz: {
+    width: 796,
+    height: 1067,
+    alt: "A practice quiz question with the correct answer marked and explained.",
+  },
+};
+
+function Shot({
+  name,
+  className = "",
+}: {
+  name: keyof typeof SHOTS;
+  className?: string;
+}): React.ReactElement {
+  const { width, height, alt } = SHOTS[name];
+
+  return (
+    <Image
+      src={`/landing/${name}.webp`}
+      alt={alt}
+      width={width}
+      height={height}
+      sizes="(max-width: 768px) 100vw, 560px"
+      className={`h-auto w-full ${className}`}
+    />
+  );
+}
 
 const HERO_FACTS = ["Live", "Works offline", "Role-based"];
 
@@ -71,6 +117,8 @@ const ROOM_TOOLS = [
   { label: "Shared notes", Icon: PenTool },
   { label: "PDF markup", Icon: FileText },
   { label: "Whiteboard", Icon: Presentation },
+  { label: "Live activities", Icon: ChartColumnBig },
+  { label: "Voice questions", Icon: Mic },
   { label: "Study packs", Icon: BrainCircuit },
   { label: "Offline edits", Icon: RefreshCw },
   { label: "Member roles", Icon: ShieldCheck },
@@ -110,8 +158,9 @@ export function LandingHero({
             Write, mark up &amp; review in one shared room.
           </Heading>
           <Text as="p" color="secondary" className="landing-body max-w-xl">
-            Qollab is a study room for your group. Write notes, annotate PDFs
-            and sketch on a whiteboard live, then turn it all into a review.
+            Qollab is a study room for any group and any subject. Write notes,
+            annotate PDFs, sketch and run live activities, then turn your notes
+            into a review.
           </Text>
           <HStack gap={3} wrap="wrap" hAlign="center">
             <PillLink href={destination} label={action} />
@@ -122,7 +171,7 @@ export function LandingHero({
           <VStack className="landing-photo relative min-h-120 min-w-0 overflow-hidden rounded-3xl lg:w-4/12">
             <Image
               src={STUDENTS}
-              alt="Two students smiling, one holding a laptop."
+              alt="Two people smiling, one holding a laptop."
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 380px"
@@ -150,29 +199,11 @@ export function LandingHero({
           </VStack>
           <VStack
             hAlign="center"
-            className="landing-sky relative min-w-0 justify-center overflow-hidden rounded-3xl p-4 md:p-8 lg:w-8/12"
+            className="landing-sky min-w-0 justify-center rounded-3xl p-4 md:p-6 lg:w-8/12"
           >
-            <LiveRoom />
-            <VStack
-              gap={3}
-              aria-hidden="true"
-              className="absolute top-1/2 right-6 hidden! -translate-y-1/2 xl:flex!"
-            >
-              {["Lea Tan", "Marco Diaz"].map((name) => (
-                <VStack
-                  key={name}
-                  hAlign="center"
-                  className="size-14 justify-center rounded-2xl bg-surface/90"
-                >
-                  <Avatar name={name} size="sm" tooltip={false} />
-                </VStack>
-              ))}
-            </VStack>
+            <ProductTour />
           </VStack>
         </HStack>
-        <Text as="p" color="secondary">
-          Sample room. Names and notes are illustrative.
-        </Text>
         <VStack gap={5} hAlign="center" className="w-full">
           <Text as="p" weight="medium" className="text-base!">
             <Text weight="medium" className="text-base! text-accent!">
@@ -180,7 +211,7 @@ export function LandingHero({
             </Text>{" "}
             a study group needs, in one room
           </Text>
-          <Grid columns={{ minWidth: 104, max: 6 }} gap={3} className="w-full">
+          <Grid columns={{ minWidth: 130, max: 4 }} gap={3} className="w-full">
             {ROOM_TOOLS.map(({ label, Icon }) => (
               <VStack
                 key={label}
@@ -242,8 +273,8 @@ export function LandingWhy(): React.ReactElement {
         id="why-title"
         Icon={Sparkles}
         label="Why Qollab"
-        title="Everything for studying together"
-        detail="Keep the notes, the reading and the discussion in one place, with the people you study with."
+        title="Any subject, studied together"
+        detail="Classes, teams, clubs and language partners: keep the notes, the reading and the discussion in one place."
         layout="center"
       />
       <HStack gap={4} className="flex-col items-stretch! lg:flex-row">
@@ -252,7 +283,7 @@ export function LandingWhy(): React.ReactElement {
           title="Notes you write together"
           detail="One document, live cursors and every version kept."
         >
-          <NotesFragment isBrief />
+          <Shot name="notes" className="max-h-80 object-cover object-top" />
         </WhyCard>
         <VStack
           as="article"
@@ -265,13 +296,13 @@ export function LandingWhy(): React.ReactElement {
               Rooms for your whole group
             </Heading>
             <Text as="p" color="secondary">
-              Add classmates by email. Keep a room private, or open it up.
+              Add people by email. Keep a room private, or open it up.
             </Text>
           </VStack>
           <VStack className="relative mt-auto h-64">
             <Image
               src={STUDENTS}
-              alt="Two students looking up from their notebooks."
+              alt="Two people looking up from their notebooks."
               fill
               sizes="(max-width: 640px) 100vw, 380px"
               className={`landing-crop-b ${PHOTO}`}
@@ -294,7 +325,7 @@ const MORE_TOOLS = [
   {
     Icon: Split,
     title: "Breakout rooms",
-    detail: "Split off a few people to work one question through.",
+    detail: "Split off a few people, with their own board, activities and Q&A.",
   },
   {
     Icon: Presentation,
@@ -341,7 +372,7 @@ function FeatureCard({
           {detail}
         </Text>
       </VStack>
-      <VStack className="landing-float mx-auto mt-auto w-full max-w-sm overflow-hidden rounded-t-3xl bg-surface">
+      <VStack className="mt-auto w-full overflow-hidden rounded-t-3xl">
         {children}
       </VStack>
     </VStack>
@@ -364,15 +395,42 @@ export function LandingTools(): React.ReactElement {
           title="PDFs you mark up"
           detail="Highlights, sticky notes and comments on one shared copy."
         >
-          <PdfFragment />
+          <PdfArt />
         </FeatureCard>
         <FeatureCard
           Icon={Presentation}
           title="A whiteboard for the hard parts"
           detail="Draw the connections, then walk everyone through them."
         >
-          <WhiteboardFragment />
+          <BoardArt />
         </FeatureCard>
+      </HStack>
+      <HStack
+        as="article"
+        data-reveal=""
+        gap={2}
+        className={`flex-col items-stretch! rounded-3xl bg-muted p-3 md:flex-row md:items-center! ${REVEAL}`}
+      >
+        <VStack gap={3} className="min-w-0 flex-1 p-3 md:p-8">
+          <VStack
+            hAlign="center"
+            className="size-11 justify-center rounded-full bg-surface"
+          >
+            <Mic size={20} aria-hidden="true" className="text-accent" />
+          </VStack>
+          <Heading level={3} className="landing-subtitle">
+            Ask the whiteboard out loud
+          </Heading>
+          <Text as="p" color="secondary" className="landing-body max-w-md">
+            Say or write a question on the board. AI draws a short answer beside
+            it, for everyone in the room to see and check.
+          </Text>
+        </VStack>
+        <VStack className="min-w-0 rounded-2xl bg-accent-muted p-3 md:w-1/2">
+          <VStack className="overflow-hidden rounded-2xl bg-surface">
+            <AskArt />
+          </VStack>
+        </VStack>
       </HStack>
       <Grid columns={{ minWidth: 250, max: 4 }} gap={4}>
         {MORE_TOOLS.map(({ Icon, title, detail }) => (
@@ -398,6 +456,85 @@ export function LandingTools(): React.ReactElement {
   );
 }
 
+const LIVE_FACTS: { art: FactArtName; title: string; detail: string }[] = [
+  {
+    art: "screen",
+    title: "Full-screen view",
+    detail: "Put one question on the big screen.",
+  },
+  {
+    art: "layouts",
+    title: "Several ways to show it",
+    detail: "Columns, donut, pie or dots for the same votes.",
+  },
+  {
+    art: "sheet",
+    title: "Export to Excel",
+    detail: "Take every result away in a spreadsheet.",
+  },
+];
+
+export function LandingLive(): React.ReactElement {
+  return (
+    <LandingSection id="live" labelledBy="live-title">
+      <LiveActivitiesDemo />
+      <VStack
+        data-reveal=""
+        gap={6}
+        className={`rounded-3xl bg-muted p-6 md:p-8 ${REVEAL}`}
+      >
+        <VStack gap={1}>
+          <Heading level={3} className="landing-h3">
+            {LIVE_QUESTION_KINDS.length} kinds of question
+          </Heading>
+          <Text as="p" color="secondary" className="landing-body">
+            Choose a type, write the prompt and present it to the room.
+          </Text>
+        </VStack>
+        <Grid columns={{ minWidth: 132, max: 6 }} gap={3} role="list">
+          {LIVE_QUESTION_KINDS.map((kind) => (
+            <VStack
+              role="listitem"
+              key={kind}
+              data-reveal=""
+              data-art=""
+              gap={0}
+              className="group overflow-hidden rounded-2xl bg-surface"
+            >
+              <QuestionKindArt kind={kind} />
+              <Text weight="medium" className="px-2 py-3 text-center">
+                {LIVE_KIND_LABELS[kind]}
+              </Text>
+            </VStack>
+          ))}
+        </Grid>
+        <Grid columns={{ minWidth: 240, max: 3 }} gap={3}>
+          {LIVE_FACTS.map(({ art, title, detail }) => (
+            <HStack
+              key={title}
+              data-reveal=""
+              data-art=""
+              gap={3}
+              vAlign="center"
+              className="group rounded-2xl bg-surface p-3"
+            >
+              <FactArt name={art} />
+              <VStack gap={0} className="min-w-0">
+                <Text weight="semibold" className="text-base!">
+                  {title}
+                </Text>
+                <Text as="p" color="secondary">
+                  {detail}
+                </Text>
+              </VStack>
+            </HStack>
+          ))}
+        </Grid>
+      </VStack>
+    </LandingSection>
+  );
+}
+
 export function LandingSession(): React.ReactElement {
   return (
     <LandingSection id="how" labelledBy="how-title">
@@ -406,7 +543,7 @@ export function LandingSession(): React.ReactElement {
         Icon={Route}
         label="How it works"
         title="A study session, start to finish"
-        detail="Four steps from an empty room to a review you can reopen before the exam."
+        detail="Four steps from an empty room to a review you can reopen any time."
       />
       <VStack data-reveal="" className={REVEAL}>
         <SessionSteps />
@@ -420,23 +557,25 @@ const PACK_PARTS = [
     title: "A summary to read first",
     detail: "The key points of your room’s notes, in one short read.",
     preview: (
-      <VStack className="rounded-2xl bg-surface">
-        <SummaryFragment />
+      <VStack className="overflow-hidden rounded-2xl bg-surface">
+        <Shot name="summary" className="max-h-80 object-cover object-top" />
       </VStack>
     ),
   },
   {
     title: "A quiz to test yourself",
-    detail: "Questions drawn from the same notes, so you find the gaps early.",
+    detail:
+      "Questions drawn from the same notes, so you find the gaps early. Choose 3 to 20.",
     preview: (
-      <VStack className="rounded-2xl bg-surface">
-        <QuizFragment />
+      <VStack className="overflow-hidden rounded-2xl bg-surface">
+        <Shot name="quiz" className="max-h-80 object-cover object-top" />
       </VStack>
     ),
   },
   {
     title: "Flashcards for the last pass",
-    detail: "Flip through them alone or with your group. Try the sample card.",
+    detail:
+      "Choose 4 to 20 and flip through them alone or with your group. Try the sample card.",
     preview: <FlashcardDemo />,
   },
 ];
@@ -486,6 +625,7 @@ const ROLES = [
     abilities: [
       "Read the notes, PDF and whiteboard",
       "Read the version history",
+      "Answer live activities",
       "Generate a study pack from the notes",
     ],
     verb: "Read",
@@ -500,10 +640,11 @@ const ROLES = [
       "Everything a viewer can do",
       "Write notes and restore versions",
       "Upload, annotate and comment on the PDF",
-      "Draw on the whiteboard",
+      "Draw on the whiteboard and ask it questions",
+      "Host live activities",
     ],
     verb: "Write",
-    scope: "Notes, PDF comments and whiteboard",
+    scope: "Notes, PDF, whiteboard and activities",
     isFeatured: true,
   },
   {
@@ -598,9 +739,14 @@ export function LandingRoles(): React.ReactElement {
 
 const QUESTIONS = [
   {
+    question: "What can we study?",
+    answer:
+      "Anything you can write down, read or draw. Rooms aren’t tied to a field, a school or an industry.",
+  },
+  {
     question: "How do I start a study room?",
     answer:
-      "Create an account, then create a room named after your subject. Choose public or private, then add classmates who have an account by their email.",
+      "Create an account, then create a room named after your subject. Choose public or private, then add people who have an account by their email.",
   },
   {
     question: "Who can see what’s in my room?",
@@ -618,9 +764,19 @@ const QUESTIONS = [
       "It uses a snapshot of the room’s notes, not the PDF or whiteboard. Each pack has a summary, a quiz, flashcards, recommendations and a misconception review.",
   },
   {
+    question: "What are live activities?",
+    answer:
+      "Questions the whole room answers at once: polls, quizzes, word clouds, rankings, Q&A and more. An owner or editor hosts, in the main room or in a breakout room.",
+  },
+  {
+    question: "Is my voice recorded?",
+    answer:
+      "No. When you ask the whiteboard by voice, your speech becomes text on your device and only the words go on the board. The first use downloads a speech model of about 80 MB.",
+  },
+  {
     question: "Can I rely on the generated material?",
     answer:
-      "Treat it as a study aid, not as an authority or as medical advice. Always check it against your own sources.",
+      "Treat it as a study aid, not as an authority. Always check it against your own sources.",
   },
   {
     question: "What can I upload?",
@@ -699,7 +855,7 @@ export function LandingClosing({
         </VStack>
         <Image
           src={STUDENTS}
-          alt="Five students with laptops and notebooks, surrounded by study notes and tool icons."
+          alt="Five people with laptops and notebooks, surrounded by study notes and tool icons."
           width={1942}
           height={809}
           sizes="(max-width: 1024px) 100vw, 620px"

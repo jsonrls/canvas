@@ -202,7 +202,13 @@ export const qollabWorkshopTheme = {
     "--qollab-button-height-sm": "32px",
     "--qollab-button-height-md": "36px",
     "--qollab-button-height-lg": "40px",
-    "--qollab-highlight": "light-dark(#FFE45C, #E8C93A)"
+    "--qollab-highlight": "light-dark(#FFE45C, #E8C93A)",
+    "--qollab-answer-1": "#2563EB",
+    "--qollab-answer-2": "#0F9488",
+    "--qollab-answer-3": "#D97706",
+    "--qollab-answer-4": "#DB2777",
+    "--qollab-answer-5": "#6B21A8",
+    "--qollab-answer-6": "#4D7C0F"
   },
   components: {
     "heading": {
@@ -409,6 +415,16 @@ export const qollabWorkshopTheme = {
         "boxShadow": "none !important",
         ":hover": {
           "backgroundColor": "var(--color-error-muted) !important"
+        }
+      },
+      "variant:accent-soft": {
+        "--qollab-button-edge": "transparent",
+        "backgroundColor": "var(--color-accent-muted) !important",
+        "borderRadius": "var(--radius-full) !important",
+        "paddingInline": "var(--spacing-4)",
+        "color": "var(--color-text-accent) !important",
+        ":hover": {
+          "backgroundColor": "color-mix(in srgb, var(--color-accent-muted), var(--color-accent) 12%) !important"
         }
       },
       "variant:link": {

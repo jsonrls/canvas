@@ -4,146 +4,256 @@ import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
-import { ProgressBar } from "@astryxdesign/core/ProgressBar";
 import { Text } from "@astryxdesign/core/Text";
-import { Token } from "@astryxdesign/core/Token";
 
+import {
+  ChoiceChart,
+  FlowingGrid,
+  RankedBars,
+  SpeechBubbles,
+  Swatch,
+  WordCloud,
+} from "@/components/collaboration/live/live-charts";
+import {
+  GridPlot,
+  NumberLine,
+  PinnedImage,
+  ScaleHill,
+} from "@/components/collaboration/live/live-plots";
 import { ChartColumnBig, Trophy } from "@/components/ui/icons";
-import type {
-  Leaderboard,
-  LiveQuestion,
-  LiveResults as LiveResultsData,
+import { PANEL_ROW } from "@/components/ui/panel";
+import {
+  layoutOf,
+  type Leaderboard,
+  type LivePoint,
+  type LiveQuestion,
+  type LiveResults as LiveResultsData,
 } from "@/lib/live/activities";
-
-type TextSize = "sm" | "base" | "lg" | "xl" | "2xl" | "3xl";
-const CLOUD_SIZES: TextSize[] = ["sm", "base", "lg", "xl", "2xl", "3xl"];
+import { ordinal } from "@/lib/live/shapes";
 
 function responseLabel(total: number): string {
   return total === 1 ? "1 response" : `${total} responses`;
 }
 
-function ChoiceResults({
-  counts,
-  question,
-  total,
-}: {
-  counts: number[];
-  question: LiveQuestion;
-  total: number;
-}): React.ReactElement {
-  return (
-    <VStack gap={4} as="ol" aria-label="Votes per option">
-      {question.options.map((option, index) => {
-        const isCorrect = question.correctOption === index;
-        const count = counts[index] ?? 0;
-        return (
-          <VStack as="li" gap={1} key={`${index}-${option}`}>
-            <HStack gap={2} hAlign="between" vAlign="center">
-              <HStack gap={2} vAlign="center" className="min-w-0">
-                <Text weight="medium" className="break-words">
-                  {option}
-                </Text>
-                {isCorrect ? (
-                  <Token label="Correct" color="green" size="sm" />
-                ) : null}
-              </HStack>
-              <Text type="supporting">{count}</Text>
-            </HStack>
-            <ProgressBar
-              label={`${option}: ${count} of ${total}`}
-              isLabelHidden
-              value={count}
-              max={Math.max(total, 1)}
-              variant={isCorrect ? "success" : "accent"}
-            />
-          </VStack>
-        );
-      })}
-    </VStack>
-  );
-}
-
-function WordCloud({
-  words,
-}: {
-  words: Array<{ text: string; count: number }>;
-}): React.ReactElement {
-  const highest = Math.max(...words.map((word) => word.count), 1);
-  return (
-    <HStack
-      gap={4}
-      wrap="wrap"
-      hAlign="center"
-      vAlign="center"
-      padding={4}
-      role="list"
-      aria-label="Word cloud"
-    >
-      {words.map((word) => {
-        const step = Math.round(
-          (word.count / highest) * (CLOUD_SIZES.length - 1),
-        );
-        return (
-          <Text
-            key={word.text}
-            role="listitem"
-            aria-label={`${word.text}, ${word.count}`}
-            size={CLOUD_SIZES[step]}
-            weight={step >= 4 ? "bold" : step >= 2 ? "semibold" : "normal"}
-            color={step >= 3 ? "accent" : undefined}
-            className="break-words"
-          >
-            {word.text}
-          </Text>
-        );
-      })}
-    </HStack>
-  );
-}
-
 function ScaleResults({
-  average,
-  counts,
-  total,
+  rows,
 }: {
-  average: number | null;
-  counts: number[];
-  total: number;
+  rows: Extract<LiveResultsData, { type: "scale" }>["rows"];
 }): React.ReactElement {
   return (
-    <VStack gap={4}>
-      <HStack gap={2} vAlign="end">
-        <Heading level={3}>{average ?? "–"}</Heading>
-        <Text type="supporting">average out of {counts.length}</Text>
-      </HStack>
-      <VStack gap={2} as="ol" aria-label="Ratings">
-        {counts.map((count, index) => (
-          <HStack as="li" gap={3} vAlign="center" key={index}>
-            <Text weight="medium">{index + 1}</Text>
-            <VStack className="flex-1">
-              <ProgressBar
-                label={`Rating ${index + 1}: ${count} of ${total}`}
-                isLabelHidden
-                value={count}
-                max={Math.max(total, 1)}
-              />
-            </VStack>
-            <Text type="supporting">{count}</Text>
-          </HStack>
-        ))}
-      </VStack>
+    <VStack gap={5} as="ol" aria-label="Ratings">
+      {rows.map((row, index) => (
+        <VStack as="li" gap={1} key={`${index}-${row.label}`}>
+          {row.label ? (
+            <Text size="lg" className="break-words">
+              {row.label}
+            </Text>
+          ) : null}
+          <ScaleHill average={row.average} color={index} counts={row.counts} />
+        </VStack>
+      ))}
     </VStack>
   );
 }
 
-export function LiveResults({
+function NumberResults({
   question,
   results,
 }: {
   question: LiveQuestion;
+  results: Extract<LiveResultsData, { type: "number" }>;
+}): React.ReactElement {
+  const { answer, max = 0, min = 0 } = question.settings;
+  return (
+    <VStack gap={4}>
+      <NumberLine
+        answer={answer}
+        buckets={results.buckets}
+        max={max}
+        min={min}
+      />
+      <Text as="p">
+        Average guess {results.average ?? "–"}.
+        {answer === undefined
+          ? ""
+          : ` ${results.exact} exact ${results.exact === 1 ? "guess" : "guesses"}.`}
+      </Text>
+    </VStack>
+  );
+}
+
+function GridResults({
+  question,
+  averages,
+}: {
+  question: LiveQuestion;
+  averages: LivePoint[];
+}): React.ReactElement {
+  const xLabel = question.settings.xLabel ?? "";
+  const yLabel = question.settings.yLabel ?? "";
+  return (
+    <HStack
+      gap={6}
+      hAlign="center"
+      className="flex-col items-center! lg:flex-row lg:items-start!"
+    >
+      <GridPlot
+        labels={question.options}
+        points={averages}
+        xLabel={xLabel}
+        yLabel={yLabel}
+      />
+      <List
+        aria-label="Average position per item"
+        className="w-full max-w-lg lg:w-auto lg:max-w-xs"
+      >
+        {question.options.map((option, index) => (
+          <ListItem
+            key={`${index}-${option}`}
+            startContent={<Swatch index={index} />}
+            label={
+              // A plain string would be cut to one line.
+              <Text as="span" className="break-words">
+                {option}
+              </Text>
+            }
+            description={`${xLabel} ${averages[index].x}, ${yLabel} ${averages[index].y}`}
+          />
+        ))}
+      </List>
+    </HStack>
+  );
+}
+
+function FormResults({
+  fields,
+  rows,
+}: {
+  fields: string[];
+  rows: string[][];
+}): React.ReactElement {
+  return (
+    <VStack as="ol" gap={2} aria-label="Form answers">
+      {rows.map((row, index) => (
+        <VStack
+          as="li"
+          gap={1}
+          className={`${PANEL_ROW} bg-muted!`}
+          key={index}
+        >
+          {fields.map((field, column) => (
+            <Text key={field} className="break-words">
+              <Text as="span" weight="semibold">
+                {field}:{" "}
+              </Text>
+              {row[column] || "–"}
+            </Text>
+          ))}
+        </VStack>
+      ))}
+    </VStack>
+  );
+}
+
+function ResultsBody({
+  imageUrl,
+  question,
+  results,
+}: {
+  imageUrl: string;
+  question: LiveQuestion;
   results: LiveResultsData;
 }): React.ReactElement {
-  if (results.total === 0) {
+  const { options } = question;
+  switch (results.type) {
+    case "choice":
+      return (
+        <ChoiceChart
+          correctOption={question.correctOption}
+          counts={results.counts}
+          layout={layoutOf(question)}
+          options={options}
+        />
+      );
+    case "words":
+      return <WordCloud words={results.words} />;
+    case "texts":
+      return layoutOf(question) === "grid" ? (
+        <FlowingGrid texts={results.texts} total={results.total} />
+      ) : (
+        <SpeechBubbles texts={results.texts} total={results.total} />
+      );
+    case "scale":
+      return <ScaleResults rows={results.rows} />;
+    case "ranking":
+      return (
+        <RankedBars
+          label="Items, best average first"
+          // First place fills the bar.
+          max={options.length}
+          rows={results.rows.map(({ average, option }) => ({
+            color: option,
+            name: options[option],
+            // Equal averages share a place, as equal quiz points do.
+            place: ordinal(
+              results.rows.findIndex((row) => row.average === average) + 1,
+            ),
+            value: options.length + 1 - average,
+            valueLabel: `average position ${average}`,
+          }))}
+        />
+      );
+    case "points":
+      return (
+        <RankedBars
+          label="Average points, most first"
+          max={Math.max(...results.averages, 1)}
+          rows={results.averages
+            .map((average, option) => ({
+              color: option,
+              name: options[option],
+              value: average,
+              valueLabel: `${average} points`,
+            }))
+            .sort((a, b) => b.value - a.value || a.color - b.color)}
+        />
+      );
+    case "grid":
+      return <GridResults question={question} averages={results.averages} />;
+    case "number":
+      return <NumberResults question={question} results={results} />;
+    case "form":
+      return <FormResults fields={options} rows={results.rows} />;
+    case "pin":
+      return (
+        <VStack gap={3} hAlign="center">
+          <PinnedImage
+            alt={`Image for: ${question.prompt}, with everyone’s pins`}
+            src={imageUrl}
+            pins={results.pins}
+            area={question.settings.area}
+          />
+          {results.inArea === null ? null : (
+            <Text as="p">
+              {results.inArea} of {results.total}{" "}
+              {results.total === 1 ? "pin is" : "pins are"} in the correct area.
+            </Text>
+          )}
+        </VStack>
+      );
+  }
+}
+
+export function LiveResults({
+  imageUrl,
+  question,
+  results,
+}: {
+  imageUrl: string;
+  question: LiveQuestion;
+  results: LiveResultsData;
+}): React.ReactElement {
+  if (results.total === 0 && results.type !== "pin") {
     return (
       <EmptyState
         isCompact
@@ -159,27 +269,7 @@ export function LiveResults({
       <Text type="supporting" aria-live="polite">
         {responseLabel(results.total)}
       </Text>
-      {results.type === "choice" ? (
-        <ChoiceResults
-          counts={results.counts}
-          question={question}
-          total={results.total}
-        />
-      ) : results.type === "words" ? (
-        <WordCloud words={results.words} />
-      ) : results.type === "texts" ? (
-        <List aria-label="Answers">
-          {results.texts.map((text, index) => (
-            <ListItem key={`${index}-${text}`} label={text} />
-          ))}
-        </List>
-      ) : (
-        <ScaleResults
-          average={results.average}
-          counts={results.counts}
-          total={results.total}
-        />
-      )}
+      <ResultsBody imageUrl={imageUrl} question={question} results={results} />
     </VStack>
   );
 }

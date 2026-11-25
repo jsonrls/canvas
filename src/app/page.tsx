@@ -9,6 +9,7 @@ import {
   LandingClosing,
   LandingFaq,
   LandingHero,
+  LandingLive,
   LandingPacks,
   LandingRoles,
   LandingSession,
@@ -22,11 +23,12 @@ import { getAuthenticatedContext } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "A shared room for the work of learning",
   description:
-    "Write shared notes, annotate PDFs, and sketch ideas with your study group. Keep the work together in Qollab.",
+    "Write shared notes, annotate PDFs, and sketch ideas with any group, on any subject. Keep the work together in Qollab.",
 };
 
 const NAVIGATION = [
   { href: "#workspace", label: "Study tools" },
+  { href: "#live", label: "Live activities" },
   { href: "#how", label: "How it works" },
   { href: "#roles", label: "Roles" },
   { href: "#faq", label: "FAQ" },
@@ -103,6 +105,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
         <LandingHero destination={destination} action={action} />
         <LandingWhy />
         <LandingTools />
+        <LandingLive />
         <LandingSession />
         <LandingPacks />
         <LandingRoles />

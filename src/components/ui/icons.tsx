@@ -16,6 +16,8 @@ import {
   Bookmark as BookmarkData,
   BrainCircuit as BrainCircuitData,
   ChartColumnBig as ChartColumnBigData,
+  ChevronUp as ChevronUpData,
+  ThumbsUp as ThumbsUpData,
   EyeOff as EyeOffData,
   Play as PlayData,
   Trophy as TrophyData,
@@ -46,6 +48,7 @@ import {
   Highlighter as HighlighterData,
   History as HistoryData,
   House as HouseData,
+  GripVertical as GripVerticalData,
   ImagePlus as ImagePlusData,
   Italic as ItalicData,
   KeyRound as KeyRoundData,
@@ -59,6 +62,7 @@ import {
   Maximize2 as Maximize2Data,
   MessageCircleQuestion as MessageCircleQuestionData,
   MessageSquare as MessageSquareData,
+  Mic as MicData,
   Minus as MinusData,
   MoreHorizontal as MoreHorizontalData,
   MousePointer2 as MousePointer2Data,
@@ -262,6 +266,10 @@ export function House(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={HouseData} />;
 }
 
+export function GripVertical(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={GripVerticalData} />;
+}
+
 export function ImagePlus(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={ImagePlusData} />;
 }
@@ -312,6 +320,10 @@ export function MessageCircleQuestion(props: IconProps): React.ReactElement {
 
 export function MessageSquare(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={MessageSquareData} />;
+}
+
+export function Mic(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={MicData} />;
 }
 
 export function Minus(props: IconProps): React.ReactElement {
@@ -492,4 +504,12 @@ export function Play(props: IconProps): React.ReactElement {
 
 export function Trophy(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={TrophyData} />;
+}
+
+export function ChevronUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ChevronUpData} />;
+}
+
+export function ThumbsUp(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={ThumbsUpData} />;
 }

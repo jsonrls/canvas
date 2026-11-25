@@ -116,7 +116,7 @@ export function AuthShell({
             >
               <VStack gap={0}>
                 <Text weight="semibold" className="text-lg!">
-                  Pharmacology review
+                  History study group
                 </Text>
                 <Text color="secondary">Sample room, 3 members</Text>
               </VStack>

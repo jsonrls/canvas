@@ -24,7 +24,7 @@ const owner = render({});
 assert.equal((owner.match(/<h1\b/g) ?? []).length, 1, "exactly one h1");
 assert.match(owner, /<h1\b[^>]*>[\s\S]*Organic Chemistry[\s\S]*<\/h1>/);
 assert.match(owner, /Private/);
-// Presence lives in the sidebar's People item and dialog, not the header.
+// Presence lives in the collapsed sidebar's People dialog, not the header.
 assert.doesNotMatch(owner, /people in this room|person in this room/);
 assert.doesNotMatch(owner, /astryx-avatar-group/);
 assert.match(owner, /Live/);

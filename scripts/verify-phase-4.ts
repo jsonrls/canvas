@@ -16,6 +16,9 @@ import {
   MAX_STUDY_PACK_OUTPUT_TOKENS,
   MAX_STUDY_SOURCE_CHARACTERS,
   normalizeStudySource,
+  MAX_FLASHCARD_COUNT,
+  MAX_QUIZ_COUNT,
+  readStudyCounts,
   readStudyPack,
   readStudyPackProviderResponse,
   STUDY_PACK_JSON_SCHEMA,
@@ -23,6 +26,7 @@ import {
   StudyPackProviderError,
   StudyPackValidationError,
 } from "../src/lib/ai/study-pack";
+import { readSavedStudyGuideRequest } from "../src/lib/ai/saved-study-guides";
 import {
   buildWhiteboardAnswerRequest,
   formatWhiteboardAnswer,
@@ -47,6 +51,53 @@ function verifyInputBoundaries(): void {
     StudyPackInputError,
   );
   assert.throws(() => normalizeStudySource(null), StudyPackInputError);
+}
+
+function verifyStudyCounts(): void {
+  const most = {
+    ...fixture,
+    quiz: Array.from({ length: MAX_QUIZ_COUNT }, () => fixture.quiz[0]),
+    flashcards: Array.from(
+      { length: MAX_FLASHCARD_COUNT },
+      () => fixture.flashcards[0],
+    ),
+  };
+  const message = {
+    stop_reason: "end_turn" as const,
+    content: [
+      { type: "text" as const, text: JSON.stringify(most), citations: null },
+    ],
+  };
+  // The most the dialog offers is the most the server generates.
+  assert.deepEqual(readStudyCounts(MAX_QUIZ_COUNT, MAX_FLASHCARD_COUNT), {
+    quizCount: 20,
+    flashcardCount: 20,
+  });
+  assert.deepEqual(readStudyCounts(99, 99), {
+    quizCount: 20,
+    flashcardCount: 20,
+  });
+  assert.deepEqual(readStudyCounts(0, -1), { quizCount: 3, flashcardCount: 4 });
+  assert.deepEqual(readStudyCounts("20", undefined), {
+    quizCount: 5,
+    flashcardCount: 8,
+  });
+  assert.deepEqual(readStudyPackProviderResponse(message, 20, 20), most);
+  assert.equal(readStudyPackProviderResponse(message, 6, 9).quiz.length, 6);
+  // Saving and reopening a guide keeps every item.
+  assert.deepEqual(
+    readSavedStudyGuideRequest({
+      generatedAt: "2026-11-25T00:00:00.000Z",
+      sourceCharacters: 2_000,
+      studyPack: most,
+    }).studyPack,
+    most,
+  );
+  assert.deepEqual(readStudyPack(most), most);
+  assert.throws(
+    () => readStudyPack({ ...most, quiz: [...most.quiz, fixture.quiz[0]] }),
+    StudyPackValidationError,
+  );
 }
 
 function verifyStudyPackValidation(): void {
@@ -84,57 +135,66 @@ function verifyStudyPackValidation(): void {
 }
 
 function verifyProviderContract(): void {
+  const source = normalizeStudySource("Grounded room note. ".repeat(8));
   const request = buildStudyPackProviderRequest(
-    " gpt-4o-mini",
+    " claude-opus-5-5",
     "cardiology-review",
-    normalizeStudySource("Grounded room note. ".repeat(8)),
+    source,
+    7,
+    12,
   );
-  assert.equal(request.store, false);
-  assert.equal(request.max_output_tokens, MAX_STUDY_PACK_OUTPUT_TOKENS);
-  assert.equal(request.model, "gpt-4o-mini");
-  assert.match(String(request.instructions), /untrusted room-note data/);
-  assert.match(String(request.instructions), /not medical advice/);
-
-  const text = request.text as {
-    format?: { schema?: unknown; strict?: unknown; type?: unknown };
-  };
-  assert.equal(text.format?.type, "json_schema");
-  assert.equal(text.format?.strict, true);
-  assert.notEqual(text.format?.schema, STUDY_PACK_JSON_SCHEMA);
-  const schema = text.format?.schema as {
-    properties?: {
-      flashcards?: { maxItems?: unknown };
-      quiz?: { maxItems?: unknown };
-    };
-  };
-  assert.equal(schema.properties?.quiz?.maxItems, 5);
-  assert.equal(schema.properties?.flashcards?.maxItems, 8);
-
-  const input = request.input as Array<{ content?: unknown }>;
-  assert.equal(typeof input[0]?.content, "string");
-  assert.match(String(input[0]?.content), /untrusted_collaborative_notes/);
-  assert.deepEqual(
-    readStudyPackProviderResponse({ output_text: JSON.stringify(fixture) }),
-    fixture,
+  assert.equal(request.model, "claude-opus-5-5");
+  assert.equal(request.max_tokens, MAX_STUDY_PACK_OUTPUT_TOKENS);
+  assert.equal(request.fallbacks, "default");
+  assert.deepEqual(request.betas, ["server-side-fallback-2026-07-01"]);
+  assert.equal(request.output_config?.effort, "low");
+  assert.equal(request.output_config?.format?.type, "json_schema");
+  assert.equal(request.output_config?.format?.schema, STUDY_PACK_JSON_SCHEMA);
+  // Claude rejects schemas with these keywords.
+  assert.doesNotMatch(
+    JSON.stringify(STUDY_PACK_JSON_SCHEMA),
+    /"(minItems|maxItems|minimum|maximum|minLength|maxLength)"/,
   );
-  assert.deepEqual(
-    readStudyPackProviderResponse({
-      output: [
-        {
-          content: [{ type: "output_text", text: JSON.stringify(fixture) }],
-        },
-      ],
-    }),
-    fixture,
+  assert.match(String(request.system), /untrusted room-note data/);
+  assert.match(String(request.system), /study assistant for any subject/);
+  assert.match(String(request.system), /not medical, legal or financial/);
+  assert.doesNotMatch(String(request.system), /medical study|board-review/);
+  assert.match(String(request.system), /exactly 7 quiz .* exactly 12 flash/);
+  // Notes travel as data, never inside the system prompt.
+  assert.doesNotMatch(String(request.system), /Grounded room note/);
+  assert.match(
+    JSON.stringify(request.messages),
+    /untrusted_collaborative_notes.*Grounded room note/,
   );
   assert.throws(
-    () =>
-      readStudyPackProviderResponse({
-        output: [{ content: [{ type: "refusal", refusal: "declined" }] }],
-      }),
-    (error: unknown) =>
-      error instanceof StudyPackProviderError && error.code === "refusal",
+    () => buildStudyPackProviderRequest("bad model!", "room", source),
+    StudyPackInputError,
   );
+
+  const read = (text: string) =>
+    readStudyPackProviderResponse({
+      stop_reason: "end_turn",
+      content: [{ type: "text", text, citations: null }],
+    });
+  assert.deepEqual(read(JSON.stringify(fixture)), fixture);
+  for (const text of ["not json", "", JSON.stringify({ summary: {} })]) {
+    assert.throws(
+      () => read(text),
+      (error: unknown) =>
+        error instanceof StudyPackProviderError &&
+        error.code === "invalid-response",
+    );
+  }
+  for (const stopReason of ["refusal", "max_tokens"] as const) {
+    assert.throws(
+      () =>
+        readStudyPackProviderResponse({ stop_reason: stopReason, content: [] }),
+      (error: unknown) =>
+        error instanceof StudyPackProviderError &&
+        error.code ===
+          (stopReason === "refusal" ? "refusal" : "invalid-response"),
+    );
+  }
 }
 
 function verifyWhiteboardAnswerContract(): void {
@@ -334,17 +394,32 @@ function verifyStudyViews(): void {
     loadSavedGuide: async () => {},
     pendingDeleteId: null,
     deletingGuideId: null,
+    deleteError: "",
     deleteSavedGuide: async () => {},
     setPendingDeleteId: () => {},
   };
   const library = renderToStaticMarkup(createElement(SavedGuideLibrary, props));
   assert.match(library, /aria-label="Delete Review guide"/);
-  assert.doesNotMatch(library, /Delete this saved guide\?/);
+  assert.doesNotMatch(library, /“Review guide” will be permanently deleted/);
   const confirmation = renderToStaticMarkup(
     createElement(SavedGuideLibrary, { ...props, pendingDeleteId: "guide-1" }),
   );
-  assert.match(confirmation, /aria-label="Confirm deleting Review guide"/);
+  assert.match(confirmation, /role="alertdialog"/);
   assert.match(confirmation, /Delete this saved guide\?/);
+  assert.match(confirmation, /“Review guide” will be permanently deleted/);
+  assert.match(confirmation, /data-autofocus="true"[^>]*>.*Keep guide/);
+  assert.doesNotMatch(confirmation, /role="alert"/);
+  const failed = renderToStaticMarkup(
+    createElement(SavedGuideLibrary, {
+      ...props,
+      deleteError: "The saved guide could not be deleted.",
+      pendingDeleteId: "guide-1",
+    }),
+  );
+  assert.match(
+    failed,
+    /role="alert"[^>]*>The saved guide could not be deleted\./,
+  );
   const deleting = renderToStaticMarkup(
     createElement(SavedGuideLibrary, {
       ...props,
@@ -353,7 +428,6 @@ function verifyStudyViews(): void {
     }),
   );
   assert.match(deleting, /Deleting…/);
-  assert.equal((deleting.match(/disabled=""/g) ?? []).length, 2);
 }
 
 // These are source-boundary policies, not evidence of runtime authorization.
@@ -376,6 +450,7 @@ async function verifyServerBoundaries(): Promise<void> {
 
 async function main(): Promise<void> {
   verifyInputBoundaries();
+  verifyStudyCounts();
   verifyStudyPackValidation();
   verifyProviderContract();
   verifyWhiteboardAnswerContract();

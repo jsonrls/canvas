@@ -15,6 +15,8 @@ npm run lint
 npm run typecheck
 npm run build
 npm run verify:buttons
+npm run verify:live-activities
+npm run verify:live-breakouts
 npm run verify:password-reset
 npm run verify:account-profile
 npm run verify:conflict-review

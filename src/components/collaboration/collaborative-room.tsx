@@ -29,6 +29,7 @@ import { RoomHeader } from "@/components/collaboration/room-header";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { readNotesText } from "@/lib/collaboration/notes-text";
 import { useNotesCollaboration } from "@/lib/collaboration/use-notes-collaboration";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -57,10 +58,20 @@ import {
   useRoomPresentation,
   type PresentedWorkspace,
 } from "@/hooks/use-room-presentation";
+import { LivePrompt } from "@/components/collaboration/live/live-prompt";
 import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
+import { useActiveTool } from "@/hooks/use-active-tool";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
 type WorkspaceTool = RoomDocumentKind | "assistant" | "live";
+
+const WORKSPACE_TOOLS: readonly [WorkspaceTool, ...WorkspaceTool[]] = [
+  "notes",
+  "pdf",
+  "whiteboard",
+  "live",
+  "assistant",
+];
 
 interface CollaborativeRoomProps {
   availableRooms: Array<{ name: string; slug: string }>;
@@ -142,7 +153,7 @@ export function CollaborativeRoom({
     });
   const canManagePdf = currentUserRole !== "viewer";
   const canEdit = canManagePdf || viewerCanCollaborate;
-  const [activeTool, setActiveTool] = useState<WorkspaceTool>("notes");
+  const [activeTool, setActiveTool] = useActiveTool(WORKSPACE_TOOLS);
   const live = useLiveActivities({
     roomSlug: roomId,
     isActive: activeTool === "live",
@@ -155,7 +166,10 @@ export function CollaborativeRoom({
     string | null
   >(null);
   const [showFollowPrompt, setShowFollowPrompt] = useState(false);
-  const [assistantSourceText, setAssistantSourceText] = useState("");
+  // Null until the notes are read, after a refresh on the assistant.
+  const [assistantSourceText, setAssistantSourceText] = useState<string | null>(
+    null,
+  );
   const [isVersionHistoryCollapsed, setIsVersionHistoryCollapsed] =
     useState(true);
   const notesWorkspaceRef = useRef<HTMLElement>(null);
@@ -221,7 +235,7 @@ export function CollaborativeRoom({
       setActiveTool(nextTool);
       setIsMobileNavigationOpen(false);
     },
-    [canEdit],
+    [canEdit, setActiveTool],
   );
 
   const followPresenter = useCallback((): void => {
@@ -229,7 +243,7 @@ export function CollaborativeRoom({
     setFollowingPresenterId(presentation.presenterId);
     setShowFollowPrompt(false);
     setActiveTool(presentation.workspace);
-  }, [canEdit, presentation]);
+  }, [canEdit, presentation, setActiveTool]);
 
   useEffect(() => {
     if (canEdit) return;
@@ -251,6 +265,7 @@ export function CollaborativeRoom({
     followingPresenterId,
     presenterId,
     presenterWorkspace,
+    setActiveTool,
   ]);
 
   const handleNotesScroll = useCallback(
@@ -309,9 +324,20 @@ export function CollaborativeRoom({
   ]);
 
   const openAssistant = (): void => {
-    setAssistantSourceText(editorRef.current?.captureDraft()?.text ?? "");
+    const draft = editorRef.current?.captureDraft();
+    setAssistantSourceText(
+      draft?.text ?? (connection ? readNotesText(connection.document) : null),
+    );
     chooseTool("assistant");
   };
+
+  useEffect(() => {
+    if (activeTool !== "assistant" || assistantSourceText !== null) return;
+    if (!connection || remoteStatus === "connecting") return;
+    queueMicrotask(() =>
+      setAssistantSourceText(readNotesText(connection.document)),
+    );
+  }, [activeTool, assistantSourceText, connection, remoteStatus]);
 
   const otherRooms = availableRooms.filter((room) => room.slug !== roomId);
   const toolLabels: Record<WorkspaceTool, string> = {
@@ -321,12 +347,18 @@ export function CollaborativeRoom({
     assistant: "AI study assistant",
     live: "Live activities",
   };
-  const liveSession = live.snapshot?.session;
-  const showLivePrompt =
-    activeTool !== "live" &&
-    live.snapshot?.canHost === false &&
-    Boolean(liveSession?.isAccepting) &&
-    !live.snapshot?.myResponse;
+  const renderAccountMenu = (
+    appearance: "rail" | "sidebar",
+  ): React.ReactElement => (
+    <SidebarAccountMenu
+      appearance={appearance}
+      beforeSignOut={prepareForSignOut}
+      displayName={connection?.user.name ?? currentUser.displayName}
+      role={currentUserRole}
+      userColor={connection?.user.color}
+      userId={currentUser.id}
+    />
+  );
   const collaborationControl =
     currentUserRole === "viewer" ? (
       <ViewerCollaborationStatus compact enabled={viewerCanCollaborate} />
@@ -443,15 +475,22 @@ export function CollaborativeRoom({
         sideNavigation={
           <QollabSideNavigation
             footerIcons={
-              // Expanded, "People" is a labelled item in the Room group instead.
+              // The expanded sidebar has no People item (2026-11-25).
               isSidebarCollapsed ? (
-                <Button
-                  label="People and room"
-                  isIconOnly
-                  icon={<UsersRound aria-hidden="true" size={16} />}
-                  variant="ghost"
-                  onClick={() => setIsRoomControlsOpen(true)}
-                />
+                <VStack
+                  gap={1}
+                  hAlign="center"
+                  className={WORKSPACE_FLAT_CONTROLS}
+                >
+                  <Button
+                    label="People and room"
+                    isIconOnly
+                    icon={<UsersRound aria-hidden="true" size={16} />}
+                    variant="ghost"
+                    onClick={() => setIsRoomControlsOpen(true)}
+                  />
+                  {renderAccountMenu("rail")}
+                </VStack>
               ) : undefined
             }
             collapsedHeader={<QollabBrandLogo variant="mark" />}
@@ -578,13 +617,6 @@ export function CollaborativeRoom({
                     ),
                     size: "lg",
                   },
-                  {
-                    id: "people",
-                    label: "People",
-                    icon: UsersRound,
-                    onClick: () => setIsRoomControlsOpen(true),
-                    size: "lg",
-                  },
                 ],
               },
             ]}
@@ -598,15 +630,7 @@ export function CollaborativeRoom({
             footer={
               !isSidebarCollapsed ? (
                 <VStack padding={2} className={WORKSPACE_FLAT_CONTROLS}>
-                  <SidebarAccountMenu
-                    beforeSignOut={prepareForSignOut}
-                    displayName={
-                      connection?.user.name ?? currentUser.displayName
-                    }
-                    role={currentUserRole}
-                    userColor={connection?.user.color}
-                    userId={currentUser.id}
-                  />
+                  {renderAccountMenu("sidebar")}
                 </VStack>
               ) : undefined
             }
@@ -664,22 +688,8 @@ export function CollaborativeRoom({
               <Button label="Follow presenter" onClick={followPresenter} />
             </HStack>
           ) : null}
-          {showLivePrompt ? (
-            <HStack
-              gap={3}
-              padding={3}
-              wrap="wrap"
-              vAlign="center"
-              className="border-b border-border bg-surface"
-              role="status"
-            >
-              <Text className="flex-1">A live question is open.</Text>
-              <Button
-                label="Answer now"
-                icon={<ChartColumnBig aria-hidden="true" size={16} />}
-                onClick={() => chooseTool("live")}
-              />
-            </HStack>
+          {activeTool !== "live" ? (
+            <LivePrompt live={live} onAnswer={() => chooseTool("live")} />
           ) : null}
           {activeTool === "notes" ? (
             <VStack
@@ -755,9 +765,12 @@ export function CollaborativeRoom({
             <VStack
               as="section"
               className={
-                activeTool === "assistant" || activeTool === "live"
-                  ? "flex-1 min-h-0 overflow-auto bg-surface"
-                  : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+                activeTool === "assistant"
+                  ? // Tabs of different heights must not move as the scrollbar goes.
+                    "flex-1 min-h-0 overflow-auto scrollbar-gutter-stable bg-surface"
+                  : activeTool === "live"
+                    ? "flex-1 min-h-0 overflow-auto bg-surface"
+                    : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
               }
               aria-label={toolLabels[activeTool]}
             >
@@ -772,13 +785,19 @@ export function CollaborativeRoom({
                 />
               ) : activeTool === "whiteboard" ? (
                 <WhiteboardStudyTool
+                  canAskAi={canManagePdf}
                   canEdit={canEdit}
                   currentUser={currentUser}
                   initialState={initialDocumentStates.whiteboard}
                   roomId={roomId}
                 />
               ) : activeTool === "live" ? (
-                <LiveActivitiesTool live={live} />
+                <LiveActivitiesTool live={live} roomSlug={roomId} />
+              ) : assistantSourceText === null ? (
+                <LoadingIndicator
+                  label="Reading the shared notes…"
+                  size="panel"
+                />
               ) : (
                 <AiStudyTool
                   onReturnToNotes={() => chooseTool("notes")}

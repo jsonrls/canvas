@@ -12,7 +12,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 interface SidebarAccountMenuProps {
-  appearance?: "header" | "sidebar";
+  /** "rail" is the avatar alone, for a collapsed sidebar. */
+  appearance?: "header" | "rail" | "sidebar";
   beforeSignOut: () => Promise<void>;
   displayName: string;
   profileHref?: string;
@@ -42,9 +43,20 @@ export function SidebarAccountMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const initial = displayName.trim().charAt(0).toUpperCase() || "?";
   const isHeaderMenu = appearance === "header";
+  const isRail = appearance === "rail";
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // The rail's menu reaches over the page, so it needs the top layer, where
+    // it is placed against the window.
+    const menu = menuRef.current;
+    const trigger = triggerRef.current?.getBoundingClientRect();
+    if (isRail && menu && trigger) {
+      menu.style.left = `${trigger.right + 8}px`;
+      menu.style.bottom = `${window.innerHeight - trigger.bottom}px`;
+      menu.showPopover();
+    }
 
     const animationFrame = window.requestAnimationFrame(() => {
       const items = Array.from(
@@ -83,7 +95,7 @@ export function SidebarAccountMenu({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [isOpen]);
+  }, [isOpen, isRail]);
 
   const openMenu = (focusTarget: FocusTarget): void => {
     focusTargetRef.current = focusTarget;
@@ -161,6 +173,7 @@ export function SidebarAccountMenu({
             openMenu(event.key === "ArrowUp" ? "last" : "first");
           }
         }}
+        title={isRail ? displayName : undefined}
         ref={triggerRef}
         style={
           {
@@ -172,16 +185,22 @@ export function SidebarAccountMenu({
         <span className="current-user__avatar" aria-hidden="true">
           {initial}
         </span>
-        <span className="current-user__copy">
-          <strong>{displayName}</strong>
-          {!isHeaderMenu ? <small>You · {role}</small> : null}
-        </span>
-        <AppIcon
-          iconData={isHeaderMenu !== isOpen ? ChevronDownData : ChevronUpData}
-          className="sidebar-account-menu__chevron transform-none!"
-          aria-hidden="true"
-          size={15}
-        />
+        {isRail ? null : (
+          <>
+            <span className="current-user__copy">
+              <strong>{displayName}</strong>
+              {!isHeaderMenu ? <small>You · {role}</small> : null}
+            </span>
+            <AppIcon
+              iconData={
+                isHeaderMenu !== isOpen ? ChevronDownData : ChevronUpData
+              }
+              className="sidebar-account-menu__chevron transform-none!"
+              aria-hidden="true"
+              size={15}
+            />
+          </>
+        )}
       </ButtonControl>
 
       {isOpen ? (
@@ -190,6 +209,7 @@ export function SidebarAccountMenu({
           className="sidebar-account-menu__popover"
           id={menuId}
           onKeyDown={handleMenuKeyDown}
+          popover={isRail ? "manual" : undefined}
           ref={menuRef}
           role="menu"
         >

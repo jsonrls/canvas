@@ -518,6 +518,22 @@
   box-shadow: var(--shadow-med);
 }
 
+/* Collapsed sidebar: the avatar alone. Its menu is a popover beside the rail;
+   the resets undo the browser's popover placement. */
+.sidebar-account-menu--rail .sidebar-account-menu__trigger {
+  justify-content: center;
+  width: calc(var(--spacing-1) * 11);
+  min-height: calc(var(--spacing-1) * 11);
+}
+
+.sidebar-account-menu--rail .sidebar-account-menu__popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: 220px;
+  transform-origin: bottom left;
+}
+
 .sidebar-account-menu__popover .sidebar-account-menu__item {
   justify-content: flex-start;
   gap: var(--spacing-3);

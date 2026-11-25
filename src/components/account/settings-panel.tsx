@@ -7,7 +7,9 @@ import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import Link from "next/link";
+import { useState } from "react";
 
+import { PasswordResetDialog } from "@/components/account/password-reset-dialog";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ArrowRight } from "@/components/ui/icons";
 import {
@@ -23,6 +25,8 @@ interface SettingsPanelProps {
   userId: string;
 }
 
+const RESET_HREF = "/reset-password";
+
 const accountActions = [
   {
     title: "Public profile",
@@ -34,7 +38,8 @@ const accountActions = [
     title: "Password & recovery",
     description: "Get an email link to choose a new password.",
     label: "Reset password",
-    href: "/reset-password",
+    // The page asks for an email; with one at hand, a dialog does instead.
+    href: RESET_HREF,
   },
   {
     title: "Study rooms",
@@ -50,6 +55,8 @@ export function SettingsPanel({
   email,
   userId,
 }: SettingsPanelProps): React.ReactElement {
+  const [isResetting, setIsResetting] = useState(false);
+
   return (
     <>
       <VStack
@@ -109,14 +116,24 @@ export function SettingsPanel({
                 <Text weight="semibold">{action.title}</Text>
                 <Text color="secondary">{action.description}</Text>
               </VStack>
-              <Button
-                as={Link}
-                href={action.href}
-                label={action.label}
-                variant="secondary"
-                endContent={<ArrowRight aria-hidden="true" size={16} />}
-                className="shrink-0 px-4"
-              />
+              {action.href === RESET_HREF && email ? (
+                <Button
+                  label={action.label}
+                  variant="secondary"
+                  aria-haspopup="dialog"
+                  className="shrink-0 px-4"
+                  onClick={() => setIsResetting(true)}
+                />
+              ) : (
+                <Button
+                  as={Link}
+                  href={action.href}
+                  label={action.label}
+                  variant="secondary"
+                  endContent={<ArrowRight aria-hidden="true" size={16} />}
+                  className="shrink-0 px-4"
+                />
+              )}
             </HStack>
           ))}
         </VStack>
@@ -163,6 +180,14 @@ export function SettingsPanel({
         </VStack>
         <SignOutButton label="Sign out" userId={userId} variant="danger" />
       </VStack>
+
+      {email ? (
+        <PasswordResetDialog
+          email={email}
+          isOpen={isResetting}
+          onClose={() => setIsResetting(false)}
+        />
+      ) : null}
     </>
   );
 }

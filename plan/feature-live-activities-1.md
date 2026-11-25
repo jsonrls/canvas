@@ -38,10 +38,12 @@
 ### Task 1: Pure live-activity domain logic
 
 **Files:**
+
 - Create: `src/lib/live/activities.ts`
 - Test: `scripts/verify-live-activities.ts`, plus `package.json` script `verify:live-activities` = `node --import tsx scripts/verify-live-activities.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type LiveQuestionKind = "poll" | "word_cloud" | "open_ended" | "scale" | "quiz"`
   - `interface LiveQuestionDraft { kind; prompt: string; options: string[]; correctOption: number | null; timeLimitSeconds: number | null }`
@@ -76,9 +78,11 @@
 ### Task 2: Database migration
 
 **Files:**
+
 - Create: `supabase/migrations/20261124090000_add_live_activities.sql`
 
 Tables:
+
 - **`live_questions`**: `id`, `room_id → rooms cascade`, `created_by → auth.users cascade`, `kind`, `prompt`, `options jsonb`, `correct_option smallint`, `time_limit_seconds smallint`, `position int`, `created_at`. Check constraints mirror the Global Constraints.
 - **`live_sessions`**: `room_id` primary key `→ rooms cascade`, `question_id → live_questions on delete set null`, `is_accepting bool`, `show_results bool`, `opened_at`, `updated_at`.
 - **`live_responses`**: `id`, `question_id → live_questions cascade`, `room_id → rooms cascade`, `user_id → auth.users cascade`, `value jsonb`, `points int`, `submitted_at`, `unique (question_id, user_id)`.
@@ -92,10 +96,12 @@ Enable RLS on all three tables with no policies, and `revoke all … from public
 ### Task 3: Live route
 
 **Files:**
+
 - Create: `src/lib/live/repository.ts` (service-role reads and writes, mapping rows to the Task 1 types)
 - Create: `src/app/api/rooms/[roomId]/live/route.ts` (`GET`, `POST`)
 
 **Interfaces:**
+
 - Consumes: `getRoomMemberAccess`, `getAuthenticatedContext`, `createServiceRoleClient`, and the Task 1 helpers.
 - Produces the `GET` payload `LiveSnapshot`, exported from `src/lib/live/activities.ts`:
   `{ canHost: boolean; questions: LiveQuestion[] (hosts only, otherwise []); session: { questionId: string | null; isAccepting: boolean; showResults: boolean; closesAt: string | null }; current: LiveQuestion | null (correctOption null unless host or showResults); myResponse: LiveResponseValue | null; myPoints: number | null; responseCount: number; results: LiveResults | null (host always, others only when showResults); leaderboard: { top; me } | null (when showResults and current is quiz) }`
@@ -108,6 +114,7 @@ Enable RLS on all three tables with no policies, and `revoke all … from public
   - `reset_results`, which deletes the room's responses
 
   Any member can send `respond` with `{ questionId, value }`. Each POST returns the fresh `LiveSnapshot`.
+
 - Status codes: 401 not signed in, 404 not a member, 403 host action by a non-host, 400 `LiveInputError`, 409 for a closed question or duplicate answer, 502 otherwise. Headers: `Cache-Control: private, no-store`.
 - Leaderboard names come from `user_profiles.display_name`, read with the service-role client. The fallback is "Participant".
 
@@ -118,9 +125,11 @@ Enable RLS on all three tables with no policies, and `revoke all … from public
 ### Task 4: Polling hook
 
 **Files:**
+
 - Create: `src/components/collaboration/live/use-live-activities.ts`
 
 **Interfaces:**
+
 - `useLiveActivities({ roomSlug: string; isActive: boolean }): { snapshot: LiveSnapshot | null; error: string | null; isMutating: boolean; act(body: LiveAction): Promise<boolean> }`
 - Polls every 2000 ms when `isActive` and every 5000 ms otherwise. It pauses while `document.hidden` and ignores out-of-order responses.
 
@@ -130,6 +139,7 @@ Enable RLS on all three tables with no policies, and `revoke all … from public
 ### Task 5: Live tool UI and room wiring
 
 **Files:**
+
 - Create: `src/components/collaboration/live/live-activities-tool.tsx` (the host stage, question list and student stage)
 - Create: `src/components/collaboration/live/live-question-form.tsx`
 - Create: `src/components/collaboration/live/live-results.tsx` (choice bars with `ProgressBar`, a word cloud with `Text` sized by count, open texts as a `List`, scale distribution, leaderboard)
@@ -142,6 +152,7 @@ Enable RLS on all three tables with no policies, and `revoke all … from public
 - Modify: `src/hooks/use-room-presentation.ts` (`PresentedWorkspace` adds `"live"`, so followers move with the host)
 
 Behaviour:
+
 - **Host stage:**
   - a question list with present and delete
   - an "Add question" form
@@ -159,6 +170,58 @@ Behaviour:
 - [ ] **Step 3: Verify in the browser** that the Live tab renders for a host, and that the student banner and idle state render. The full answer flow needs the migration applied.
 - [ ] **Step 4: Commit** `feat(live): live activities room tool`.
 
+## Version 2 (2026-11-25): the other Mentimeter types
+
+Added: multi-statement scales, ranking, 100 points, 2×2 grid, guess the number,
+quick form, pin on image and live Q&A.
+
+- Migration `20261125090000_add_live_question_types.sql`: `settings` and
+  `image_path` on `live_questions`, `live_qa_items`, `live_qa_votes`, and the
+  private `live-images` bucket. No client grants.
+- A secret answer (quiz, guess the number) is stripped for students until
+  results are shown. Such a question runs once per reset.
+- Quick form answers go to hosts only, whatever `show_results` says.
+- Q&A never sends authors or voters. Hosts can approve, mark answered and hide.
+  Ten questions per person per slide; no votes for your own.
+- Pin images are shrunk to JPEG in the browser (2 MB), checked on the server,
+  and served by `/live/image`. Students only get the presented one.
+
+## Excel export (2026-11-25)
+
+Hosts download every question's results as one `.xlsx` from `/live/export`:
+a summary, the quiz leaderboard, and a sheet per question. Answers carry no
+names and are sorted, so rows cannot be matched across sheets. Text cells are
+inline strings, never formulas. `src/lib/xlsx.ts` writes the file without a
+dependency.
+
+## Next: visuals
+
+Proposed in [feature-live-visuals-1.md](feature-live-visuals-1.md).
+
 ## Not in this version
 
-Ranking, 100 points, 2×2 grid, pin on image, image slides, room-level Q&A (breakout Q&A exists), self-paced forms, Excel/PDF export, AI-generated questions, editing or reordering questions (delete and re-add instead), and push updates (polling now; `shortcut` comment marks the upgrade to the presence socket).
+Text, image and video slides, correct areas on pin images, self-paced forms,
+PDF export, AI-generated questions, editing or reordering questions, and
+push updates (polling now; the `shortcut` comment marks the upgrade).
+
+## Reordering (2026-11-25)
+
+`reorder_questions` takes every question id in the room, in the new order, from
+hosts only. A list that does not name each question exactly once is refused, so
+a question added or deleted meanwhile cannot be lost. Only rows whose place
+changed are written; the writes are not one transaction, so after a failure the
+list shows the order that was saved.
+
+## Breakout rooms (2026-11-25)
+
+The user asked to "add Live Activities in Breakout rooms also". Each breakout
+has its own activities, as it has its own notes, PDF and whiteboard.
+
+- The room's owner and editors host; joined viewers answer.
+- Migration `20261125120000_add_breakout_live_activities.sql` adds five
+  `breakout_live_*` tables. Separate tables, not a column on `live_*`: a main
+  room works before and after the migration, and no main-room query can return
+  a breakout row. Until it is applied, the tool in a breakout says it is
+  unavailable.
+- `breakouts/[code]/live`, `/export` and `/image` re-export the main handlers.
+- Checked by `npm run verify:live-breakouts`.

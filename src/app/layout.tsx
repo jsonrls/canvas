@@ -31,8 +31,7 @@ export const metadata: Metadata = {
     default: "Qollab",
     template: "%s · Qollab",
   },
-  description:
-    "A focused, collaborative study canvas for board exam preparation.",
+  description: "A live study room for any group and any subject.",
 };
 
 export const viewport: Viewport = {

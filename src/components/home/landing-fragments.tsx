@@ -2,8 +2,10 @@ import { Avatar } from "@astryxdesign/core/Avatar";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { VStack } from "@astryxdesign/core/VStack";
 
+import { RankedBars } from "@/components/collaboration/live/live-charts";
 import { Check, MousePointer2, StickyNote } from "@/components/ui/icons";
 
 /*
@@ -43,22 +45,21 @@ export function NotesFragment({
   return (
     <VStack gap={3} className="relative p-5">
       <Heading level={3} className="landing-h3">
-        Heart failure medications
+        The printing press
       </Heading>
       <Text as="p" className="leading-relaxed">
-        ACE inhibitors lower afterload.{" "}
+        Gutenberg printed in Mainz.{" "}
         <Text className="rounded-sm bg-yellow-subtle">
-          Watch for a dry cough and high potassium.
+          Movable type made copying fast.
         </Text>
       </Text>
       {isBrief ? null : (
         <>
           <Text as="p" className="leading-relaxed">
-            Loop diuretics move fluid fast, so monitor potassium and daily
-            weight.
+            Cheaper books spread arguments, not only scripture.
           </Text>
           <Text as="p" className="leading-relaxed">
-            Digoxin: count the apical pulse for a full minute before each dose.
+            Woodblocks and movable type came earlier in East Asia.
           </Text>
         </>
       )}
@@ -66,7 +67,7 @@ export function NotesFragment({
         <Avatar name="Lea Tan" size="sm" tooltip={false} />
         <VStack gap={0}>
           <Text weight="semibold">Lea</Text>
-          <Text>When do we hold a dose? Adding this for Thursday.</Text>
+          <Text>Did it cause the Reformation? Adding this for Thursday.</Text>
         </VStack>
       </HStack>
       <NamedCursor name="Ana" className="top-24 right-4" />
@@ -77,18 +78,18 @@ export function NotesFragment({
 export function PdfFragment(): React.ReactElement {
   return (
     <VStack gap={3} className="relative p-5">
-      <Text weight="semibold">Chapter 6: Cardiac output</Text>
+      <Text weight="semibold">Chapter 6: Print and protest</Text>
       <Text as="p" className="leading-relaxed">
         <Text className="rounded-sm bg-yellow-subtle">
-          Cardiac output is heart rate multiplied by stroke volume.
+          Luther’s theses were reprinted across German cities.
         </Text>{" "}
-        When either falls, the body compensates through the other.
+        Printers, as much as couriers, carried the argument.
       </Text>
       <HStack gap={2} vAlign="start" className="rounded-xl bg-muted p-3">
         <Avatar name="Lea Tan" size="sm" tooltip={false} />
         <VStack gap={0}>
           <Text weight="semibold">Lea, page 12</Text>
-          <Text>Can someone explain afterload in plain words?</Text>
+          <Text>Can someone find a second source for this?</Text>
         </VStack>
       </HStack>
       <HStack
@@ -97,17 +98,17 @@ export function PdfFragment(): React.ReactElement {
         className="self-start rounded-lg bg-yellow-subtle px-3 py-1"
       >
         <StickyNote size={16} />
-        <Text weight="medium">On the quiz</Text>
+        <Text weight="medium">Use in the essay</Text>
       </HStack>
     </VStack>
   );
 }
 
 const SKETCH_NODES = [
-  { label: "Low blood pressure", x: 16, y: 24, width: 176 },
-  { label: "Renin", x: 268, y: 24, width: 96 },
-  { label: "Angiotensin II", x: 232, y: 124, width: 150 },
-  { label: "Aldosterone", x: 24, y: 124, width: 130 },
+  { label: "Movable type", x: 16, y: 24, width: 176 },
+  { label: "Books", x: 268, y: 24, width: 96 },
+  { label: "More readers", x: 232, y: 124, width: 150 },
+  { label: "New ideas", x: 24, y: 124, width: 130 },
 ];
 
 export function WhiteboardFragment(): React.ReactElement {
@@ -120,7 +121,7 @@ export function WhiteboardFragment(): React.ReactElement {
       <svg
         viewBox="0 0 400 200"
         role="img"
-        aria-label="Sample whiteboard diagram: low blood pressure leads to renin, angiotensin II and aldosterone."
+        aria-label="Sample whiteboard diagram: movable type leads to books, more readers and new ideas."
         className="h-auto w-full"
       >
         {SKETCH_NODES.map(({ label, x, y, width }) => (
@@ -156,21 +157,82 @@ export function WhiteboardFragment(): React.ReactElement {
   );
 }
 
-const QUIZ_CHOICES = ["Sodium", "Potassium", "Calcium", "Glucose"];
+/** A spoken question written on the board, and the answer drawn beside it. */
+export function BoardAnswerFragment(): React.ReactElement {
+  return (
+    <VStack gap={2} className="p-5">
+      <svg
+        viewBox="0 0 400 150"
+        role="img"
+        aria-label="Sample whiteboard: the question “When was the Gutenberg Bible printed?” leads to the answer “About 1455”."
+        className="h-auto w-full"
+      >
+        <g className="fill-none stroke-primary" strokeWidth={2}>
+          <ellipse cx={100} cy={75} rx={94} ry={58} />
+          <path d="M202 75 H252 M244 69 L252 75 L244 81" />
+        </g>
+        <ellipse
+          cx={328}
+          cy={75}
+          rx={68}
+          ry={48}
+          className="fill-accent-muted stroke-accent-bg"
+          strokeWidth={2}
+        />
+        <g textAnchor="middle" fontSize={15} className="fill-primary">
+          <text x={100} y={58}>
+            When was the
+          </text>
+          <text x={100} y={80}>
+            Gutenberg Bible
+          </text>
+          <text x={100} y={102}>
+            printed?
+          </text>
+          <text x={328} y={80} fontWeight={600}>
+            About 1455
+          </text>
+        </g>
+      </svg>
+      <HStack gap={2} vAlign="center" className="rounded-xl bg-muted p-3">
+        <StatusDot variant="error" label="Microphone" isPulsing />
+        <VStack gap={0} className="min-w-0">
+          <Text weight="semibold">Listening… 0:04 of 1:00</Text>
+          <Text>Your voice stays on this device.</Text>
+        </VStack>
+      </HStack>
+    </VStack>
+  );
+}
+
+const POLL_ROWS = [
+  { color: 0, name: "Cheaper books", value: 6, valueLabel: "6 votes" },
+  { color: 1, name: "More readers", value: 4, valueLabel: "4 votes" },
+  { color: 2, name: "Faster news", value: 2, valueLabel: "2 votes" },
+];
+
+export function PollFragment(): React.ReactElement {
+  return (
+    <VStack gap={3} className="p-5">
+      <Text weight="semibold">What did printing change most?</Text>
+      <RankedBars label="Sample poll" max={6} rows={POLL_ROWS} />
+    </VStack>
+  );
+}
+
+const QUIZ_CHOICES = ["Venice", "Mainz", "Paris", "Basel"];
 
 export function QuizFragment(): React.ReactElement {
   return (
     <VStack gap={2} className="p-5">
-      <Text weight="semibold">
-        Which electrolyte do loop diuretics tend to lower?
-      </Text>
+      <Text weight="semibold">Where was Gutenberg printing by about 1450?</Text>
       {QUIZ_CHOICES.map((choice, index) => (
         <HStack
           key={choice}
           gap={3}
           vAlign="center"
           className={`rounded-xl px-3 py-2 ${
-            choice === "Potassium" ? "bg-accent-muted" : "bg-muted"
+            choice === "Mainz" ? "bg-accent-muted" : "bg-muted"
           }`}
         >
           <Text weight="semibold">{"ABCD"[index]}</Text>
@@ -182,15 +244,15 @@ export function QuizFragment(): React.ReactElement {
 }
 
 const SUMMARY_POINTS = [
-  "ACE inhibitors lower afterload. Watch potassium.",
-  "Loop diuretics move fluid fast. Weigh daily.",
-  "Count the apical pulse before each digoxin dose.",
+  "Gutenberg was printing in Mainz by about 1450.",
+  "Movable type made each page faster to copy.",
+  "Cheaper books spread arguments, not only scripture.",
 ];
 
 export function SummaryFragment(): React.ReactElement {
   return (
     <VStack gap={2} className="p-5">
-      <Text weight="semibold">Summary: heart failure medications</Text>
+      <Text weight="semibold">Summary: the printing press</Text>
       {SUMMARY_POINTS.map((point) => (
         <HStack key={point} gap={2} vAlign="start">
           <Check

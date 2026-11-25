@@ -32,6 +32,14 @@ const buttonTokens: Record<string, string | [string, string]> = {
   "--qollab-button-height-md": "36px",
   "--qollab-button-height-lg": "40px",
   "--qollab-highlight": ["#FFE45C", "#E8C93A"],
+  // Live answers, in this order. Chosen so neighbours stay apart for red-green
+  // colour blindness at every count; see plan/feature-live-visuals-1.md.
+  "--qollab-answer-1": "#2563EB",
+  "--qollab-answer-2": "#0F9488",
+  "--qollab-answer-3": "#D97706",
+  "--qollab-answer-4": "#DB2777",
+  "--qollab-answer-5": "#6B21A8",
+  "--qollab-answer-6": "#4D7C0F",
 };
 
 export const qollabTheme = defineTheme({
@@ -225,6 +233,18 @@ export const qollabTheme = defineTheme({
         boxShadow: "none !important",
         ":hover": {
           backgroundColor: "var(--color-error-muted) !important",
+        },
+      },
+      // A tinted fill: quieter than a solid button, easier to spot than a ghost.
+      "variant:accent-soft": {
+        "--qollab-button-edge": "transparent",
+        backgroundColor: "var(--color-accent-muted) !important",
+        borderRadius: "var(--radius-full) !important",
+        paddingInline: "var(--spacing-4)",
+        color: "var(--color-text-accent) !important",
+        ":hover": {
+          backgroundColor:
+            "color-mix(in srgb, var(--color-accent-muted), var(--color-accent) 12%) !important",
         },
       },
       "variant:link": {

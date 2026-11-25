@@ -4,6 +4,7 @@ import { Button, IconButton } from "@/components/ui/button";
 import {
   ArrowLeft,
   BookOpenText,
+  ChartColumnBig,
   Copy,
   FileText,
   MessageCircleQuestion,
@@ -37,7 +38,12 @@ import * as Y from "yjs";
 
 import { SidebarAccountMenu } from "@/components/auth/sidebar-account-menu";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
-import { BreakoutQaPanel } from "@/components/collaboration/breakout-qa-panel";
+import {
+  BreakoutQaPanel,
+  type BreakoutTool,
+} from "@/components/collaboration/breakout-qa-panel";
+import { LivePrompt } from "@/components/collaboration/live/live-prompt";
+import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
 import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
 import { RoomHeader } from "@/components/collaboration/room-header";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
@@ -47,11 +53,11 @@ import {
   ViewerCollaborationStatus,
   ViewerCollaborationToggle,
 } from "@/components/rooms/viewer-collaboration-toggle";
+import { useActiveTool } from "@/hooks/use-active-tool";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 import { buildBreakoutCollaborativeDocumentName } from "@/lib/collaboration/document-name";
 import { getCollaborationWebSocketEndpoint } from "@/lib/collaboration/websocket-endpoint";
 import type { BreakoutRoomWorkspace as BreakoutWorkspace } from "@/lib/breakout-rooms/repository";
-import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
 interface BreakoutRoomWorkspaceProps {
   breakout: BreakoutWorkspace;
@@ -89,6 +95,21 @@ const WhiteboardStudyTool = dynamic(
     ssr: false,
   },
 );
+
+const LiveActivitiesTool = dynamic(
+  () => import("@/components/collaboration/live/live-activities-tool"),
+  {
+    loading: () => <BreakoutToolLoading label="Opening live activities…" />,
+    ssr: false,
+  },
+);
+
+const BREAKOUT_TOOLS: readonly [BreakoutTool, ...BreakoutTool[]] = [
+  "notes",
+  "pdf",
+  "whiteboard",
+  "live",
+];
 
 const USER_COLORS = ["#7352FA", "#f04623", "#9c614f", "#16866d", "#d98b22"];
 
@@ -135,7 +156,12 @@ export function BreakoutRoomWorkspace({
     });
   const canManagePdf = breakout.role !== "viewer";
   const canEdit = canManagePdf || viewerCanCollaborate;
-  const [activeTool, setActiveTool] = useState<RoomDocumentKind>("notes");
+  const [activeTool, setActiveTool] = useActiveTool(BREAKOUT_TOOLS);
+  const live = useLiveActivities({
+    roomSlug: breakout.parentRoomSlug,
+    breakoutCode: breakout.code,
+    isActive: activeTool === "live",
+  });
   const [connection, setConnection] = useState<Connection | null>(null);
   const [participants, setParticipants] = useState<StudyUser[]>([]);
   const [status, setStatus] = useState<SyncStatus>(
@@ -293,13 +319,14 @@ export function BreakoutRoomWorkspace({
 
   // The labelled button would push the breakout name out of the phone header.
   const isPhone = useMediaQuery("(max-width: 639px)");
-  const toolLabels: Record<RoomDocumentKind, string> = {
+  const toolLabels: Record<BreakoutTool, string> = {
     notes: "Shared notes",
     pdf: "PDF annotation",
     whiteboard: "Whiteboard",
+    live: "Live activities",
   };
 
-  const chooseTool = (tool: RoomDocumentKind): void => {
+  const chooseTool = (tool: BreakoutTool): void => {
     setActiveTool(tool);
     setIsMobileNavigationOpen(false);
   };
@@ -318,8 +345,11 @@ export function BreakoutRoomWorkspace({
         roomSlug={breakout.parentRoomSlug}
       />
     );
-  const accountMenu = (
+  const renderAccountMenu = (
+    appearance: "rail" | "sidebar",
+  ): React.ReactElement => (
     <SidebarAccountMenu
+      appearance={appearance}
       beforeSignOut={prepareBreakoutSignOut}
       displayName={connection?.user.name ?? currentUser.displayName}
       role={breakout.role}
@@ -472,6 +502,14 @@ export function BreakoutRoomWorkspace({
                     onClick: () => chooseTool("whiteboard"),
                     size: "lg",
                   },
+                  {
+                    id: "live",
+                    label: "Live activities",
+                    icon: ChartColumnBig,
+                    isSelected: activeTool === "live",
+                    onClick: () => chooseTool("live"),
+                    size: "lg",
+                  },
                 ],
               },
             ]}
@@ -485,18 +523,25 @@ export function BreakoutRoomWorkspace({
             footer={
               !isSidebarCollapsed ? (
                 <VStack padding={2} className={WORKSPACE_FLAT_CONTROLS}>
-                  {accountMenu}
+                  {renderAccountMenu("sidebar")}
                 </VStack>
               ) : undefined
             }
             footerIcons={
               // Expanded, "People" is a labelled item in the Breakout room group instead.
               isSidebarCollapsed ? (
-                <IconButton
-                  label="Breakout room controls"
-                  icon={<UsersRound aria-hidden="true" size={18} />}
-                  onClick={() => setIsRoomControlsOpen(true)}
-                />
+                <VStack
+                  gap={1}
+                  hAlign="center"
+                  className={WORKSPACE_FLAT_CONTROLS}
+                >
+                  <IconButton
+                    label="Breakout room controls"
+                    icon={<UsersRound aria-hidden="true" size={18} />}
+                    onClick={() => setIsRoomControlsOpen(true)}
+                  />
+                  {renderAccountMenu("rail")}
+                </VStack>
               ) : undefined
             }
           />
@@ -538,12 +583,11 @@ export function BreakoutRoomWorkspace({
               label="Breakout workspace"
               isLabelHidden
               value={activeTool}
-              onChange={(value) => chooseTool(value as RoomDocumentKind)}
-              options={[
-                { value: "notes", label: "Shared notes" },
-                { value: "pdf", label: "PDF annotation" },
-                { value: "whiteboard", label: "Whiteboard" },
-              ]}
+              onChange={(value) => chooseTool(value as BreakoutTool)}
+              options={Object.entries(toolLabels).map(([value, label]) => ({
+                value,
+                label,
+              }))}
               width="100%"
             />
           </HStack>
@@ -551,6 +595,9 @@ export function BreakoutRoomWorkspace({
             <Text role="alert" className="shrink-0 bg-muted px-4 py-2">
               {message}
             </Text>
+          ) : null}
+          {activeTool !== "live" ? (
+            <LivePrompt live={live} onAnswer={() => chooseTool("live")} />
           ) : null}
           {activeTool === "notes" ? (
             <VStack
@@ -576,9 +623,15 @@ export function BreakoutRoomWorkspace({
               aria-label={
                 activeTool === "pdf"
                   ? "Breakout PDF Annotation"
-                  : "Breakout Whiteboard"
+                  : activeTool === "live"
+                    ? "Breakout live activities"
+                    : "Breakout Whiteboard"
               }
-              className="workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+              className={
+                activeTool === "live"
+                  ? "flex-1 min-h-0 overflow-auto bg-surface"
+                  : "workspace-visual-tool flex-1 min-h-0 overflow-hidden bg-surface"
+              }
             >
               {activeTool === "pdf" ? (
                 <PdfStudyTool
@@ -591,9 +644,16 @@ export function BreakoutRoomWorkspace({
                   pdfApiPath={`/api/rooms/${breakout.parentRoomSlug}/breakouts/${breakout.code}/pdf`}
                   roomId={breakout.parentRoomSlug}
                 />
+              ) : activeTool === "live" ? (
+                <LiveActivitiesTool
+                  breakoutCode={breakout.code}
+                  live={live}
+                  roomSlug={breakout.parentRoomSlug}
+                />
               ) : (
                 <WhiteboardStudyTool
                   breakoutCode={breakout.code}
+                  canAskAi={canManagePdf}
                   canEdit={canEdit}
                   currentUser={currentUser}
                   initialState={breakout.initialDocumentStates.whiteboard}

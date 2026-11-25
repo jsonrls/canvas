@@ -1,21 +1,14 @@
 "use client";
 
-import { Avatar } from "@astryxdesign/core/Avatar";
+import { AspectRatio } from "@astryxdesign/core/AspectRatio";
 import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
 import { HStack } from "@astryxdesign/core/HStack";
-import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  NotesFragment,
-  PdfFragment,
-  QuizFragment,
-  WhiteboardFragment,
-} from "./landing-fragments";
 import { attachRefraction, supportsRefraction } from "./liquid-glass";
 import { Button, ButtonControl } from "@/components/ui/button";
 import { CheckCircle2, Clock3, RefreshCw } from "@/components/ui/icons";
@@ -71,13 +64,16 @@ export function LandingMotion(): null {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const observer = new IntersectionObserver((entries) => {
+    const reveal: IntersectionObserverCallback = (entries, source) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         (entry.target as HTMLElement).dataset.reveal = "shown";
-        observer.unobserve(entry.target);
+        source.unobserve(entry.target);
       }
-    });
+    };
+    const observer = new IntersectionObserver(reveal);
+    // Drawings that animate inside wait until most of them is on screen.
+    const artObserver = new IntersectionObserver(reveal, { threshold: 0.6 });
 
     // Only content still below the fold starts hidden, so nothing visible flashes.
     document
@@ -85,7 +81,7 @@ export function LandingMotion(): null {
       .forEach((element) => {
         if (element.getBoundingClientRect().top < window.innerHeight) return;
         element.dataset.reveal = "hidden";
-        observer.observe(element);
+        ("art" in element.dataset ? artObserver : observer).observe(element);
       });
 
     const drifts = Array.from(document.querySelectorAll("[data-drift]")).map(
@@ -108,6 +104,7 @@ export function LandingMotion(): null {
 
     return () => {
       observer.disconnect();
+      artObserver.disconnect();
       drifts.forEach((drift) => drift.cancel());
     };
   }, []);
@@ -116,9 +113,9 @@ export function LandingMotion(): null {
 }
 
 const OFFLINE_LINES = [
-  "Furosemide: check potassium first.",
-  "Hold digoxin if the pulse is under 60.",
-  "Ask the group about ACE inhibitor cough.",
+  "Use estar for states and locations.",
+  "Use ser for identity and origin.",
+  "Ask the group: which one do events take?",
 ];
 
 function offlineStatus(
@@ -191,16 +188,16 @@ export function OfflineDemo(): React.ReactElement {
 
 const FLASHCARDS = [
   {
-    prompt: "What two values multiply to give cardiac output?",
-    answer: "Heart rate and stroke volume.",
+    prompt: "What did movable type let printers reuse?",
+    answer: "The same metal letters, page after page.",
   },
   {
-    prompt: "What should you check before giving digoxin?",
-    answer: "The apical pulse, counted for a full minute.",
+    prompt: "Which city was Gutenberg printing in by about 1450?",
+    answer: "Mainz.",
   },
   {
-    prompt: "Which electrolyte do loop diuretics tend to lower?",
-    answer: "Potassium.",
+    prompt: "Where did movable type appear earlier?",
+    answer: "East Asia.",
   },
 ];
 
@@ -243,58 +240,99 @@ export function FlashcardDemo(): React.ReactElement {
   );
 }
 
-const ROOM_TOOLS = [
-  { value: "notes", label: "Notes", View: NotesFragment },
-  { value: "pdf", label: "PDF", View: PdfFragment },
-  { value: "whiteboard", label: "Whiteboard", View: WhiteboardFragment },
-  { value: "pack", label: "Study pack", View: QuizFragment },
+/** Chapter starts, in seconds, of the recording in `public/landing/tour.mp4`. */
+const TOUR_CHAPTERS = [
+  { label: "Notes", start: 0 },
+  { label: "PDF", start: 6.8 },
+  { label: "Board", start: 14.4 },
+  { label: "Live", start: 22.7 },
+  { label: "Pack", start: 30.9 },
 ];
 
-/** A sample room window; the glass dock really switches its tools. */
-export function LiveRoom(): React.ReactElement {
-  const [activeTool, setActiveTool] = useState(ROOM_TOOLS[0].value);
-  const tool =
-    ROOM_TOOLS.find(({ value }) => value === activeTool) ?? ROOM_TOOLS[0];
+/**
+ * A screen recording of the real app. It plays only while it is on screen and
+ * the glass dock jumps between its chapters. Selecting the recording pauses or
+ * resumes it. Reduced motion leaves it paused; chapters then show still frames.
+ */
+export function ProductTour(): React.ReactElement {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  // A pause the visitor chose must survive scrolling away and back.
+  const isHeldRef = useRef(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      isHeldRef.current = true;
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) video.pause();
+        else if (!isHeldRef.current) void video.play().catch(() => undefined);
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  function togglePlayback(): void {
+    const video = videoRef.current;
+    if (!video) return;
+    isHeldRef.current = !video.paused;
+    if (video.paused) void video.play().catch(() => undefined);
+    else video.pause();
+  }
+
+  function openChapter(index: number): void {
+    const video = videoRef.current;
+    if (!video) return;
+    // Just past the start, so the cross-fade from the last chapter is over.
+    video.currentTime = TOUR_CHAPTERS[index].start + 0.3;
+    setActiveIndex(index);
+  }
 
   return (
-    <VStack
-      gap={0}
-      className="landing-float relative h-120 w-full max-w-md overflow-hidden rounded-3xl bg-surface md:h-110"
-    >
-      <HStack
-        hAlign="between"
-        vAlign="center"
-        gap={3}
-        className="border-b border-border px-5 py-3"
+    <VStack gap={4} hAlign="center" className="w-full">
+      <AspectRatio
+        ratio={16 / 10}
+        fit="cover"
+        className="landing-float w-full overflow-hidden rounded-2xl bg-surface md:rounded-3xl"
       >
-        <Text weight="semibold" className="truncate">
-          Pharmacology review
-        </Text>
-        <HStack gap={2} vAlign="center">
-          <StatusDot variant="success" label="Live" isPulsing />
-          <Text weight="medium">Live</Text>
-          <HStack gap={0} className="hidden! -space-x-2 sm:flex!">
-            <Avatar name="Ana Reyes" size="sm" tooltip={false} />
-            <Avatar name="Marco Diaz" size="sm" tooltip={false} />
-            <Avatar name="Lea Tan" size="sm" tooltip={false} />
-          </HStack>
-        </HStack>
-      </HStack>
-      <VStack className="min-w-0">
-        <tool.View />
-      </VStack>
+        <video
+          ref={videoRef}
+          src="/landing/tour.mp4"
+          poster="/landing/tour-poster.jpg"
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label="Screen recording of a Qollab room. Three people write notes together, mark up a PDF, ask the whiteboard a question, run a live poll and build a study pack."
+          onClick={togglePlayback}
+          onTimeUpdate={(event) => {
+            const time = event.currentTarget.currentTime;
+            setActiveIndex(
+              TOUR_CHAPTERS.findLastIndex(({ start }) => time >= start),
+            );
+          }}
+        />
+      </AspectRatio>
       <HStack
+        role="group"
+        aria-label="Recording chapters"
         gap={1}
-        className="landing-glass absolute bottom-4 left-1/2 -translate-x-1/2 p-1"
+        className="landing-glass max-w-full p-1"
       >
-        {ROOM_TOOLS.map(({ value, label }) => (
+        {TOUR_CHAPTERS.map(({ label }, index) => (
           <ButtonControl
-            key={value}
+            key={label}
             variant="custom"
-            aria-pressed={value === activeTool}
-            onClick={() => setActiveTool(value)}
+            aria-pressed={index === activeIndex}
+            onClick={() => openChapter(index)}
             className={`min-h-11 cursor-pointer rounded-full px-2 whitespace-nowrap transition-colors sm:px-3 ${
-              value === activeTool
+              index === activeIndex
                 ? "bg-surface font-semibold text-primary!"
                 : "text-surface! hover:bg-accent-bg"
             }`}
@@ -312,22 +350,22 @@ const SESSION_STEPS = [
     title: "Create the room",
     detail: "Name it after the subject. Keep it private, or open it up.",
     figure: "1 room",
-    caption: "Notes, a PDF and a whiteboard, side by side.",
+    caption: "Notes, a PDF, a whiteboard and live activities.",
   },
   {
     title: "Bring in your group",
-    detail: "Add classmates by email and give each person a role.",
+    detail: "Add people by email and give each person a role.",
     figure: "3 roles",
     caption: "Owner, editor and viewer.",
   },
   {
     title: "Work it through",
-    detail: "Notes, PDF and whiteboard, all changing as you watch.",
-    figure: "4 tools",
-    caption: "Notes, PDF, whiteboard and study packs.",
+    detail: "Write, read, draw and vote, all changing as you watch.",
+    figure: "5 tools",
+    caption: "Notes, PDF, whiteboard, live activities and study packs.",
   },
   {
-    title: "Review before the exam",
+    title: "Review what you learned",
     detail: "Turn your notes into a study pack and save it for later.",
     figure: "5 parts",
     caption:
@@ -385,7 +423,7 @@ export function SessionSteps(): React.ReactElement {
       <VStack className="landing-photo relative min-h-96 min-w-0 overflow-hidden rounded-3xl lg:w-1/2">
         <Image
           src="/images/home-study-collaboration.png"
-          alt="Two students smiling, holding notebooks and a laptop."
+          alt="Two people smiling, holding notebooks and a laptop."
           fill
           sizes="(max-width: 1024px) 100vw, 560px"
           className="landing-crop-c object-cover brightness-105 contrast-105 mix-blend-multiply"

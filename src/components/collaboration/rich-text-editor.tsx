@@ -175,6 +175,9 @@ const TOOLBAR_GROUPS: readonly (readonly ToolbarAction[])[] = [
 ];
 
 const MOBILE_PRIMARY_NOTE_ACTIONS = new Set(["Undo", "Redo", "Bold", "Italic"]);
+// The same sizes as the PDF and whiteboard toolbars: see the end of
+// workspace-renderers.css.
+const COMPACT_TOOL = "h-11! w-11! p-0! md:h-8! md:w-9!";
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 72;
 
@@ -193,13 +196,14 @@ function FontSizeControl({
     <HStack
       gap={0.5}
       vAlign="center"
-      className="font-size-stepper shrink-0 rounded-full bg-surface p-0.5"
+      className="font-size-stepper shrink-0 rounded-full bg-surface p-0.5 md:p-0"
     >
       <IconButton
         label="Decrease text size"
         tooltip="Decrease text size"
-        icon={<Minus aria-hidden="true" size={14} />}
+        icon={<Minus aria-hidden="true" size={16} />}
         size="sm"
+        className={COMPACT_TOOL}
         isDisabled={!editable || fontSize <= MIN_FONT_SIZE}
         onClick={() => applyFontSize(fontSize - 1)}
       />
@@ -221,8 +225,9 @@ function FontSizeControl({
       <IconButton
         label="Increase text size"
         tooltip="Increase text size"
-        icon={<Plus aria-hidden="true" size={14} />}
+        icon={<Plus aria-hidden="true" size={16} />}
         size="sm"
+        className={COMPACT_TOOL}
         isDisabled={!editable || fontSize >= MAX_FONT_SIZE}
         onClick={() => applyFontSize(fontSize + 1)}
       />
@@ -311,7 +316,7 @@ function EditorToolbar({
       "aria-pressed": action.isActive ? isActive : undefined,
       isDisabled,
       variant: "ghost" as const,
-      className: `min-w-9 ${isActive ? "bg-surface! text-primary!" : ""}`,
+      className: `${options?.dialog ? "min-w-9" : COMPACT_TOOL} ${isActive ? "bg-surface! text-primary!" : ""}`,
       icon: <Icon aria-hidden="true" size={17} strokeWidth={1.9} />,
       onClick: () => {
         if (!editorReady) return;
@@ -322,7 +327,12 @@ function EditorToolbar({
     return options?.dialog ? (
       <Button key={action.label} {...sharedProps} />
     ) : (
-      <IconButton key={action.label} {...sharedProps} tooltip={action.label} />
+      <IconButton
+        key={action.label}
+        {...sharedProps}
+        size="sm"
+        tooltip={action.label}
+      />
     );
   };
 
@@ -339,10 +349,10 @@ function EditorToolbar({
   return (
     <HStack hAlign="center" className="shrink-0 overflow-x-auto px-3 pt-3">
       {/* One muted track holds every tool; the active tool is the white pill. */}
-      <VStack className="editor-toolbar-track qollab-pill-tray max-w-full rounded-full bg-muted px-2">
+      <VStack className="editor-toolbar-track qollab-pill-tray max-w-full rounded-full bg-muted px-2 md:p-1 [&_.astryx-section]:px-0! [&_.astryx-section]:py-1.5! md:[&_.astryx-section]:py-0!">
         <Toolbar
           label="Text formatting"
-          size="lg"
+          size="sm"
           startContent={
             <>
               <HStack
@@ -360,7 +370,7 @@ function EditorToolbar({
                       />
                     ) : null}
                     <HStack
-                      gap={0.5}
+                      gap={1}
                       vAlign="center"
                       className={groupIndex > 0 ? "pl-2" : ""}
                     >
@@ -378,9 +388,10 @@ function EditorToolbar({
                   tooltip="More note tools"
                   icon={<MoreHorizontal aria-hidden="true" />}
                   variant="ghost"
+                  size="sm"
                   aria-haspopup="dialog"
                   aria-expanded={isToolsOpen}
-                  className={`min-w-9 ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-surface! text-primary!" : ""}`}
+                  className={`${COMPACT_TOOL} ${mobileSecondaryActionActive || fontSize !== 11 ? "bg-surface! text-primary!" : ""}`}
                   onClick={() => setIsToolsOpen(true)}
                 />
                 <Dialog

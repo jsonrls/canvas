@@ -9,6 +9,7 @@ import {
 } from "@/lib/ai/whiteboard-answer";
 import { findWhiteboardAnswerPlacement } from "@/lib/whiteboard/answer-placement";
 import {
+  getElementBounds,
   type WhiteboardElement,
   type WhiteboardElementType,
 } from "@/lib/whiteboard/model";
@@ -23,6 +24,7 @@ export function useWhiteboardAnswer({
   canEdit,
   roomId,
   upsertElement,
+  readElement,
   currentUser,
   setSelectedId,
   setTool,
@@ -33,6 +35,7 @@ export function useWhiteboardAnswer({
   canEdit: boolean;
   roomId: string;
   upsertElement: (element: WhiteboardElement) => void;
+  readElement: (id: string) => WhiteboardElement | null;
   currentUser: { displayName: string; id: string };
   setSelectedId: Dispatch<SetStateAction<string | null>>;
   setTool: Dispatch<SetStateAction<WhiteboardTool>>;
@@ -49,50 +52,39 @@ export function useWhiteboardAnswer({
 
   const pendingAnswerKeysRef = useRef<Set<string>>(new Set());
 
-  const answerWhiteboardQuestion = useCallback(
+  const requestAnswer = useCallback(
     async (
-      candidateElements = elements,
-      candidateSelectedId = selectedId,
-      mode: "auto" | "manual" = "manual",
+      question: string,
+      targetId: string,
+      boardElements: WhiteboardElement[],
+      loadingMessage: string,
     ): Promise<void> => {
-      if (!canEdit || aiAnswerLoading) return;
-
-      const placement = findWhiteboardAnswerPlacement(
-        candidateElements,
-        candidateSelectedId,
-      );
-      if (!placement) {
-        if (mode === "manual") {
-          setAiAnswerMessage(
-            "Circle a question and draw an arrow to one blank circle.",
-          );
-        }
-        return;
-      }
-
-      const answerKey = `${placement.targetId}:${placement.question}`;
+      const answerKey = `${targetId}:${question}`;
       if (pendingAnswerKeysRef.current.has(answerKey)) return;
       pendingAnswerKeysRef.current.add(answerKey);
       setAiAnswerLoading(true);
-      setAiAnswerMessage(
-        mode === "auto" ? "Answering inside the blank circle..." : "",
-      );
+      setAiAnswerMessage(loadingMessage);
 
       try {
+        if (!navigator.onLine) {
+          throw new Error(
+            "You are offline. The question is on the board; choose AI answer when you are back online.",
+          );
+        }
         // Other text on the board tells the assistant the topic and level.
-        const boardNotes = candidateElements
+        const boardNotes = boardElements
           .filter(
             (element) =>
               element.type === "text" &&
               element.text.trim() &&
-              element.text.trim() !== placement.question,
+              element.text.trim() !== question,
           )
           .map((element) => element.text.trim())
           .join("\n")
           .slice(0, MAX_WHITEBOARD_CONTEXT_CHARACTERS);
         const response = await fetch(`/api/rooms/${roomId}/whiteboard-answer`, {
           body: JSON.stringify({
-            question: placement.question,
+            question,
             ...(boardNotes ? { context: boardNotes } : {}),
           }),
           cache: "no-store",
@@ -122,8 +114,13 @@ export function useWhiteboardAnswer({
           answer: payload.answer.trim(),
           points,
         });
+        // Where the circle is now, not when the question was asked.
+        const target = readElement(targetId);
+        if (!target) {
+          throw new Error("The answer circle was removed before the answer.");
+        }
         // Largest text size that fits the circle, centred in it.
-        const { targetBounds } = placement;
+        const targetBounds = getElementBounds(target);
         const box = fitBoardTextInEllipse(
           answerText,
           measureBoardText,
@@ -153,9 +150,10 @@ export function useWhiteboardAnswer({
         success("AI answer added inside the blank circle.");
       } catch (error) {
         setAiAnswerMessage(
-          error instanceof Error
+          // `fetch` throws a TypeError with no useful text when it can't connect.
+          error instanceof Error && !(error instanceof TypeError)
             ? error.message
-            : "The AI answer could not be generated.",
+            : "The AI answer could not be reached. Choose AI answer to try again.",
         );
       } finally {
         pendingAnswerKeysRef.current.delete(answerKey);
@@ -163,18 +161,70 @@ export function useWhiteboardAnswer({
       }
     },
     [
-      aiAnswerLoading,
-      canEdit,
       currentUser.displayName,
       currentUser.id,
-      elements,
+      readElement,
       roomId,
-      selectedId,
       setSelectedId,
       setTool,
       success,
       upsertElement,
     ],
+  );
+
+  const answerWhiteboardQuestion = useCallback(
+    async (
+      candidateElements = elements,
+      candidateSelectedId = selectedId,
+      mode: "auto" | "manual" = "manual",
+    ): Promise<void> => {
+      if (!canEdit || aiAnswerLoading) return;
+
+      const placement = findWhiteboardAnswerPlacement(
+        candidateElements,
+        candidateSelectedId,
+      );
+      if (!placement) {
+        if (mode === "manual") {
+          setAiAnswerMessage(
+            "Circle a question and draw an arrow to one blank circle.",
+          );
+        }
+        return;
+      }
+
+      await requestAnswer(
+        placement.question,
+        placement.targetId,
+        candidateElements,
+        mode === "auto" ? "Answering inside the blank circle..." : "",
+      );
+    },
+    [aiAnswerLoading, canEdit, elements, requestAnswer, selectedId],
+  );
+
+  /** For a question that comes with its own circle, so nothing to look for. */
+  const answerPlacedQuestion = useCallback(
+    async (
+      question: string,
+      targetId: string,
+      boardElements: WhiteboardElement[],
+    ): Promise<void> => {
+      if (!canEdit) return;
+      if (aiAnswerLoading) {
+        setAiAnswerMessage(
+          "Another answer is being written. Choose AI answer when it is done.",
+        );
+        return;
+      }
+      await requestAnswer(
+        question,
+        targetId,
+        boardElements,
+        "Answering your question…",
+      );
+    },
+    [aiAnswerLoading, canEdit, requestAnswer],
   );
 
   useEffect(() => {
@@ -202,5 +252,11 @@ export function useWhiteboardAnswer({
     canEdit,
     elements,
   ]);
-  return { aiAnswerMessage, aiAnswerLoading, answerWhiteboardQuestion };
+  return {
+    aiAnswerMessage,
+    aiAnswerLoading,
+    answerPlacedQuestion,
+    answerWhiteboardQuestion,
+    setAiAnswerMessage,
+  };
 }
