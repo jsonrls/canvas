@@ -310,7 +310,13 @@ export function ProductTour(): React.ReactElement {
           playsInline
           preload="metadata"
           aria-label="Screen recording of a Qollab room. Three people write notes together, mark up a PDF, ask the whiteboard a question, run a live poll and build a study pack."
+          tabIndex={0}
           onClick={togglePlayback}
+          onKeyDown={(event) => {
+            if (event.key !== " " && event.key !== "Enter") return;
+            event.preventDefault();
+            togglePlayback();
+          }}
           onTimeUpdate={(event) => {
             const time = event.currentTarget.currentTime;
             setActiveIndex(
