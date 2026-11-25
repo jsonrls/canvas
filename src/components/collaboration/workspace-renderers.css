@@ -153,6 +153,14 @@
   padding-left: 1.35em;
 }
 
+.boardprep-editor ul {
+  list-style: disc;
+}
+
+.boardprep-editor ol {
+  list-style: decimal;
+}
+
 .boardprep-editor li {
   padding-left: 0.2em;
 }
@@ -1442,10 +1450,17 @@
 }
 
 .whiteboard-stage svg {
+  -webkit-user-select: none;
+  user-select: none;
   display: block;
   width: 100%;
   height: 100%;
   touch-action: none;
+}
+
+.whiteboard-text-editor {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .whiteboard-stage--draw svg,
@@ -2763,7 +2778,7 @@
 
 /* Narrow desktops: the tool pill and the file details no longer fit side by
    side, so the file details move to their own line under the pill. */
-@media (min-width: 761px) and (max-width: 1279px) {
+@media (min-width: 761px) and (max-width: 1535px) {
   .study-tool--pdf .pdf-toolbar-row {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;

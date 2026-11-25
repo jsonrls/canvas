@@ -460,7 +460,7 @@ export const RichTextEditor = forwardRef<
         FontSize,
         Placeholder.configure({
           placeholder:
-            "Start with the mechanism, then add the exam clues your group never wants to miss…",
+            "Start writing. Everyone in the room sees it as you type…",
         }),
         Collaboration.configure({ document }),
         CollaborationCaret.configure({
