@@ -22,8 +22,8 @@ export default async function LoginPage({
   return (
     <AuthShell
       eyebrow="Welcome back"
-      title="Sign in to Qollab"
-      intro="Open your rooms and continue working with your group."
+      title="Welcome back!"
+      intro="Sign in to open your rooms and keep working with your group."
     >
       {reset === "success" ? (
         <SuccessToastOnMount message="Your password is updated. Sign in with the new one." />

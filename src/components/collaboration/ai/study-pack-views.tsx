@@ -1,55 +1,186 @@
-import { quizScore } from "@/lib/ai/study-view-state";
-import { ButtonControl } from "@/components/ui/button";
+"use client";
+
+import { EmptyState } from "@astryxdesign/core/EmptyState";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { useState } from "react";
+
+import { Button, ButtonControl, IconButton } from "@/components/ui/button";
 import {
   Check,
   CheckCircle2,
-  CircleHelp,
+  ChevronLeft,
+  ChevronRight,
   RotateCcw,
+  X,
 } from "@/components/ui/icons";
+import {
+  PANEL_ACCENT,
+  PANEL_HEADING,
+  PANEL_MUTED,
+  PANEL_ROW,
+} from "@/components/ui/panel";
 import type { StudyPack } from "@/lib/ai/study-pack";
+import { quizScore } from "@/lib/ai/study-view-state";
+
+const ANSWER_OPTION =
+  "flex min-h-12 w-full items-center gap-3 rounded-2xl p-4 text-start text-base text-primary transition-colors";
+
+// Tints, so the dark text stays readable wherever a shape passes behind it.
+const CARD_COLORS = [
+  {
+    prompt: "bg-answer-1/15",
+    answer: "bg-answer-1/25",
+    shape: "bg-answer-1/30",
+    ring: "border-answer-1/30",
+  },
+  {
+    prompt: "bg-answer-2/15",
+    answer: "bg-answer-2/25",
+    shape: "bg-answer-2/30",
+    ring: "border-answer-2/30",
+  },
+  {
+    prompt: "bg-answer-3/15",
+    answer: "bg-answer-3/25",
+    shape: "bg-answer-3/30",
+    ring: "border-answer-3/30",
+  },
+  {
+    prompt: "bg-answer-4/15",
+    answer: "bg-answer-4/25",
+    shape: "bg-answer-4/30",
+    ring: "border-answer-4/30",
+  },
+  {
+    prompt: "bg-answer-5/15",
+    answer: "bg-answer-5/25",
+    shape: "bg-answer-5/30",
+    ring: "border-answer-5/30",
+  },
+  {
+    prompt: "bg-answer-6/15",
+    answer: "bg-answer-6/25",
+    shape: "bg-answer-6/30",
+    ring: "border-answer-6/30",
+  },
+] as const;
+// Plays each time the side changes; reduced motion turns it off app-wide.
+const CARD_SIDE =
+  "transition duration-300 ease-out starting:translate-y-2 starting:scale-95 starting:opacity-0";
+const CARD_SHAPE =
+  "pointer-events-none absolute transition-transform duration-500 ease-out";
+
+/** Corner shapes of one flashcard; they turn when the card is flipped. */
+function CardShapes({
+  colors,
+  index,
+  isRevealed,
+}: {
+  colors: (typeof CARD_COLORS)[number];
+  index: number;
+  isRevealed: boolean;
+}): React.ReactElement {
+  const solid = index % 2 === 0 ? "rounded-full" : "rounded-3xl";
+  return (
+    <>
+      <VStack
+        as="span"
+        aria-hidden="true"
+        className={`${CARD_SHAPE} -top-16 -left-16 size-44 md:size-56 ${solid} ${colors.shape} ${isRevealed ? "scale-90 rotate-45" : "rotate-12"}`}
+      />
+      <VStack
+        as="span"
+        aria-hidden="true"
+        className={`${CARD_SHAPE} -right-12 -bottom-16 size-40 rounded-full border-24 md:size-52 ${colors.ring} ${isRevealed ? "scale-75" : ""}`}
+      />
+      <VStack
+        as="span"
+        aria-hidden="true"
+        className={`${CARD_SHAPE} top-6 right-8 size-8 md:right-16 md:size-12 ${index % 2 === 0 ? "rounded-lg" : "rounded-full"} ${colors.shape} ${isRevealed ? "translate-y-6 rotate-90" : "rotate-12"}`}
+      />
+    </>
+  );
+}
+
+const KIND_LABELS = {
+  clarify: "Clarify",
+  connect: "Connect",
+  practice: "Practice",
+  review: "Review",
+} as const;
+
+function ViewHeading({
+  children,
+  title,
+}: {
+  children?: React.ReactNode;
+  title: string;
+}): React.ReactElement {
+  return (
+    <VStack gap={1}>
+      <Heading level={3} className="text-xl!">
+        {title}
+      </Heading>
+      {children}
+    </VStack>
+  );
+}
 
 export function SummaryView({ pack }: { pack: StudyPack }): React.ReactElement {
   return (
-    <div className="ai-summary-layout">
-      <section className="ai-summary-lead">
-        <p className="ai-section-kicker">Room synthesis</p>
-        <h2>{pack.summary.title}</h2>
-        <p>{pack.summary.overview}</p>
-      </section>
+    <VStack gap={6}>
+      <ViewHeading title={pack.summary.title}>
+        <Text as="p">{pack.summary.overview}</Text>
+      </ViewHeading>
 
-      <section className="ai-output-card">
-        <div className="ai-output-card__heading">
-          <CheckCircle2 aria-hidden="true" size={19} />
-          <h3>High-yield takeaways</h3>
-        </div>
-        <ol className="ai-key-point-list">
+      <VStack as="section" gap={4} className={PANEL_MUTED}>
+        <Heading level={4} className={PANEL_HEADING}>
+          Key points
+        </Heading>
+        <VStack as="ol" gap={2}>
           {pack.summary.keyPoints.map((point, index) => (
-            <li key={`${index}-${point}`}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <p>{point}</p>
-            </li>
+            <HStack
+              as="li"
+              gap={3}
+              vAlign="start"
+              className={PANEL_ROW}
+              key={`${index}-${point}`}
+            >
+              <Text weight="semibold" color="secondary" aria-hidden="true">
+                {index + 1}
+              </Text>
+              <Text>{point}</Text>
+            </HStack>
           ))}
-        </ol>
-      </section>
+        </VStack>
+      </VStack>
 
-      <section className="ai-output-card ai-output-card--questions">
-        <div className="ai-output-card__heading">
-          <CircleHelp aria-hidden="true" size={19} />
-          <h3>Questions still worth resolving</h3>
-        </div>
+      <VStack as="section" gap={4} className={PANEL_ACCENT}>
+        <Heading level={4} className={PANEL_HEADING}>
+          Open questions
+        </Heading>
         {pack.summary.openQuestions.length > 0 ? (
-          <ul>
+          <VStack as="ul" gap={2}>
             {pack.summary.openQuestions.map((question, index) => (
-              <li key={`${index}-${question}`}>{question}</li>
+              <VStack
+                as="li"
+                className={PANEL_ROW}
+                key={`${index}-${question}`}
+              >
+                <Text>{question}</Text>
+              </VStack>
             ))}
-          </ul>
+          </VStack>
         ) : (
-          <p className="ai-inline-empty">
+          <Text as="p">
             The notes did not leave a clear unresolved question.
-          </p>
+          </Text>
         )}
-      </section>
-    </div>
+      </VStack>
+    </VStack>
   );
 }
 
@@ -67,37 +198,48 @@ export function QuizView({
   const { answeredCount, correctCount } = quizScore(pack.quiz, answers);
 
   return (
-    <div>
-      <div className="ai-view-heading">
-        <div>
-          <p className="ai-section-kicker">Active recall</p>
-          <h2>Practice the room&apos;s core ideas</h2>
-        </div>
-        <div className="ai-quiz-score" aria-live="polite">
-          <strong>
-            {correctCount}/{answeredCount}
-          </strong>
-          <span>correct so far</span>
-        </div>
-      </div>
+    <VStack gap={6}>
+      <HStack gap={4} hAlign="between" vAlign="end" wrap="wrap">
+        <ViewHeading title="Practice quiz">
+          <Text as="p" color="secondary" aria-live="polite">
+            {answeredCount === 0
+              ? `${pack.quiz.length} questions. Choose an answer to see the explanation.`
+              : `${correctCount} of ${answeredCount} correct, ${pack.quiz.length - answeredCount} left.`}
+          </Text>
+        </ViewHeading>
+        {answeredCount > 0 ? (
+          <Button
+            label="Reset quiz"
+            variant="secondary"
+            icon={<RotateCcw aria-hidden="true" size={16} />}
+            onClick={onReset}
+          />
+        ) : null}
+      </HStack>
 
-      <div className="ai-quiz-list">
+      <VStack as="ol" gap={4}>
         {pack.quiz.map((item, questionIndex) => {
           const selectedAnswer = answers[questionIndex];
           const isAnswered = selectedAnswer !== undefined;
           const isCorrect = selectedAnswer === item.answerIndex;
 
           return (
-            <article
-              className="ai-quiz-card"
+            <VStack
+              as="li"
+              gap={4}
+              className={PANEL_MUTED}
               key={`${questionIndex}-${item.question}`}
             >
-              <span className="ai-quiz-card__number">
-                Question {questionIndex + 1} of {pack.quiz.length}
-              </span>
-              <h3>{item.question}</h3>
-              <div
-                className="ai-answer-grid"
+              <VStack gap={1}>
+                <Text type="supporting">
+                  Question {questionIndex + 1} of {pack.quiz.length}
+                </Text>
+                <Heading level={4} className="text-lg!">
+                  {item.question}
+                </Heading>
+              </VStack>
+              <VStack
+                gap={2}
                 role="group"
                 aria-label={`Answers for question ${questionIndex + 1}`}
               >
@@ -106,52 +248,61 @@ export function QuizView({
                   const showCorrect =
                     isAnswered && optionIndex === item.answerIndex;
                   const showIncorrect = isSelected && !isCorrect;
+                  const stateClass = showCorrect
+                    ? "bg-success-muted"
+                    : showIncorrect
+                      ? "bg-error-muted"
+                      : isAnswered
+                        ? "bg-surface"
+                        : "cursor-pointer bg-surface hover:bg-accent-muted";
 
                   return (
                     <ButtonControl
                       variant="custom"
                       aria-pressed={isSelected}
-                      className={`ai-answer-button${showCorrect ? " ai-answer-button--correct" : ""}${showIncorrect ? " ai-answer-button--incorrect" : ""}`}
+                      className={`${ANSWER_OPTION} ${stateClass}`}
                       disabled={isAnswered}
                       key={`${optionIndex}-${option}`}
                       onClick={() => onAnswer(questionIndex, optionIndex)}
-                      type="button"
                     >
-                      <span>{String.fromCharCode(65 + optionIndex)}</span>
-                      {option}
+                      <Text weight="semibold" color="secondary">
+                        {String.fromCharCode(65 + optionIndex)}
+                      </Text>
+                      <Text className="min-w-0 flex-1 break-words">
+                        {option}
+                      </Text>
                       {showCorrect ? (
-                        <Check aria-hidden="true" size={17} />
+                        <>
+                          <Check aria-hidden="true" size={18} />
+                          <Text weight="semibold" size="sm">
+                            Answer
+                          </Text>
+                        </>
+                      ) : showIncorrect ? (
+                        <>
+                          <X aria-hidden="true" size={18} />
+                          <Text weight="semibold" size="sm">
+                            Your choice
+                          </Text>
+                        </>
                       ) : null}
                     </ButtonControl>
                   );
                 })}
-              </div>
+              </VStack>
               {isAnswered ? (
-                <div
-                  className={`ai-answer-feedback${isCorrect ? " ai-answer-feedback--correct" : ""}`}
-                  role="status"
-                >
-                  <strong>{isCorrect ? "Correct." : "Review this one."}</strong>
-                  <p>{item.explanation}</p>
-                </div>
+                <VStack gap={1} role="status">
+                  <Text weight="semibold">
+                    {isCorrect ? "Correct." : "Review this one."}
+                  </Text>
+                  <Text as="p">{item.explanation}</Text>
+                </VStack>
               ) : null}
-            </article>
+            </VStack>
           );
         })}
-      </div>
-
-      {answeredCount > 0 ? (
-        <ButtonControl
-          variant="secondary"
-          className="ai-secondary-button"
-          onClick={onReset}
-          type="button"
-        >
-          <RotateCcw aria-hidden="true" size={16} />
-          Reset quiz
-        </ButtonControl>
-      ) : null}
-    </div>
+      </VStack>
+    </VStack>
   );
 }
 
@@ -164,45 +315,105 @@ export function FlashcardsView({
   pack: StudyPack;
   revealedCards: Set<number>;
 }): React.ReactElement {
-  return (
-    <div>
-      <div className="ai-view-heading">
-        <div>
-          <p className="ai-section-kicker">Rapid review</p>
-          <h2>Flashcards from the shared notes</h2>
-          <p>Choose a card to reveal its answer.</p>
-        </div>
-        <span className="ai-count-badge">{pack.flashcards.length} cards</span>
-      </div>
-      <div className="ai-flashcard-grid">
-        {pack.flashcards.map((card, index) => {
-          const isRevealed = revealedCards.has(index);
+  const [index, setIndex] = useState(0);
+  const total = pack.flashcards.length;
+  const card = pack.flashcards[index];
+  const isRevealed = revealedCards.has(index);
+  const colors = CARD_COLORS[index % CARD_COLORS.length];
 
-          return (
-            <ButtonControl
-              variant="custom"
-              aria-label={`${isRevealed ? "Hide" : "Reveal"} answer for flashcard ${index + 1}`}
-              aria-pressed={isRevealed}
-              className={`ai-flashcard${isRevealed ? " ai-flashcard--revealed" : ""}`}
-              key={`${index}-${card.front}`}
-              onClick={() => onToggle(index)}
-              type="button"
+  const move = (step: number): void => {
+    setIndex((current) => Math.min(total - 1, Math.max(0, current + step)));
+  };
+
+  if (!card) {
+    return (
+      <EmptyState
+        isCompact
+        title="No flashcards in this pack"
+        description="Regenerate the pack to create a new set."
+      />
+    );
+  }
+
+  return (
+    <VStack gap={6}>
+      <ViewHeading title="Flashcards">
+        <Text as="p" color="secondary">
+          Choose the card to flip it, then move with the arrows.
+        </Text>
+      </ViewHeading>
+      <VStack
+        gap={4}
+        className={PANEL_MUTED}
+        role="group"
+        aria-label="Flashcard deck"
+        onKeyDown={(event: React.KeyboardEvent) => {
+          if (event.key === "ArrowRight") move(1);
+          else if (event.key === "ArrowLeft") move(-1);
+          else return;
+          event.preventDefault();
+        }}
+      >
+        <ButtonControl
+          variant="custom"
+          aria-label={`${isRevealed ? "Hide" : "Reveal"} answer for flashcard ${index + 1}`}
+          aria-describedby="ai-flashcard-text"
+          aria-pressed={isRevealed}
+          className={`relative flex min-h-72 w-full cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl p-6 text-center transition-colors duration-500 text-primary md:min-h-80 md:p-10 ${isRevealed ? colors.answer : colors.prompt}`}
+          onClick={() => onToggle(index)}
+        >
+          <CardShapes
+            key={index}
+            colors={colors}
+            index={index}
+            isRevealed={isRevealed}
+          />
+          <Text
+            key={isRevealed ? "answer" : "prompt"}
+            size="sm"
+            weight="semibold"
+            className={`relative rounded-full bg-surface px-4 py-1 ${CARD_SIDE}`}
+          >
+            {isRevealed ? "Answer" : "Prompt"}
+          </Text>
+          <Text
+            id="ai-flashcard-text"
+            size="2xl"
+            weight="medium"
+            className="relative max-w-prose break-words"
+            aria-live="polite"
+          >
+            {/* Keyed inside the live region, so screen readers still hear it. */}
+            <VStack
+              as="span"
+              key={isRevealed ? "answer" : "prompt"}
+              className={CARD_SIDE}
             >
-              <span className="ai-flashcard__index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span className="ai-flashcard__label">
-                {isRevealed ? "Answer" : "Prompt"}
-              </span>
-              <strong>{isRevealed ? card.back : card.front}</strong>
-              <small>
-                {isRevealed ? "Choose to hide" : "Choose to reveal"}
-              </small>
-            </ButtonControl>
-          );
-        })}
-      </div>
-    </div>
+              {isRevealed ? card.back : card.front}
+            </VStack>
+          </Text>
+        </ButtonControl>
+        <HStack gap={4} hAlign="center" vAlign="center">
+          <IconButton
+            label="Previous card"
+            tooltip="Previous card"
+            icon={<ChevronLeft aria-hidden="true" size={18} />}
+            isDisabled={index === 0}
+            onClick={() => move(-1)}
+          />
+          <Text weight="medium" aria-live="polite">
+            {index + 1} of {total}
+          </Text>
+          <IconButton
+            label="Next card"
+            tooltip="Next card"
+            icon={<ChevronRight aria-hidden="true" size={18} />}
+            isDisabled={index === total - 1}
+            onClick={() => move(1)}
+          />
+        </HStack>
+      </VStack>
+    </VStack>
   );
 }
 
@@ -212,34 +423,40 @@ export function RecommendationsView({
   pack: StudyPack;
 }): React.ReactElement {
   return (
-    <div>
-      <div className="ai-view-heading">
-        <div>
-          <p className="ai-section-kicker">Study direction</p>
-          <h2>What to work on next</h2>
-          <p>Actions selected from gaps and connections in this snapshot.</p>
-        </div>
-      </div>
-      <div className="ai-recommendation-list">
+    <VStack gap={6}>
+      <ViewHeading title="What to work on next">
+        <Text as="p" color="secondary">
+          Based on gaps and connections in these notes.
+        </Text>
+      </ViewHeading>
+      <VStack as="ol" gap={2} className={PANEL_MUTED}>
         {pack.recommendations.map((recommendation, index) => (
-          <article key={`${index}-${recommendation.title}`}>
-            <span className="ai-recommendation-index">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <div>
-              <span
-                className={`ai-kind-badge ai-kind-badge--${recommendation.kind}`}
-              >
-                {recommendation.kind}
-              </span>
-              <h3>{recommendation.title}</h3>
-              <p>{recommendation.rationale}</p>
-              <strong>{recommendation.nextStep}</strong>
-            </div>
-          </article>
+          <VStack
+            as="li"
+            gap={2}
+            className={PANEL_ROW}
+            key={`${index}-${recommendation.title}`}
+          >
+            <HStack gap={3} hAlign="between" vAlign="start">
+              <Heading level={4} className={PANEL_HEADING}>
+                {recommendation.title}
+              </Heading>
+              <Token
+                label={KIND_LABELS[recommendation.kind]}
+                size="sm"
+                className="shrink-0"
+              />
+            </HStack>
+            <Text as="p" color="secondary">
+              {recommendation.rationale}
+            </Text>
+            <Text as="p" weight="medium">
+              {recommendation.nextStep}
+            </Text>
+          </VStack>
         ))}
-      </div>
-    </div>
+      </VStack>
+    </VStack>
   );
 }
 
@@ -249,53 +466,59 @@ export function MisconceptionsView({
   pack: StudyPack;
 }): React.ReactElement {
   return (
-    <div>
-      <div className="ai-view-heading">
-        <div>
-          <p className="ai-section-kicker">Cautious review</p>
-          <h2>Claims that may need another look</h2>
-          <p>These are review prompts, not definitive corrections.</p>
-        </div>
-      </div>
+    <VStack gap={6}>
+      <ViewHeading title="Claims to check">
+        <Text as="p" color="secondary">
+          These are prompts to review, not definitive corrections.
+        </Text>
+      </ViewHeading>
 
       {pack.misconceptions.length > 0 ? (
-        <div className="ai-misconception-list">
+        <VStack as="ol" gap={2} className={PANEL_MUTED}>
           {pack.misconceptions.map((item, index) => (
-            <article key={`${index}-${item.suspectedClaim}`}>
-              <div className="ai-misconception-card__heading">
-                <span>Review signal {String(index + 1).padStart(2, "0")}</span>
-                <span
-                  className={`ai-confidence ai-confidence--${item.confidence}`}
-                >
-                  {item.confidence} confidence
-                </span>
-              </div>
-              <h3>{item.suspectedClaim}</h3>
-              <div className="ai-correction-grid">
-                <div>
-                  <span>Possible correction</span>
-                  <p>{item.correction}</p>
-                </div>
-                <div>
-                  <span>Why it matters</span>
-                  <p>{item.whyItMatters}</p>
-                </div>
-              </div>
-            </article>
+            <VStack
+              as="li"
+              gap={4}
+              className={PANEL_ROW}
+              key={`${index}-${item.suspectedClaim}`}
+            >
+              <HStack gap={3} hAlign="between" vAlign="start">
+                <Heading level={4} className={PANEL_HEADING}>
+                  {item.suspectedClaim}
+                </Heading>
+                <Token
+                  label={`${item.confidence} confidence`}
+                  size="sm"
+                  className="shrink-0"
+                />
+              </HStack>
+              <HStack gap={4} vAlign="start" className="flex-col md:flex-row">
+                <VStack gap={1} className="w-full flex-1">
+                  <Text weight="semibold" size="sm">
+                    Possible correction
+                  </Text>
+                  <Text as="p">{item.correction}</Text>
+                </VStack>
+                <VStack gap={1} className="w-full flex-1">
+                  <Text weight="semibold" size="sm">
+                    Why it matters
+                  </Text>
+                  <Text as="p">{item.whyItMatters}</Text>
+                </VStack>
+              </HStack>
+            </VStack>
           ))}
-        </div>
+        </VStack>
       ) : (
-        <div className="ai-positive-empty">
-          <CheckCircle2 aria-hidden="true" size={26} />
-          <div>
-            <h3>No supported misconception signal</h3>
-            <p>
-              The assistant did not find a claim it could responsibly flag.
-              Continue verifying the notes against course sources.
-            </p>
-          </div>
-        </div>
+        <VStack className={PANEL_MUTED}>
+          <EmptyState
+            isCompact
+            title="No supported misconception signal"
+            description="The assistant did not find a claim it could responsibly flag. Keep checking the notes against course sources."
+            icon={<CheckCircle2 />}
+          />
+        </VStack>
       )}
-    </div>
+    </VStack>
   );
 }

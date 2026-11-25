@@ -55,15 +55,14 @@ function SuccessToast({
         <p>{message}</p>
       </div>
       <ButtonControl
-        variant="ghost"
+        variant="custom"
         aria-label="Dismiss notification"
         className={styles.dismiss}
         onClick={() => onDismiss(id)}
         type="button"
       >
-        <X aria-hidden="true" size={15} />
+        <X aria-hidden="true" size={16} strokeWidth={2.4} />
       </ButtonControl>
-      <span className={styles.progress} aria-hidden="true" />
     </li>
   );
 }
@@ -95,11 +94,28 @@ export function ToastProvider({
   }, []);
 
   const value = useMemo(() => ({ success }), [success]);
+  const viewportRef = useRef<HTMLOListElement>(null);
+
+  // Modal dialogs sit in the browser's top layer, above any z-index. Showing
+  // the list as a popover puts it in the top layer too; re-showing it on each
+  // toast moves it above whatever opened since.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || typeof viewport.showPopover !== "function") return;
+
+    if (viewport.matches(":popover-open")) viewport.hidePopover();
+    if (toasts.length > 0) viewport.showPopover();
+  }, [toasts]);
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <ol aria-label="Notifications" className={styles.viewport}>
+      <ol
+        aria-label="Notifications"
+        className={styles.viewport}
+        popover="manual"
+        ref={viewportRef}
+      >
         {toasts.map((toast) => (
           <SuccessToast
             id={toast.id}

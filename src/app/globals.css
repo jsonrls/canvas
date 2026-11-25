@@ -11,10 +11,20 @@
 @import "../components/shell/legacy-controls.css";
 @import "../components/collaboration/workspace-renderers.css";
 @import "../components/rooms/breakout-directory-compat.css";
+@import "../components/home/landing.css" layer(components);
+
+@theme inline {
+  --color-answer-1: var(--qollab-answer-1);
+  --color-answer-2: var(--qollab-answer-2);
+  --color-answer-3: var(--qollab-answer-3);
+  --color-answer-4: var(--qollab-answer-4);
+  --color-answer-5: var(--qollab-answer-5);
+  --color-answer-6: var(--qollab-answer-6);
+}
 
 :root {
   --font-body: var(--font-qollab-body);
-  --font-display: var(--font-qollab-body);
+  --font-display: var(--font-qollab-heading);
   --font-mono: var(--font-qollab-code);
   --brand-primary: var(--color-accent);
   --canvas: var(--color-background-body);
@@ -83,6 +93,31 @@ select:focus-visible,
 textarea:focus-visible {
   outline: var(--focus-outline-width) solid var(--color-text-accent);
   outline-offset: var(--focus-outline-offset);
+}
+
+/*
+ * Text fields show focus as an accent rim with a soft halo instead of an
+ * offset outline. The transparent outline stays so forced-colours mode still
+ * draws one. `:where` keeps specificity low so feature styles can override.
+ */
+input:where(
+    :not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="color"],
+      [type="file"]
+    )
+  ):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--color-accent);
+  outline-color: transparent;
+  outline-offset: 0;
+  box-shadow: var(--qollab-field-focus-ring);
+  transition:
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
 }
 
 .sr-only {

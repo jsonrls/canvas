@@ -5,9 +5,9 @@ import { Eye as EyeData, EyeOff as EyeOffData } from "lucide";
 import { useActionState, useState } from "react";
 
 import { updatePassword } from "@/app/reset-password/actions";
-import { Button } from "@/components/ui/button";
+import { AuthSubmit } from "@/components/auth/auth-submit";
 import { Field } from "@astryxdesign/core/Field";
-import { IconButton } from "@/components/ui/button";
+import { ButtonControl } from "@/components/ui/button";
 import { FormLayout } from "@astryxdesign/core/FormLayout";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
@@ -30,10 +30,10 @@ export function UpdatePasswordForm(): React.ReactElement {
   return (
     <form action={action}>
       <FormLayout className="gap-5">
-        <Field inputID="new-password" label="New password">
+        <Field inputID="new-password" label="New password" isLabelHidden>
           <HStack gap={0} vAlign="center" className="relative w-full">
             <input
-              className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 pr-14! text-primary text-lg focus:outline-accent"
+              className="min-h-10 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 pr-12! text-primary text-lg"
               id="new-password"
               name="password"
               type={inputType}
@@ -41,25 +41,23 @@ export function UpdatePasswordForm(): React.ReactElement {
               minLength={PASSWORD_MIN_LENGTH}
               maxLength={PASSWORD_MAX_LENGTH}
               aria-describedby="new-password-help"
+              placeholder="New password"
               required
             />
-            <IconButton
-              variant="ghost"
-              size="lg"
-              className="absolute! inset-y-0 right-0 min-h-11 min-w-11 focus-visible:outline-accent!"
-              type="button"
-              label={showPasswords ? "Hide passwords" : "Show passwords"}
+            <ButtonControl
+              variant="custom"
+              className="absolute inset-y-0 right-1 flex min-w-10 cursor-pointer items-center justify-center rounded-full text-secondary! hover:text-primary! aria-pressed:text-accent!"
+              aria-label={showPasswords ? "Hide passwords" : "Show passwords"}
               aria-controls="new-password new-password-confirmation"
               aria-pressed={showPasswords}
               onClick={() => setShowPasswords((visible) => !visible)}
-              icon={
-                <AppIcon
-                  iconData={showPasswords ? EyeOffData : EyeData}
-                  aria-hidden="true"
-                  size={18}
-                />
-              }
-            />
+            >
+              <AppIcon
+                iconData={showPasswords ? EyeOffData : EyeData}
+                aria-hidden="true"
+                size={18}
+              />
+            </ButtonControl>
           </HStack>
         </Field>
         <Text as="p" color="secondary" id="new-password-help">
@@ -67,15 +65,20 @@ export function UpdatePasswordForm(): React.ReactElement {
           a password you do not use elsewhere.
         </Text>
 
-        <Field inputID="new-password-confirmation" label="Confirm new password">
+        <Field
+          inputID="new-password-confirmation"
+          label="Confirm new password"
+          isLabelHidden
+        >
           <input
-            className="min-h-11 w-full min-w-0 rounded-md border border-border-strong bg-surface px-3 text-primary text-lg focus:outline-accent"
+            className="min-h-10 w-full min-w-0 rounded-full border border-border-strong bg-surface px-4 text-primary text-lg"
             id="new-password-confirmation"
             name="passwordConfirmation"
             type={inputType}
             autoComplete="new-password"
             minLength={PASSWORD_MIN_LENGTH}
             maxLength={PASSWORD_MAX_LENGTH}
+            placeholder="Confirm new password"
             required
           />
         </Field>
@@ -84,24 +87,16 @@ export function UpdatePasswordForm(): React.ReactElement {
           <Text
             as="p"
             role="alert"
-            className="text-primary! bg-error-muted p-3 rounded-md"
+            className="text-primary! bg-error-muted p-3 rounded-2xl"
           >
             {state.message}
           </Text>
         ) : null}
 
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          width="100%"
-          className="min-h-11 text-on-accent! focus-visible:outline-accent!"
-          isLoading={pending}
-          isDisabled={pending}
-          aria-busy={pending}
-          label={pending ? "Securing your account…" : "Set new password"}
-          icon={<KeyRound aria-hidden="true" size={17} />}
-        />
+        <AuthSubmit isDisabled={pending}>
+          <KeyRound aria-hidden="true" size={17} />
+          {pending ? "Securing your account…" : "Set new password"}
+        </AuthSubmit>
       </FormLayout>
     </form>
   );

@@ -350,6 +350,49 @@ export async function getBreakoutRoomWorkspace(
   };
 }
 
+/**
+ * Checks breakout access without joining. Opening the breakout page joins a
+ * viewer, so a viewer without a membership row has not been let in.
+ */
+export async function getBreakoutMemberAccess(
+  client: SupabaseClient,
+  parentRoomSlug: string,
+  code: string,
+  userId: string,
+): Promise<{ breakoutRoomId: string; role: RoomRole }> {
+  const normalizedCode = normalizeBreakoutRoomCode(code);
+  const access = await getRoomMemberAccess(client, parentRoomSlug, userId);
+  const { data: breakout, error } = await client
+    .from("breakout_rooms")
+    .select("id")
+    .eq("room_id", access.id)
+    .eq("code", normalizedCode)
+    .maybeSingle();
+
+  if (error || !breakout) {
+    throw new RoomDomainError(
+      "That breakout room does not belong to this study room.",
+    );
+  }
+
+  const breakoutRoomId = String(breakout.id);
+
+  if (access.role === "viewer") {
+    const { data: membership, error: membershipError } = await client
+      .from("breakout_room_members")
+      .select("user_id")
+      .eq("breakout_room_id", breakoutRoomId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (membershipError || !membership) {
+      throw new RoomDomainError("Join that breakout room first.");
+    }
+  }
+
+  return { breakoutRoomId, role: access.role };
+}
+
 export async function getBreakoutToolAccess(
   client: SupabaseClient,
   parentRoomSlug: string,

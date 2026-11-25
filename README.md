@@ -1,6 +1,6 @@
 # Qollab
 
-Qollab is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the OpenAI Responses API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB. The collaboration runtime runs as a standalone Node service locally and as a same-origin Vercel WebSocket Function in deployment, with durable state and cross-instance fan-out provided by Supabase.
+Qollab is an authenticated collaborative study workspace built with Next.js, Supabase, Tiptap, React PDF, Yjs, and the Claude API. Signed-in users can create public or private study rooms and work together in isolated Notes, PDF, Whiteboard, and AI Assistant workspaces according to owner/editor/viewer membership. Notes include live cursors, offline recovery, overlap review, and immutable version history. The private PDF workspace adds highlights, underlines, freehand marks, sticky notes, page comments, replies, bookmarks, and zoom. The SVG whiteboard adds drawing, shapes, arrows, text, images, and a transient laser pointer. The assistant converts an explicit note snapshot into a summary, quiz, flashcards, learning recommendations, and cautious misconception review. Account-scoped Yjs updates persist in IndexedDB. The collaboration runtime runs as a standalone Node service locally and as a same-origin Vercel WebSocket Function in deployment, with durable state and cross-instance fan-out provided by Supabase.
 
 Each Supabase Auth account has a constrained `public.profiles` row. Signup creates it automatically from the supplied display name, existing accounts are backfilled, and the application uses that name for presence and version authorship. Profile RLS limits reads to the current user and collaborators who share a room.
 
@@ -58,11 +58,11 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_YJS_WS_URL=ws://localhost:1234
 YJS_HOST=127.0.0.1
 YJS_PORT=1234
-OPENAI_API_KEY=your-server-only-openai-api-key
-# Optional; defaults to gpt-4o-mini
-# OPENAI_MODEL=gpt-4o-mini
-# Optional; defaults to gpt-4o-mini for quick whiteboard answers
-# OPENAI_WHITEBOARD_MODEL=gpt-4o-mini
+# AI study assistant and whiteboard answers
+ANTHROPIC_API_KEY=your-server-only-anthropic-api-key
+# Optional; both default to claude-opus-5-5
+# ANTHROPIC_STUDY_MODEL=claude-opus-5-5
+# ANTHROPIC_WHITEBOARD_MODEL=claude-opus-5-5
 ```
 
 `NEXT_PUBLIC_YJS_WS_URL` is the browser-visible address of the service started by `npm run dev:yjs`; it is not a generated credential. Omit it on Vercel so production uses the same-origin `/api/collaboration` WebSocket Function and cookie authentication. Set it only when using the standalone service. `YJS_ALLOWED_ORIGIN` can require an exact browser Origin for an externally hosted service.
@@ -79,7 +79,7 @@ Configure these Vercel variables for both Preview and Production:
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-server-only-service-role-key
 NEXT_PUBLIC_SITE_URL=https://your-deployment.vercel.app
-OPENAI_API_KEY=your-server-only-openai-api-key
+ANTHROPIC_API_KEY=your-server-only-anthropic-api-key
 ```
 
 Do not configure `NEXT_PUBLIC_YJS_WS_URL` on Vercel. Add `https://your-deployment.vercel.app/auth/confirm` to the Supabase Auth redirect allow list before testing signup or password recovery.
@@ -89,7 +89,7 @@ vercel link
 vercel env add SUPABASE_URL production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production --sensitive
 vercel env add NEXT_PUBLIC_SITE_URL production
-vercel env add OPENAI_API_KEY production --sensitive
+vercel env add ANTHROPIC_API_KEY production --sensitive
 vercel --prod
 ```
 
@@ -114,8 +114,8 @@ Vercel WebSockets follow the Function maximum duration. The existing Yjs and pre
 ## Phase 4 AI assistant
 
 - Opening the assistant captures the current collaborative-note text before the editor unmounts. Generation is explicit; later note edits are included only after returning to Notes and reopening the assistant.
-- One authenticated request creates a discussion summary, 3–5 question quiz, 4–8 flashcards, 2–5 focused learning recommendations, and zero or more cautious misconception signals.
-- Every request revalidates room membership. `OPENAI_API_KEY` remains server-only, provider storage is disabled, request and output sizes are bounded, generation times out after 30 seconds, and a basic instance-local limit allows five attempts per user/room in ten minutes.
+- One authenticated request creates a discussion summary, 3–20 question quiz, 4–20 flashcards, 2–5 focused learning recommendations, and zero or more cautious misconception signals.
+- Every request revalidates room membership. `ANTHROPIC_API_KEY` remains server-only, request and output sizes are bounded, generation times out after 55 seconds, and a basic instance-local limit allows five attempts per user/room in ten minutes.
 - Strict JSON Schema and runtime validation protect the UI from incomplete model output. Note text is labeled as untrusted data and kept separate from model instructions.
 - Generated packs are private, ephemeral browser state: they are not written to Postgres, Yjs, or the collaborative notes. The interface consistently labels them as study aids that require verification, not medical advice.
 - Creators can explicitly save a validated guide to a private room library, reopen it without another model call, and delete it after inline confirmation. Lists return metadata only; the source note snapshot, revealed-card state, and provider metadata are never stored.

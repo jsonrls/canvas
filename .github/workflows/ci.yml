@@ -15,6 +15,10 @@ jobs:
       # shortcut: Node and static sites only; add a step here when a project uses another stack.
       - name: Node project
         if: hashFiles('package.json') != ''
+        # The Yjs runtime fails fast at import without these; build never connects with them.
+        env:
+          SUPABASE_URL: https://ci-placeholder.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
           npm run lint --if-present

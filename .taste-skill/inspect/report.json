@@ -1,0 +1,1318 @@
+{
+ "url": "http://localhost:3000/rooms-preview",
+ "at": "2026-11-23T12:06:15.541Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    0.99
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 900,
+     "screens": 1,
+     "words": 103,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 14,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 1,
+     "size": 35,
+     "vw": 2.4,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.11,
+     "top": 129,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "lines": 1,
+     "size": 35,
+     "font": "Bricolage Grotesque"
+    },
+    "headings": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "words": 5,
+      "chars": 32,
+      "lines": 1,
+      "size": 35,
+      "vw": 2.4,
+      "font": "Bricolage Grotesque",
+      "weight": 600,
+      "tracking": 0,
+      "leading": 1.11,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 129,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.66,
+       "mono": false
+      },
+      {
+       "family": "Bricolage Grotesque",
+       "share": 0.34,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      35
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": {
+      "font": "Bricolage Grotesque",
+      "size": 14,
+      "leading": 1.5,
+      "weight": 600,
+      "tracking": 0,
+      "contrast": 16.9
+     },
+     "measureChars": 39,
+     "max": {
+      "size": 35,
+      "vw": 2.4,
+      "font": "Bricolage Grotesque",
+      "text": "Your study rooms, Sample preview"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.02,
+     "centerShare": 0.06,
+     "smallText": 8
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f6f9fc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.5,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffefe",
+       "top": 0,
+       "hsl": {
+        "h": 0,
+        "s": 1,
+        "l": 1
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#0e1a3d",
+       "share": 0.57
+      },
+      {
+       "color": "#536079",
+       "share": 0.38
+      },
+      {
+       "color": "#fffefe",
+       "share": 0.02
+      },
+      {
+       "color": "#b53c36",
+       "share": 0.02
+      },
+      {
+       "color": "#272726",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#fffefe",
+      "hsl": {
+       "h": 0,
+       "s": 1,
+       "l": 1
+      },
+      "fg": "#0e1a3d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 10,
+     "radius": "pill",
+     "height": 38,
+     "withShadow": 1,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Create room",
+      "Manage",
+      "Open room",
+      "Leave",
+      "Open room"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "button.astryx-button.primary → color(srgb 1 1 1 / 0.28) 0px 1px 0px 0px inset, color(srgb 0.145098 0.388235 0.9"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 1,
+     "hairlineSamples": [
+      "header.astryx-stack.vertical 1440px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 4,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 81,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "bricolage grotesque",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 900,
+    "margins": {
+     "left": 192,
+     "right": 192
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "size": 35,
+      "top": 129,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 192,
+      "n": 1
+     },
+     {
+      "x": 212,
+      "n": 1
+     },
+     {
+      "x": 844,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 3,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.27,
+    "voidBox": {
+     "x": 0,
+     "y": 660,
+     "w": 1440,
+     "h": 240
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f6f9fc",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 192,
+     "right": 192
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 1,
+     "size": 35,
+     "vw": 2.4,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.11,
+     "top": 129,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 2,
+     "firstScreen": 2,
+     "ragged": [
+      {
+       "diff": 196,
+       "top": 228
+      }
+     ],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 7,
+     "radii": [
+      [
+       16,
+       5
+      ],
+      [
+       24,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.32,
+     "tiny": 6,
+     "tinySamples": [
+      "Signed in as 10px",
+      "Room icon or logo 9px",
+      "Optional 9px",
+      "1:1 9px"
+     ],
+     "sizes": [
+      8,
+      9,
+      10,
+      12,
+      14,
+      20,
+      35
+     ]
+    },
+    "title": {
+     "text": "Your study rooms, Sample preview",
+     "size": 35,
+     "top": 129
+    },
+    "colourShare": 0.01
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 1,
+   "filled": [
+    0.99
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 1024,
+     "screens": 1,
+     "words": 103,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 14,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 1,
+     "size": 35,
+     "vw": 4.6,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.11,
+     "top": 129,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "lines": 1,
+     "size": 35,
+     "font": "Bricolage Grotesque"
+    },
+    "headings": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "words": 5,
+      "chars": 32,
+      "lines": 1,
+      "size": 35,
+      "vw": 4.6,
+      "font": "Bricolage Grotesque",
+      "weight": 600,
+      "tracking": 0,
+      "leading": 1.11,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.76,
+      "top": 129,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.66,
+       "mono": false
+      },
+      {
+       "family": "Bricolage Grotesque",
+       "share": 0.34,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      35
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": {
+      "font": "Bricolage Grotesque",
+      "size": 14,
+      "leading": 1.5,
+      "weight": 600,
+      "tracking": 0,
+      "contrast": 16.9
+     },
+     "measureChars": 52,
+     "max": {
+      "size": 35,
+      "vw": 4.6,
+      "font": "Bricolage Grotesque",
+      "text": "Your study rooms, Sample preview"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.02,
+     "centerShare": 0.06,
+     "smallText": 8
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f6f9fc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.5,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffefe",
+       "top": 0,
+       "hsl": {
+        "h": 0,
+        "s": 1,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f3f4fb",
+       "top": 288,
+       "hsl": {
+        "h": 232,
+        "s": 0.5,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#0e1a3d",
+       "share": 0.57
+      },
+      {
+       "color": "#536079",
+       "share": 0.38
+      },
+      {
+       "color": "#fffefe",
+       "share": 0.02
+      },
+      {
+       "color": "#b53c36",
+       "share": 0.02
+      },
+      {
+       "color": "#272726",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#fffefe",
+      "hsl": {
+       "h": 0,
+       "s": 1,
+       "l": 1
+      },
+      "fg": "#0e1a3d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 10,
+     "radius": "pill",
+     "height": 38,
+     "withShadow": 1,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Create room",
+      "Manage",
+      "Open room",
+      "Leave",
+      "Open room"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "button.astryx-button.primary → color(srgb 1 1 1 / 0.28) 0px 1px 0px 0px inset, color(srgb 0.145098 0.388235 0.9"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 1,
+     "hairlineSamples": [
+      "header.astryx-stack.vertical 768px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 3,
+     "boxRadius": 24,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 81,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "bricolage grotesque",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 1024,
+    "margins": {
+     "left": 32,
+     "right": 66
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "size": 35,
+      "top": 129,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 52,
+      "n": 2
+     },
+     {
+      "x": 32,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 3,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f6f9fc",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 32,
+     "right": 42
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 1,
+     "size": 35,
+     "vw": 4.6,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.11,
+     "top": 129,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 2,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 7,
+     "radii": [
+      [
+       16,
+       5
+      ],
+      [
+       24,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.32,
+     "tiny": 6,
+     "tinySamples": [
+      "Signed in as 10px",
+      "Room icon or logo 9px",
+      "Optional 9px",
+      "1:1 9px"
+     ],
+     "sizes": [
+      8,
+      9,
+      10,
+      12,
+      14,
+      20,
+      35
+     ]
+    },
+    "title": {
+     "text": "Your study rooms, Sample preview",
+     "size": 35,
+     "top": 129
+    },
+    "colourShare": 0.016
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 2,
+   "filled": [
+    0.98,
+    0.98
+   ],
+   "motion": {
+    "elements": 1,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 1258,
+     "screens": 1.5,
+     "words": 103,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 14,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 2,
+     "size": 29,
+     "vw": 7.4,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.2,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "lines": 2,
+     "size": 29,
+     "font": "Bricolage Grotesque"
+    },
+    "headings": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "words": 5,
+      "chars": 32,
+      "lines": 2,
+      "size": 29,
+      "vw": 7.4,
+      "font": "Bricolage Grotesque",
+      "weight": 600,
+      "tracking": 0,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 113,
+      "tag": "h1",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 1,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Inter",
+       "share": 0.66,
+       "mono": false
+      },
+      {
+       "family": "Bricolage Grotesque",
+       "share": 0.34,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      10,
+      11,
+      12,
+      14,
+      29
+     ],
+     "sizeCount": 5,
+     "notLoaded": [],
+     "body": {
+      "font": "Bricolage Grotesque",
+      "size": 14,
+      "leading": 1.5,
+      "weight": 600,
+      "tracking": 0,
+      "contrast": 16.9
+     },
+     "measureChars": 35,
+     "max": {
+      "size": 29,
+      "vw": 7.4,
+      "font": "Bricolage Grotesque",
+      "text": "Your study rooms, Sample preview"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.02,
+     "centerShare": 0.06,
+     "smallText": 8
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f6f9fc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.5,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#fffefe",
+       "top": 0,
+       "hsl": {
+        "h": 0,
+        "s": 1,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f3f4fb",
+       "top": 322,
+       "hsl": {
+        "h": 232,
+        "s": 0.5,
+        "l": 0.97
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#0e1a3d",
+       "share": 0.57
+      },
+      {
+       "color": "#536079",
+       "share": 0.38
+      },
+      {
+       "color": "#fffefe",
+       "share": 0.02
+      },
+      {
+       "color": "#b53c36",
+       "share": 0.02
+      },
+      {
+       "color": "#272726",
+       "share": 0
+      }
+     ],
+     "button": {
+      "bg": "#fffefe",
+      "hsl": {
+       "h": 0,
+       "s": 1,
+       "l": 1
+      },
+      "fg": "#0e1a3d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 10,
+     "inHero": 7,
+     "radius": "pill",
+     "height": 38,
+     "withShadow": 1,
+     "withGradient": 1,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Create room",
+      "Manage",
+      "Open room",
+      "Leave",
+      "Open room"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 0,
+     "shadowSamples": [
+      "button.astryx-button.primary → color(srgb 1 1 1 / 0.28) 0px 1px 0px 0px inset, color(srgb 0.145098 0.388235 0.9"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 1,
+     "hairlineSamples": [
+      "header.astryx-stack.vertical 390px"
+     ],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 7,
+     "boxRadius": 16,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 4,
+       "iconTopped": true,
+       "rounded": true,
+       "top": 375
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": false,
+     "height": 81,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "inter",
+     "bricolage grotesque",
+     "__nextjs-geist"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 1258,
+    "margins": {
+     "left": 16,
+     "right": 32
+    },
+    "sections": [],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Your study rooms, Sample preview",
+      "size": 29,
+      "top": 113,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 32,
+      "n": 2
+     },
+     {
+      "x": 16,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 3,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f6f9fc",
+    "sidebar": null,
+    "topbar": {
+     "h": 81
+    },
+    "canvas": {
+     "left": 16,
+     "right": 26
+    },
+    "hero": {
+     "text": "Your study rooms, Sample preview",
+     "words": 5,
+     "chars": 32,
+     "lines": 2,
+     "size": 29,
+     "vw": 7.4,
+     "font": "Bricolage Grotesque",
+     "weight": 600,
+     "tracking": 0,
+     "leading": 1.2,
+     "top": 113,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 2,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 7,
+     "radii": [
+      [
+       16,
+       5
+      ],
+      [
+       24,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 0,
+     "tabularShare": null,
+     "kpiMax": null
+    },
+    "rows": null,
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.33,
+     "tiny": 6,
+     "tinySamples": [
+      "Signed in as 10px",
+      "Room icon or logo 9px",
+      "Optional 9px",
+      "1:1 9px"
+     ],
+     "sizes": [
+      8,
+      9,
+      10,
+      12,
+      14,
+      20,
+      29
+     ]
+    },
+    "title": {
+     "text": "Your study rooms, Sample preview",
+     "size": 29,
+     "top": 113
+    },
+    "colourShare": 0.032
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "FAIL",
+   "id": "button-fx",
+   "width": 1440,
+   "message": "Buttons with gradient fill and shadow/glow.",
+   "fix": "Flat fill, one colour.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "FAIL",
+   "id": "tiny-text",
+   "width": 1440,
+   "message": "6 text blocks under 11px: Signed in as 10px, Room icon or logo 9px, Optional 9px, 1:1 9px.",
+   "fix": "Nothing below 11px; secondary text 12px, data 13–14px.",
+   "alsoAt": [
+    768,
+    390
+   ]
+  },
+  {
+   "level": "WARN",
+   "id": "ragged-row",
+   "width": 1440,
+   "message": "1 pair(s) of cards in one row end at different heights (by 196px).",
+   "fix": "Cards that share a row share a bottom edge: balance them by their content (the same number of rows, a block of similar height beside it), or stack them. In testing, ragged rows were marked down every time."
+  },
+  {
+   "level": "WARN",
+   "id": "app-title-size",
+   "width": 1440,
+   "message": "The h1 is 35px (\"Your study rooms, Sample preview\").",
+   "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone).",
+   "alsoAt": [
+    768,
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/desktop-fold.jpg",
+   "pages": [
+    "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/desktop-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/tablet-fold.jpg",
+   "pages": [
+    "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/tablet-page-01.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/mobile-fold.jpg",
+   "pages": [
+    "/Volumes/json SSD/dev-projects/qollab/.taste-skill/inspect/mobile-page-01.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

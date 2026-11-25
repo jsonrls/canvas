@@ -62,7 +62,7 @@ export function SignOutButton({
         <Button
           label={isPending ? pendingLabel : label}
           variant="destructive"
-          className="min-h-11 bg-error! text-on-error!"
+          className="bg-error! text-on-error!"
           aria-busy={isPending}
           isLoading={isPending}
           isDisabled={isPending}
@@ -70,7 +70,8 @@ export function SignOutButton({
         />
       ) : (
         <ButtonControl
-          variant="danger-ghost"
+          // The menu row is styled as a menu item, not a themed button.
+          variant={isMenuItem ? "custom" : "danger-ghost"}
           type="button"
           className={
             isMenuItem

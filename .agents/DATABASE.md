@@ -31,6 +31,10 @@ The deployed room model uses `public.rooms`, `public.room_members`, and `public.
 
 `public.saved_study_guides` stores explicitly saved, validated five-view AI output per creator and room. It retains the derived title, generated/save timestamps, source character count, and JSON payload, but never the source note snapshot, revealed-card state, or provider metadata. RLS permits creator-only select/insert/delete, no update privilege is granted, and room/account deletion cascades the rows. Lists use metadata-only selects; detail reads are explicit.
 
+### Implemented live activities
+
+`live_questions`, `live_sessions`, `live_responses`, `live_qa_items`, and `live_qa_votes` hold a main room's activities. `breakout_live_*` are the same five tables for breakouts, keyed by `breakout_room_id` instead of `room_id` and created from the main tables' columns, checks, and unique keys by `20261125120000_add_breakout_live_activities.sql`. Apply `20261124090000` and `20261125090000` first. Repeat any later change to a `live_*` table on its breakout copy. Deleting a room or breakout cascades; deleting a room also removes the pictures of the room and its breakouts from `live-images`.
+
 Only the `pdf` row may populate `pdf_storage_path`, `pdf_file_name`, `pdf_file_size`, and `pdf_asset_revision`. The check constraint requires all four fields together, a trimmed 1–180 character name, 5–15,728,640 bytes, and the exact versioned path `<room_uuid>/<revision_uuid>.pdf`.
 
 The private `boardprep-pdfs` bucket accepts only `application/pdf` up to 15 MiB. `private.can_read_room_pdf_object(text)` grants object reads to members; `private.can_write_room_pdf_object(text)` grants inserts, replacement, and cleanup only to owners/editors after validating the versioned path and room prefix. Both helpers are `SECURITY DEFINER`, use an empty search path, and are inaccessible to anonymous callers.

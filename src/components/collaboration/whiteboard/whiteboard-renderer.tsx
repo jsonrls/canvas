@@ -4,7 +4,14 @@ import {
   WhiteboardTool,
 } from "@/components/collaboration/whiteboard/types";
 import { getResizeHandles, handleCursor } from "@/lib/whiteboard/geometry";
+import { measureBoardText } from "@/components/collaboration/whiteboard/measure-board-text";
 import type { ResizeHandle } from "@/lib/whiteboard/model";
+import {
+  boardLineHeight,
+  boardTextBaseline,
+  boardTextHeight,
+  wrapBoardText,
+} from "@/lib/whiteboard/text-layout";
 import {
   getElementBounds,
   type WhiteboardElement,
@@ -158,11 +165,23 @@ export function WhiteboardRenderer({
               if (event.detail === 2) beginTextEdit(event, element);
             }}
             stroke="none"
+            style={
+              element.fontSize ? { fontSize: element.fontSize } : undefined
+            }
             x={element.x}
-            y={element.y + 30}
+            y={element.y + boardTextBaseline(element.fontSize)}
           >
-            {element.text.split("\n").map((line, index) => (
-              <tspan dy={index === 0 ? 0 : 32} key={index} x={element.x}>
+            {wrapBoardText(
+              element.text,
+              element.width,
+              measureBoardText,
+              element.fontSize,
+            ).map((line, index) => (
+              <tspan
+                dy={index === 0 ? 0 : boardLineHeight(element.fontSize)}
+                key={index}
+                x={element.x}
+              >
                 {line}
               </tspan>
             ))}
@@ -191,9 +210,26 @@ export function WhiteboardRenderer({
   };
 
   const renderSelectionOverlay = (
-    element: WhiteboardElement,
+    selected: WhiteboardElement,
   ): React.ReactNode => {
     if (tool !== "select") return null;
+
+    // The box hugs the wrapped lines, also for text saved before wrapping.
+    const element =
+      selected.type === "text"
+        ? {
+            ...selected,
+            height: boardTextHeight(
+              wrapBoardText(
+                selected.text,
+                selected.width,
+                measureBoardText,
+                selected.fontSize,
+              ).length,
+              selected.fontSize,
+            ),
+          }
+        : selected;
 
     const isLine = element.type === "line" || element.type === "arrow";
     const bounds = getElementBounds(element);

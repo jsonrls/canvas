@@ -4,6 +4,7 @@ import {
   LayoutContent,
   type LayoutContentProps,
 } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/VStack";
 import type { ReactElement, ReactNode } from "react";
 
 export type QollabMobileNavigationConfig = Pick<
@@ -46,20 +47,25 @@ export function QollabAppShell({
       sideNav={sideNavigation}
       variant="section"
     >
-      <Layout
-        content={
-          <LayoutContent
-            isScrollable={isContentScrollable}
-            padding={contentPadding}
-          >
-            {children}
-          </LayoutContent>
-        }
-        end={contextPanel}
-        header={header}
-        height="fill"
-        padding={0}
-      />
+      {/* Flush frame: the sidebar sits on the muted ground and the workspace
+          is the white surface beside it, edge to edge, split by one hairline.
+          An inset, rounded sheet left a stray gap above and below it. */}
+      <VStack className="h-full min-h-0 min-w-0 overflow-hidden bg-surface md:border-l md:border-border">
+        <Layout
+          content={
+            <LayoutContent
+              isScrollable={isContentScrollable}
+              padding={contentPadding}
+            >
+              {children}
+            </LayoutContent>
+          }
+          end={contextPanel}
+          header={header}
+          height="fill"
+          padding={0}
+        />
+      </VStack>
     </AppShell>
   );
 }

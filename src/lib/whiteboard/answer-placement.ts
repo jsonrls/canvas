@@ -174,9 +174,6 @@ export function findWhiteboardAnswerPlacement(
 
   if (questionCandidates.length === 0) return null;
 
-  const selectedElement = selectedId
-    ? (elements.find((element) => element.id === selectedId) ?? null)
-    : null;
   const prioritizedQuestions = [...questionCandidates].sort((first, second) => {
     const firstSelected =
       first.circle.id === selectedId || first.textElement.id === selectedId;
@@ -185,9 +182,9 @@ export function findWhiteboardAnswerPlacement(
     if (firstSelected !== secondSelected) return firstSelected ? -1 : 1;
     return second.circle.createdAt.localeCompare(first.circle.createdAt);
   });
+  // The empty answer circle is often the last thing drawn, so it is the
+  // selected element; it must stay a target. A circle holding text never is.
   const possibleTargets = circleElements.filter((circle) => {
-    if (circle.id === selectedId && selectedElement?.type !== "text")
-      return false;
     const bounds = getElementBounds(circle);
     return !textElements.some((textElement) =>
       textInsideBounds(textElement, bounds),
@@ -262,39 +259,4 @@ export function findWhiteboardAnswerPlacement(
   }
 
   return best?.placement ?? null;
-}
-
-export function wrapAnswerForTarget(
-  answer: string,
-  targetWidth: number,
-): string {
-  const maxLineLength = Math.max(
-    18,
-    Math.min(58, Math.floor(Math.max(160, targetWidth - 48) / 13)),
-  );
-  const sourceLines = answer
-    .replace(/\s+\n/gu, "\n")
-    .split(/\n+/u)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const wrapped: string[] = [];
-
-  for (const sourceLine of sourceLines) {
-    const words = sourceLine.split(/\s+/u);
-    let line = "";
-
-    for (const word of words) {
-      const next = line ? `${line} ${word}` : word;
-      if (next.length > maxLineLength && line) {
-        wrapped.push(line);
-        line = word;
-      } else {
-        line = next;
-      }
-    }
-
-    if (line) wrapped.push(line);
-  }
-
-  return wrapped.slice(0, 7).join("\n");
 }

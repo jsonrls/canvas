@@ -77,6 +77,15 @@ assert.match(updateForm, /(?:disabled|isDisabled)=\{pending\}/);
 assert.match(callbackRoute, /type === "recovery"/);
 assert.match(callbackRoute, /"invalid_or_expired"/);
 assert.match(loginForm, /href="\/reset-password"/);
+const settingsDialog = readFileSync(
+  new URL(
+    "../src/components/account/password-reset-dialog.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+assert.match(settingsDialog, /requestPasswordReset\(/);
+assert.match(settingsDialog, /role="alert"/);
 
 process.stdout.write(
   "Password-reset verification passed: validation, safe callback construction, trusted update ordering, accessible form contracts, recovery failure routing, and login entry.\n",

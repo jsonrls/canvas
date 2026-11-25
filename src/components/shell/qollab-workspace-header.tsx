@@ -21,8 +21,12 @@ export function QollabWorkspaceHeader({
       height={QOLLAB_WORKSPACE_HEADER_HEIGHT}
       padding={0}
     >
+      {/* The header is a fixed 56px. The toolbar's own block padding made its
+          content taller than that, which pushed everything below the middle,
+          so the padding is dropped and the content is centred in a 56px
+          (min-h-14) row instead. */}
       <Toolbar
-        className="min-w-0 py-1! [&_[role=toolbar]>:first-child]:min-w-0 [&_[role=toolbar]>:last-child]:shrink-0"
+        className="flex min-h-14 min-w-0 items-center py-0! [&_.astryx-section]:w-full [&_.astryx-section]:py-0! [&_[role=toolbar]>:first-child]:min-w-0 [&_[role=toolbar]>:last-child]:shrink-0"
         centerContent={centerContent}
         endContent={endContent}
         gap={2}
