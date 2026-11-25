@@ -96,7 +96,7 @@ textarea:focus-visible {
 }
 
 /*
- * Text fields show focus as an accent rim with a soft halo instead of an
+ * Text fields show focus as a solid accent rim instead of an
  * offset outline. The transparent outline stays so forced-colours mode still
  * draws one. `:where` keeps specificity low so feature styles can override.
  */

@@ -1,9 +1,7 @@
 /* Landing page only: soft grey cards, blue panels and pill actions. */
 
-/* Headings here use the body grotesque, set lighter and tighter. */
+/* Headings here are set lighter and tighter than in the app. */
 .landing-root {
-  --font-display: var(--font-qollab-body);
-  --font-family-heading: var(--font-qollab-body), sans-serif;
   overflow-x: clip;
 }
 
@@ -75,16 +73,15 @@
   object-position: 84% 50%;
 }
 
-/* The primary action as a link: the theme's gradient pill button. */
+/* The primary action as a link: the theme's ink pill button. */
 .landing-cta {
-  border: 1px solid var(--qollab-button-edge-primary);
-  background: var(--qollab-button-gradient-primary);
-  box-shadow: var(--qollab-button-glow-primary);
-  transition: filter 150ms ease-out;
+  border: 1px solid var(--qollab-button-primary);
+  background: var(--qollab-button-primary);
+  transition: background-color 150ms ease-out;
 }
 
 .landing-cta:hover {
-  filter: brightness(1.08);
+  background: var(--qollab-button-primary-hover);
 }
 
 /* The active step's bar fills as the page scrolls through that step. */
