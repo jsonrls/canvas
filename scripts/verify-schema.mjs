@@ -314,12 +314,12 @@ begin
     )
     or not has_function_privilege(
       'authenticated',
-      'public.create_breakout_room(uuid,text)',
+      'public.create_breakout_room(uuid,text,text)',
       'EXECUTE'
     )
     or has_function_privilege(
       'anon',
-      'public.create_breakout_room(uuid,text)',
+      'public.create_breakout_room(uuid,text,text)',
       'EXECUTE'
     )
     or not has_function_privilege(
