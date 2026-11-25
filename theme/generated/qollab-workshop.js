@@ -97,30 +97,30 @@ export const qollabWorkshopTheme = {
     "--color-syntax-property": "light-dark(#005348, #83dac9)",
     "--color-syntax-punctuation": "light-dark(#a3a3a3, #525252)",
     "--color-syntax-background": "light-dark(#fafafa, #0a0a0a)",
-    "--color-background-surface": "light-dark(#FFFFFF, #19191F)",
-    "--color-background-body": "light-dark(#F7F8FC, #111116)",
-    "--color-background-card": "light-dark(#FFFFFF, #1F1F25)",
-    "--color-background-popover": "light-dark(#FFFFFF, #27272D)",
-    "--color-background-muted": "light-dark(#F3F5FA, #222228)",
-    "--color-accent": "light-dark(#2563EB, #93C5FD)",
-    "--color-accent-muted": "light-dark(#EAF2FF, #172D50)",
-    "--color-neutral": "light-dark(#2563EB14, #93C5FD24)",
+    "--color-background-surface": "light-dark(#FFFFFF, #0B0D1E)",
+    "--color-background-body": "light-dark(#FFFFFF, #0B0D1E)",
+    "--color-background-card": "light-dark(#FFFFFF, #15182E)",
+    "--color-background-popover": "light-dark(#FFFFFF, #1C2040)",
+    "--color-background-muted": "light-dark(#F2F3FA, #15182E)",
+    "--color-accent": "light-dark(#2B4BFF, #8098FF)",
+    "--color-accent-muted": "light-dark(#E8ECFF, #1A2052)",
+    "--color-neutral": "light-dark(#2B4BFF14, #8098FF24)",
     "--color-overlay": "light-dark(#00000080, #000000CC)",
-    "--color-overlay-hover": "light-dark(#0F1B3D08, #FFFFFF0A)",
-    "--color-overlay-pressed": "light-dark(#2563EB14, #93C5FD20)",
-    "--color-text-primary": "light-dark(#0F1B3D, #F3F2F7)",
-    "--color-text-secondary": "light-dark(#536079, #BCBBC4)",
-    "--color-text-disabled": "light-dark(#7A869C, #7D7C87)",
-    "--color-text-accent": "light-dark(#1D4ED8, #BFDBFE)",
+    "--color-overlay-hover": "light-dark(#0E102408, #FFFFFF0A)",
+    "--color-overlay-pressed": "light-dark(#2B4BFF14, #8098FF20)",
+    "--color-text-primary": "light-dark(#0E1024, #F2F3FA)",
+    "--color-text-secondary": "light-dark(#4B4F6B, #B3B7CF)",
+    "--color-text-disabled": "light-dark(#7F839E, #8A8EA8)",
+    "--color-text-accent": "light-dark(#1F3BE0, #A9B8FF)",
     "--color-on-dark": "#ffffff",
     "--color-on-light": "#171717",
-    "--color-on-accent": "light-dark(#FFFFFF, #171717)",
+    "--color-on-accent": "light-dark(#FFFFFF, #0E1024)",
     "--color-on-success": "light-dark(#ffffff, #171717)",
     "--color-on-error": "light-dark(#ffffff, #171717)",
     "--color-on-warning": "#171717",
-    "--color-icon-accent": "light-dark(#2563EB, #93C5FD)",
-    "--color-icon-primary": "light-dark(#0F1B3D, #F3F2F7)",
-    "--color-icon-secondary": "light-dark(#536079, #BCBBC4)",
+    "--color-icon-accent": "light-dark(#2B4BFF, #8098FF)",
+    "--color-icon-primary": "light-dark(#0E1024, #F2F3FA)",
+    "--color-icon-secondary": "light-dark(#4B4F6B, #B3B7CF)",
     "--color-icon-disabled": "light-dark(#a3a3a3, #525252)",
     "--color-success": "light-dark(#207A55, #8FD9B0)",
     "--color-error": "light-dark(#B53C36, #FF9B90)",
@@ -128,9 +128,9 @@ export const qollabWorkshopTheme = {
     "--color-success-muted": "light-dark(#E7F6EE, #2B6A4A4D)",
     "--color-error-muted": "light-dark(#F4D9D4, #B94A414D)",
     "--color-warning-muted": "light-dark(#FFF8E6, #D6923440)",
-    "--color-border": "light-dark(#DFE7F2, #34323C)",
-    "--color-border-emphasized": "light-dark(#8291A8, #9696A3)",
-    "--color-skeleton": "light-dark(#E6ECF5, #3B3944)",
+    "--color-border": "light-dark(#DFE1EE, #2A2E4A)",
+    "--color-border-emphasized": "light-dark(#7F839E, #8A8EA8)",
+    "--color-skeleton": "light-dark(#E6E8F3, #2A2E4A)",
     "--color-shadow": "light-dark(#0000001A, #0000004D)",
     "--color-tint-hover": "light-dark(black, white)",
     "--color-background-red": "light-dark(#facecb, #ff9e973D)",
@@ -189,16 +189,21 @@ export const qollabWorkshopTheme = {
     "--shadow-inset-error": "inset 0px 0px 0px 2px #e33f4a4D",
     "--radius-chat": "16px",
     "--ease-standard": "cubic-bezier(0.2, 0.8, 0.2, 1)",
-    "--color-background-inverted": "light-dark(#0F1B3D, #F3F2F7)",
-    "--color-track": "light-dark(#D5DEEC, #4B4954)",
+    "--color-background-inverted": "light-dark(#0E1024, #F2F3FA)",
+    "--color-track": "light-dark(#D5D8E8, #3A3F5E)",
     "--qollab-button-radius": "12px",
-    "--qollab-button-edge-primary": "light-dark(#1744A2, #507EAF)",
-    "--qollab-button-gradient-primary": "linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 84%, var(--color-background-surface)), var(--color-text-accent))",
-    "--qollab-button-glow-primary": "inset 0 1px 0 color-mix(in srgb, var(--color-background-surface) 28%, transparent), 0 8px 20px color-mix(in srgb, var(--color-accent) 28%, transparent)",
-    "--qollab-button-edge-secondary": "light-dark(#C5D2E4, #9696A3)",
+    "--qollab-button-primary": "light-dark(#0E1024, #F2F3FA)",
+    "--qollab-button-primary-hover": "light-dark(#2A2D47, #D5D8EA)",
+    "--qollab-button-on-primary": "light-dark(#FFFFFF, #0E1024)",
+    "--qollab-button-edge-secondary": "light-dark(#7F839E, #8A8EA8)",
     "--qollab-button-edge-destructive": "light-dark(#792722, #A14B43)",
     "--qollab-button-secondary": "light-dark(#FFFFFF, #34343F)",
-    "--qollab-field-focus-ring": "0 0 0 1px var(--color-accent), 0 0 0 5px color-mix(in srgb, var(--color-accent) 18%, transparent)",
+    "--qollab-field-focus-ring": "0 0 0 1px var(--color-accent)",
+    "--qollab-popup-radius": "16px",
+    "--qollab-option-radius": "8px",
+    "--qollab-dialog-radius": "24px",
+    "--qollab-popup-shadow": "0 1px 2px color-mix(in srgb, var(--color-text-primary) 8%, transparent), 0 12px 32px color-mix(in srgb, var(--color-text-primary) 14%, transparent)",
+    "--qollab-dialog-shadow": "0 2px 4px color-mix(in srgb, var(--color-text-primary) 8%, transparent), 0 24px 64px color-mix(in srgb, var(--color-text-primary) 22%, transparent)",
     "--qollab-button-height-sm": "32px",
     "--qollab-button-height-md": "36px",
     "--qollab-button-height-lg": "40px",
@@ -341,7 +346,7 @@ export const qollabWorkshopTheme = {
           "boxShadow": "none !important"
         },
         ":focus-visible": {
-          "outline": "calc(var(--spacing-1) * 0.5) solid var(--color-text-primary) !important",
+          "outline": "calc(var(--spacing-1) * 0.5) solid var(--color-accent) !important",
           "outlineOffset": "calc(var(--spacing-1) * 0.75) !important"
         },
         ":is(:disabled,[aria-disabled='true'])": {
@@ -369,15 +374,13 @@ export const qollabWorkshopTheme = {
         "height": "auto"
       },
       "variant:primary": {
-        "--qollab-button-edge": "var(--qollab-button-edge-primary)",
-        "backgroundColor": "var(--color-accent) !important",
-        "backgroundImage": "var(--qollab-button-gradient-primary) !important",
-        "boxShadow": "var(--qollab-button-glow-primary) !important",
+        "--qollab-button-edge": "var(--qollab-button-primary)",
+        "backgroundColor": "var(--qollab-button-primary) !important",
         "borderRadius": "var(--radius-full) !important",
         "paddingInline": "var(--spacing-4)",
-        "color": "var(--color-on-accent) !important",
+        "color": "var(--qollab-button-on-primary) !important",
         ":hover": {
-          "filter": "brightness(1.08)"
+          "backgroundColor": "var(--qollab-button-primary-hover) !important"
         }
       },
       "variant:secondary": {
@@ -392,6 +395,7 @@ export const qollabWorkshopTheme = {
       },
       "variant:ghost": {
         "--qollab-button-edge": "transparent",
+        "borderRadius": "var(--radius-full) !important",
         "backgroundColor": "transparent !important",
         "color": "var(--color-text-primary) !important",
         "boxShadow": "none !important",
@@ -410,6 +414,7 @@ export const qollabWorkshopTheme = {
       },
       "variant:danger-ghost": {
         "--qollab-button-edge": "transparent",
+        "borderRadius": "var(--radius-full) !important",
         "backgroundColor": "transparent !important",
         "color": "var(--color-error) !important",
         "boxShadow": "none !important",
@@ -534,6 +539,9 @@ export const qollabWorkshopTheme = {
         "--color-text-primary": "var(--color-text-red)",
         "--color-text-secondary": "var(--color-text-red)",
         "--color-error": "var(--color-text-red)"
+      },
+      "base": {
+        "borderRadius": "var(--qollab-popup-radius)"
       }
     },
     "switch": {
@@ -590,7 +598,7 @@ export const qollabWorkshopTheme = {
     "number-input": {
       "base": {
         "borderRadius": "var(--radius-full)",
-        "--astryx-number-input-padding-inline": "var(--spacing-3)",
+        "--astryx-number-input-padding-inline": "var(--spacing-4)",
         ":focus-within": {
           "boxShadow": "var(--qollab-field-focus-ring)"
         },
@@ -602,6 +610,7 @@ export const qollabWorkshopTheme = {
     "selector": {
       "base": {
         "borderRadius": "var(--radius-full)",
+        "paddingInline": "var(--spacing-4)",
         ":focus-within": {
           "boxShadow": "var(--qollab-field-focus-ring)"
         },
@@ -612,12 +621,135 @@ export const qollabWorkshopTheme = {
     },
     "textarea": {
       "base": {
+        "borderRadius": "var(--radius-page)",
+        "paddingInline": "var(--spacing-4)",
+        "borderColor": "var(--color-border-emphasized)",
         ":focus-within": {
           "boxShadow": "var(--qollab-field-focus-ring)"
         },
         ":focus-within:not([data-status])": {
           "borderColor": "var(--color-accent)"
         }
+      }
+    },
+    "date-input": {
+      "base": {
+        "borderRadius": "var(--radius-full)",
+        "paddingInline": "var(--spacing-4)",
+        ":focus-within": {
+          "boxShadow": "var(--qollab-field-focus-ring)"
+        },
+        ":focus-within:not([data-status])": {
+          "borderColor": "var(--color-accent)"
+        }
+      }
+    },
+    "file-input": {
+      "base": {
+        "borderRadius": "var(--radius-full)",
+        "paddingInline": "var(--spacing-4)"
+      }
+    },
+    "field-status": {
+      "variant:attached": {
+        "marginTop": "var(--spacing-1)",
+        "paddingBlock": "0",
+        "paddingInline": "var(--spacing-4)",
+        "backgroundColor": "transparent"
+      },
+      "type:error": {
+        "color": "var(--color-error)"
+      },
+      "type:warning": {
+        "color": "var(--color-warning)"
+      },
+      "type:success": {
+        "color": "var(--color-success)"
+      }
+    },
+    "field-label": {
+      "base": {
+        "fontWeight": "var(--font-weight-medium)"
+      }
+    },
+    "selector-popup": {
+      "base": {
+        "borderRadius": "var(--qollab-popup-radius)",
+        "boxShadow": "var(--qollab-popup-shadow)"
+      }
+    },
+    "selector-option-row": {
+      "base": {
+        "borderRadius": "var(--qollab-option-radius)"
+      },
+      "selected": {
+        "backgroundColor": "var(--color-accent-muted)",
+        "fontWeight": "var(--font-weight-medium)"
+      }
+    },
+    "selector-check": {
+      "base": {
+        "color": "var(--color-accent)"
+      }
+    },
+    "dropdown-menu": {
+      "base": {
+        "borderRadius": "var(--qollab-popup-radius)",
+        "boxShadow": "var(--qollab-popup-shadow)"
+      }
+    },
+    "dropdown-menu-item": {
+      "base": {
+        "borderRadius": "var(--qollab-option-radius)"
+      }
+    },
+    "popover-surface": {
+      "base": {
+        "borderRadius": "var(--qollab-popup-radius)",
+        "boxShadow": "var(--qollab-popup-shadow)"
+      }
+    },
+    "calendar": {
+      "base": {
+        "borderRadius": "var(--qollab-popup-radius)"
+      }
+    },
+    "calendar-day": {
+      "base": {
+        "borderRadius": "var(--radius-full)"
+      },
+      "selected": {
+        "color": "var(--color-on-accent) !important"
+      }
+    },
+    "dialog": {
+      "variant:standard": {
+        "borderRadius": "var(--qollab-dialog-radius)",
+        "boxShadow": "var(--qollab-dialog-shadow)"
+      }
+    },
+    "bottom-sheet": {
+      "base": {
+        "borderStartStartRadius": "var(--qollab-dialog-radius)",
+        "borderStartEndRadius": "var(--qollab-dialog-radius)"
+      }
+    },
+    "segmented-control": {
+      "base": {
+        "borderRadius": "var(--radius-full)"
+      }
+    },
+    "segmented-control-item": {
+      "base": {
+        "borderRadius": "var(--radius-full)"
+      },
+      "selected": {
+        "boxShadow": "inset 0 0 0 1px var(--color-border-emphasized)"
+      }
+    },
+    "token": {
+      "base": {
+        "borderRadius": "var(--radius-full)"
       }
     },
     "side-nav": {

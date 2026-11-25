@@ -7,6 +7,36 @@ last_updated: 2026-10-09
 
 # Qollab design system
 
+## Brand identity (2026-11-25)
+
+Supersedes every older colour, font, logo and primary-button rule below.
+References: Figma (each person's live cursor colour: the logo pointer), Notion
+(a black and white core, colour kept for content: the ink primary button),
+Linear (one mark plus wordmark with strict one-colour variants). The token
+table further down is historical; `theme/qollab-workshop.ts` is the source.
+
+- Ink acts, cobalt points. The primary action is a flat ink pill
+  (`--qollab-button-primary`); cobalt `#2B4BFF` marks links, focus, selection
+  and the logo pointer. No gradient or glow on buttons. Small accent text uses
+  the deeper `#1F3BE0`.
+- Ink `#0E1024`, secondary text `#4B4F6B`, soft panels `#F2F3FA`, selected
+  tint `#E8ECFF`. Success, warning and error colours are unchanged, and so are
+  the six answer colours, which were tested for red-green colour blindness.
+- Lexend headings, landing page included, over Figtree; JetBrains Mono for
+  codes.
+- The landing page keeps its layout, its blue panel and its pale photo fields.
+- Controls (references: Stripe for a label above and an error in words below
+  the field, Linear for menus as one rounded sheet with a tinted, ticked row,
+  Notion for small confirm dialogs, Vercel for flat toasts). Single-line
+  fields, selectors, dates and file pickers are pills with 16px insets; text
+  areas are 16px. Focus is a solid 2px cobalt ring, no halo. A field's error is
+  a plain line under it. Menus and lists have 16px corners and 8px rows;
+  dialogs and sheets 24px; banners 16px; segmented controls, tokens and ghost
+  buttons are pills. Toasts are flat. Shadows are neutral and only on things
+  that float (`--qollab-popup-shadow`, `--qollab-dialog-shadow`).
+- Logo: a ring (the room) and a pointer (a person arriving) that draw a Q. See
+  `QOLLAB_LOGO.md`.
+
 ## Current front-end direction (2026-11-06)
 
 The landing page follows the user's fintech reference image ("use this
@@ -19,7 +49,7 @@ homepage rules. The token table below is historical;
 - Look: white page, soft grey rounded cards (`bg-muted`, `rounded-3xl`) holding
   white insets, one saturated blue panel (`.landing-sky`), pale blue photo
   fields (`.landing-photo`), navy pill actions (`PillLink`), small label chips
-  above section headings, medium-weight Inter headings with tight tracking.
+  above section headings, medium-weight Lexend headings with tight tracking.
 - Landing order: top bar (logo, centred links, Log in, Get started pill),
   centred hero, photo card beside the `ProductTour` panel (a looping screen
   recording of the real app with a glass chapter dock; selecting the recording
@@ -35,9 +65,6 @@ homepage rules. The token table below is historical;
 - Landing content (2026-11-25): any group, any subject. No landing, sign-in or
   placeholder copy may assume a medical, exam-board or other single-industry
   user.
-- Theme colours are unchanged: Qollab Blue `#2563EB`, ink `#0F1B3D`, Bricolage
-  Grotesque headings elsewhere in the app. Only `.landing-root` swaps the
-  heading face to Inter.
 - Sign-in, sign-up and both password pages share `AuthShell`: a centred
   column (bold heading, one line of intro, pill fields with placeholders and
   hidden labels, the pill `AuthSubmit` action) beside a tall pale blue panel
@@ -204,15 +231,14 @@ homepage rules. The token table below is historical;
   room (name, presence, sync status, Reconnect on error); the separate status
   strip above the notes is gone. The error page and both controls dialogs use
   the muted panel; the loading screen shows its message in a muted pill.
-- Buttons, app-wide: primary is a blue gradient pill with a darker rim and a
-  soft glow (`--qollab-button-gradient-primary`, `--qollab-button-glow-primary`
-  in the theme). Secondary and destructive are pills too; ghost and link keep
+- Buttons, app-wide: primary is a flat ink pill (`--qollab-button-primary` in
+  the theme). Secondary and destructive are pills too; so are ghosts; links keep
   12px corners. `.landing-cta` reuses the same tokens for link actions.
 - Fields, app-wide: single-line inputs, number inputs and selectors are pills
   like the buttons. Text areas keep their corners, since a pill cannot hold
   several lines.
 - Field focus, app-wide: the border turns accent, with a one-pixel accent rim
-  and a soft halo (`--qollab-field-focus-ring`), not an offset outline. A
+  (`--qollab-field-focus-ring`), not an offset outline. A
   transparent outline remains for forced-colours mode. Fields in a warning or
   error state keep their status border. Buttons and links keep the outline.
 - Liquid glass (`src/components/home/liquid-glass.ts`) stays on the room's tool
@@ -293,25 +319,10 @@ data, and API contracts.
 
 ## Brand
 
-Qollab brings questions, ideas, and people into one shared space. The logo's
-interlocking loops represent equal collaborators; its negative space forms a Q
-and speech bubble; the central dot is their shared focus. Rounded geometry keeps
-the identity precise but approachable.
-
-- Qollab Blue `#2563EB` is the primary brand color.
-- Soft Blue `#EAF2FF` is the selected and supporting brand surface.
-- Use the full lockup in marketing, authentication, and roomy headers at about
-  160 × 49px or larger.
-- Use the symbol in compact navigation, favicons, app icons, and avatars.
-- Preserve logo proportions and clear space. Do not redraw, rotate, outline,
-  shadow, or place it over a busy image. The approved blue refresh replaces
-  only the violet accent with Qollab Blue in every logo variant; preserve all
-  path geometry, proportions, neutral ink, and clear space. No other recoloring.
-- Give an icon-only brand link an accessible name such as “Qollab rooms.” Treat
-  the image as decorative when the link already names the destination.
-
-The source of truth for logo meaning, assets, and usage is
-[QOLLAB_LOGO.md](../QOLLAB_LOGO.md).
+The logo is a ring and a pointer that draw a Q: a room, and a person arriving.
+Meaning, files, sizes and usage are in [QOLLAB_LOGO.md](../QOLLAB_LOGO.md).
+Give an icon-only brand link an accessible name such as “Qollab rooms.” Treat
+the image as decorative when the link already names the destination.
 
 ## Visual principles
 

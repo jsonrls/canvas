@@ -8,16 +8,8 @@ import {
   type PasswordResetActionState,
   readNewPassword,
 } from "@/lib/auth/password-reset";
+import { configuredSiteUrl } from "@/lib/auth/redirects";
 import { createServerAuthClient } from "@/lib/supabase/server";
-
-function recoveryRedirectUrl(): string {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://localhost:3000";
-
-  return buildRecoveryRedirectUrl(siteUrl);
-}
 
 export async function requestPasswordReset(
   _state: PasswordResetActionState,
@@ -35,10 +27,14 @@ export async function requestPasswordReset(
   try {
     const supabase = await createServerAuthClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: recoveryRedirectUrl(),
+      redirectTo: buildRecoveryRedirectUrl(configuredSiteUrl()),
     });
 
     if (error) {
+      console.error("[qollab:auth] password reset email failed", {
+        code: error.code,
+        status: error.status,
+      });
       return {
         message:
           error.status === 429
@@ -47,7 +43,10 @@ export async function requestPasswordReset(
         status: "error",
       };
     }
-  } catch {
+  } catch (error) {
+    console.error("[qollab:auth] password reset email failed", {
+      name: error instanceof Error ? error.name : "unknown",
+    });
     return {
       message:
         "A reset email could not be sent right now. Please try again shortly.",
