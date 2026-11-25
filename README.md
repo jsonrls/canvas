@@ -209,6 +209,6 @@ npm run verify:vercel
 - Reconnection review is current-session and excerpt-based; it does not infer unsynchronized intent after a full application restart or provide semantic rich-text/per-author diffs.
 - Yjs persistence currently rewrites the complete state blob; large documents will need incremental-update compaction and monitoring.
 - Phase 3 intentionally provides one active PDF per room and a focused SVG whiteboard. PDF libraries/OCR, semantic text selection, whiteboard templates, object transforms, and large media libraries remain later work.
-- Phase 4 sends only note snapshots; PDF and whiteboard extraction are not included. Saved guides are creator-private and not shared with room members; the in-memory rate limit is instance-local rather than a distributed production quota.
+- Phase 4 sends only note snapshots; PDF and whiteboard extraction are not included. Saved guides are creator-private and not shared with room members; AI limits are shared across instances and fall back to an instance-local limit if the database function is unavailable.
 - The standalone WebSocket service sends access tokens as upgrade query parameters and should redact request URLs. The same-origin Vercel Function authenticates with the existing secure session cookie and does not put access tokens in its WebSocket URL.
 - Adding collaborators is limited to existing Qollab accounts identified by exact email. Pending invitations, outbound invitation delivery, ownership transfer, room archival, and public-room pagination/search remain future work.

@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { LiveAction, LiveSnapshot } from "@/lib/live/activities";
 import { liveApiPath } from "@/lib/live/scope";
+import { IDLE_AFTER_MS, livePollDelay } from "@/lib/polling";
 
-const ACTIVE_POLL_MS = 2_000;
-const BACKGROUND_POLL_MS = 5_000;
+const INPUT_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
 
 interface UseLiveActivitiesOptions {
   roomSlug: string;
@@ -50,6 +50,8 @@ export function useLiveActivities({
   const isMutatingRef = useRef(false);
   // Responses can arrive out of order; only the newest request may win.
   const requestSequence = useRef(0);
+  const failures = useRef(0);
+  const hasQuestion = useRef(false);
   const endpoint = liveApiPath(roomSlug, breakoutCode);
 
   const apply = useCallback(
@@ -58,6 +60,7 @@ export function useLiveActivities({
       response: Response,
       onError: (message: string) => void,
     ): Promise<boolean> => {
+      failures.current = response.ok ? 0 : failures.current + 1;
       if (!response.ok) {
         const message = await readError(response);
         if (sequence === requestSequence.current) onError(message);
@@ -66,6 +69,7 @@ export function useLiveActivities({
       const next = (await response.json()) as LiveSnapshot;
       if (sequence === requestSequence.current) {
         setSnapshot(next);
+        hasQuestion.current = next.session.questionId !== null;
         setError(null);
       }
       return true;
@@ -82,6 +86,7 @@ export function useLiveActivities({
         setError,
       );
     } catch {
+      failures.current += 1;
       if (sequence === requestSequence.current) {
         setError("You appear to be offline. Retrying…");
       }
@@ -91,17 +96,48 @@ export function useLiveActivities({
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let isStopped = false;
-    const interval = isActive ? ACTIVE_POLL_MS : BACKGROUND_POLL_MS;
+    let isRefreshing = false;
+    let lastInput = Date.now();
+    const delay = (): number =>
+      livePollDelay({
+        isActive,
+        hasQuestion: hasQuestion.current,
+        idleMs: Date.now() - lastInput,
+        failures: failures.current,
+      });
 
     const tick = async (): Promise<void> => {
-      if (!document.hidden && !isMutatingRef.current) await refresh();
-      if (!isStopped) timer = setTimeout(tick, interval);
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+      // A hidden tab sets no timer; becoming visible starts it again.
+      if (isStopped || isRefreshing || document.hidden) return;
+      isRefreshing = true;
+      if (!isMutatingRef.current) await refresh();
+      isRefreshing = false;
+      if (!isStopped) timer = setTimeout(tick, delay());
+    };
+    const handleVisibility = (): void => {
+      lastInput = Date.now();
+      if (!document.hidden) void tick();
+    };
+    const handleInput = (): void => {
+      const wasIdle = Date.now() - lastInput >= IDLE_AFTER_MS;
+      lastInput = Date.now();
+      if (wasIdle) void tick();
     };
     void tick();
+    document.addEventListener("visibilitychange", handleVisibility);
+    for (const event of INPUT_EVENTS) {
+      window.addEventListener(event, handleInput, { passive: true });
+    }
 
     return () => {
       isStopped = true;
       if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      for (const event of INPUT_EVENTS) {
+        window.removeEventListener(event, handleInput);
+      }
     };
   }, [isActive, refresh]);
 
