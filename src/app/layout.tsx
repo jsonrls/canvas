@@ -1,6 +1,6 @@
 import { Theme } from "@astryxdesign/core/theme";
 import type { Metadata, Viewport } from "next";
-import { Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Figtree, JetBrains_Mono, Lexend } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -8,10 +8,16 @@ import { qollabWorkshopTheme } from "../../theme/generated/qollab-workshop.js";
 
 import "./globals.css";
 
-const bodyFont = Inter_Tight({
+const bodyFont = Figtree({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-qollab-body",
+});
+
+const headingFont = Lexend({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-qollab-heading",
 });
 
 const codeFont = JetBrains_Mono({
@@ -25,8 +31,7 @@ export const metadata: Metadata = {
     default: "Qollab",
     template: "%s · Qollab",
   },
-  description:
-    "A focused, collaborative study canvas for board exam preparation.",
+  description: "A live study room for any group and any subject.",
 };
 
 export const viewport: Viewport = {
@@ -43,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${codeFont.variable}`}
+      className={`${bodyFont.variable} ${headingFont.variable} ${codeFont.variable}`}
       data-astryx-theme="qollab-workshop"
       data-scroll-behavior="smooth"
       data-theme="light"

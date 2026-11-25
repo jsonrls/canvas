@@ -8,6 +8,7 @@ import {
   PASSWORD_MIN_LENGTH,
   readNewPassword,
 } from "../src/lib/auth/password-reset";
+import { buildConfirmUrl, safeNextPath } from "../src/lib/auth/redirects";
 
 assert.equal(normalizeResetEmail(null), null);
 assert.equal(normalizeResetEmail("not-an-email"), null);
@@ -37,6 +38,40 @@ assert.equal(redirectUrl.pathname, "/auth/confirm");
 assert.equal(redirectUrl.searchParams.get("next"), "/reset-password/update");
 assert.equal(redirectUrl.searchParams.size, 1);
 assert.throws(() => buildRecoveryRedirectUrl("javascript:alert(1)"));
+
+assert.equal(
+  buildConfirmUrl("https://canvas.example.com/", "/rooms/a?tool=pdf"),
+  "https://canvas.example.com/auth/confirm?next=%2Frooms%2Fa%3Ftool%3Dpdf",
+);
+assert.equal(safeNextPath("/rooms/a?tool=pdf"), "/rooms/a?tool=pdf");
+for (const unsafe of [
+  null,
+  "",
+  "rooms",
+  "//evil.example",
+  "/\\evil.example",
+  "/\t/evil.example",
+  "https://evil.example",
+]) {
+  assert.equal(safeNextPath(unsafe), "/rooms");
+}
+
+// A token hash works in any browser; a PKCE code only works where it was requested.
+for (const [template, type] of [
+  ["confirmation", "email"],
+  ["recovery", "recovery"],
+]) {
+  const html = readFileSync(
+    new URL(`../supabase/templates/${template}.html`, import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    html.includes(
+      `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=${type}"`,
+    ),
+  );
+  assert.doesNotMatch(html, /ConfirmationURL/);
+}
 
 const actions = readFileSync(
   new URL("../src/app/reset-password/actions.ts", import.meta.url),
@@ -75,8 +110,17 @@ assert.match(updateForm, /autoComplete="new-password"/);
 assert.match(updateForm, /aria-pressed=\{showPasswords\}/);
 assert.match(updateForm, /(?:disabled|isDisabled)=\{pending\}/);
 assert.match(callbackRoute, /type === "recovery"/);
-assert.match(callbackRoute, /"invalid_or_expired"/);
+assert.match(callbackRoute, /error=invalid_or_expired/);
 assert.match(loginForm, /href="\/reset-password"/);
+const settingsDialog = readFileSync(
+  new URL(
+    "../src/components/account/password-reset-dialog.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+assert.match(settingsDialog, /requestPasswordReset\(/);
+assert.match(settingsDialog, /role="alert"/);
 
 process.stdout.write(
   "Password-reset verification passed: validation, safe callback construction, trusted update ordering, accessible form contracts, recovery failure routing, and login entry.\n",

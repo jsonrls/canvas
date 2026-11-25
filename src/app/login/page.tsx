@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { LoginForm } from "@/app/login/login-form";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { safeNextPath } from "@/lib/auth/redirects";
 import { SuccessToastOnMount } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
@@ -9,26 +10,29 @@ export const metadata: Metadata = {
 };
 
 interface LoginPageProps {
-  searchParams: Promise<{ next?: string; reset?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; reset?: string }>;
 }
 
 export default async function LoginPage({
   searchParams,
 }: LoginPageProps): Promise<React.ReactElement> {
-  const { next, reset } = await searchParams;
-  const nextPath =
-    next?.startsWith("/") && !next.startsWith("//") ? next : "/rooms";
+  const { error, next, reset } = await searchParams;
+  const nextPath = safeNextPath(next);
+  const initialError =
+    error === "confirmation_failed"
+      ? "This confirmation link is invalid or expired. Sign in to continue, or to get a new link."
+      : undefined;
 
   return (
     <AuthShell
       eyebrow="Welcome back"
-      title="Sign in to Qollab"
-      intro="Open your rooms and continue working with your group."
+      title="Welcome back!"
+      intro="Sign in to open your rooms and keep working with your group."
     >
       {reset === "success" ? (
         <SuccessToastOnMount message="Your password is updated. Sign in with the new one." />
       ) : null}
-      <LoginForm nextPath={nextPath} />
+      <LoginForm initialError={initialError} nextPath={nextPath} />
     </AuthShell>
   );
 }

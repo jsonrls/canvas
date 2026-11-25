@@ -19,8 +19,10 @@ import * as Y from "yjs";
 
 import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
+export type BreakoutTool = RoomDocumentKind | "live";
+
 interface BreakoutQaPanelProps {
-  activeTool: RoomDocumentKind;
+  activeTool: BreakoutTool;
   canAsk: boolean;
   document: Y.Doc | null;
   draft: string;
@@ -41,7 +43,7 @@ interface BreakoutQuestion {
   body: string;
   createdAt: number;
   id: string;
-  tool: RoomDocumentKind;
+  tool: BreakoutTool;
 }
 
 const QUESTIONS_KEY = "breakout-questions";
@@ -51,14 +53,15 @@ const TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
   minute: "2-digit",
 });
 
-const TOOL_LABELS: Record<RoomDocumentKind, string> = {
+const TOOL_LABELS: Record<BreakoutTool, string> = {
   notes: "Notes",
   pdf: "PDF",
   whiteboard: "Board",
+  live: "Activities",
 };
 
-function isRoomDocumentKind(value: unknown): value is RoomDocumentKind {
-  return value === "notes" || value === "pdf" || value === "whiteboard";
+function isBreakoutTool(value: unknown): value is BreakoutTool {
+  return typeof value === "string" && Object.hasOwn(TOOL_LABELS, value);
 }
 
 function isBreakoutQuestion(value: unknown): value is BreakoutQuestion {
@@ -73,7 +76,7 @@ function isBreakoutQuestion(value: unknown): value is BreakoutQuestion {
     typeof question.body === "string" &&
     typeof question.createdAt === "number" &&
     typeof question.id === "string" &&
-    isRoomDocumentKind(question.tool)
+    isBreakoutTool(question.tool)
   );
 }
 
@@ -266,8 +269,7 @@ export function BreakoutQaPanel({
             <MessageCircleQuestion aria-hidden="true" size={24} />
             <Heading level={3}>Questions will appear here</Heading>
             <Text color="secondary">
-              Ask about the shared notes, the PDF, or anything on the
-              whiteboard.
+              Ask about the notes, the PDF, the whiteboard or a live activity.
             </Text>
           </VStack>
         )}

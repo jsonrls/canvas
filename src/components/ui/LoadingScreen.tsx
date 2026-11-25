@@ -79,8 +79,13 @@ export function LoadingScreen({
       aria-label={`Qollab is loading. ${message}`}
     >
       <QollabBrandLogo />
-      <HStack gap={3} vAlign="center" aria-hidden="true">
-        <Spinner size="lg" />
+      <HStack
+        gap={3}
+        vAlign="center"
+        aria-hidden="true"
+        className="rounded-full bg-muted py-2 pr-5 pl-3"
+      >
+        <Spinner size="md" />
         <Text color="secondary">{message}</Text>
       </HStack>
     </VStack>

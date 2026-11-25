@@ -12,6 +12,7 @@ export {};
 declare module '@astryxdesign/core/Button' {
   interface ButtonVariantMap {
     'danger-ghost': true;
+    'accent-soft': true;
     'link': true;
   }
 }

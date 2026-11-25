@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { backoffDelay } from "@/lib/polling";
+
 import {
   getCollaborationWebSocketEndpoint,
   type CollaborationWebSocketEndpoint,
 } from "@/lib/collaboration/websocket-endpoint";
 import type { RoomDocumentKind } from "@/lib/rooms/repository";
 
-export type PresentedWorkspace = RoomDocumentKind;
+export type PresentedWorkspace = RoomDocumentKind | "live";
 
 export interface RoomPresentation {
   cursor?: { x: number; y: number };
@@ -57,7 +59,7 @@ function readPresentation(value: unknown): RoomPresentation | null {
     typeof candidate.presenterId !== "string" ||
     typeof candidate.presenterName !== "string" ||
     typeof candidate.updatedAt !== "string" ||
-    !["notes", "pdf", "whiteboard"].includes(candidate.workspace ?? "")
+    !["notes", "pdf", "whiteboard", "live"].includes(candidate.workspace ?? "")
   ) {
     return null;
   }
@@ -86,6 +88,9 @@ function readPresentation(value: unknown): RoomPresentation | null {
   } as RoomPresentation;
 }
 
+/** Ten moves a second; every send is relayed to each instance and viewer. */
+const SEND_INTERVAL_MS = 100;
+
 export function useRoomPresentation({
   canPresent,
   currentUser,
@@ -101,9 +106,9 @@ export function useRoomPresentation({
   const workspaceRef = useRef(workspace);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cursorRef = useRef<{ x: number; y: number } | null>(null);
-  const cursorFrameRef = useRef<number | null>(null);
+  const cursorTimerRef = useRef<number | null>(null);
   const scrollRef = useRef(0);
-  const scrollFrameRef = useRef<number | null>(null);
+  const scrollTimerRef = useRef<number | null>(null);
 
   const sendUpdate = useCallback((): void => {
     const socket = socketRef.current;
@@ -134,7 +139,25 @@ export function useRoomPresentation({
   useEffect(() => {
     let active = true;
     let socket: WebSocket | null = null;
+    let failures = 0;
     const abortController = new AbortController();
+
+    const scheduleReconnect = (): void => {
+      if (!active || abortController.signal.aborted) return;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      const wait = backoffDelay(2_000, failures);
+      failures += 1;
+      reconnectTimerRef.current = setTimeout(() => {
+        // A hidden tab waits; it must not keep opening sockets.
+        if (document.hidden) {
+          document.addEventListener("visibilitychange", start, { once: true });
+        } else start();
+      }, wait);
+    };
+
+    const start = (): void => {
+      if (active) void connect().catch(scheduleReconnect);
+    };
 
     const connect = async (): Promise<void> => {
       const endpoint = getCollaborationWebSocketEndpoint();
@@ -156,10 +179,14 @@ export function useRoomPresentation({
         }
         accessToken = payload.accessToken;
       }
+      if (!active) return;
 
       socket = new WebSocket(presenceUrl(endpoint, roomId, accessToken));
       socketRef.current = socket;
-      socket.addEventListener("open", sendUpdate);
+      socket.addEventListener("open", () => {
+        failures = 0;
+        sendUpdate();
+      });
       socket.addEventListener("message", (event) => {
         if (!active || typeof event.data !== "string") return;
         try {
@@ -177,18 +204,16 @@ export function useRoomPresentation({
       socket.addEventListener("close", () => {
         if (!active) return;
         setPresentation(null);
-        reconnectTimerRef.current = setTimeout(() => void connect(), 2_000);
+        scheduleReconnect();
       });
     };
 
-    void connect().catch(() => {
-      if (!active || abortController.signal.aborted) return;
-      reconnectTimerRef.current = setTimeout(() => void connect(), 2_000);
-    });
+    start();
 
     return () => {
       active = false;
       abortController.abort();
+      document.removeEventListener("visibilitychange", start);
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       socket?.close();
       if (socketRef.current === socket) socketRef.current = null;
@@ -197,7 +222,7 @@ export function useRoomPresentation({
 
   useEffect(() => {
     if (!isPresenting) return;
-    const heartbeat = setInterval(sendUpdate, 1_000);
+    const heartbeat = setInterval(sendUpdate, 2_000);
     return () => clearInterval(heartbeat);
   }, [isPresenting, sendUpdate]);
 
@@ -224,11 +249,11 @@ export function useRoomPresentation({
         x: Math.max(0, Math.min(1, x)),
         y: Math.max(0, Math.min(1, y)),
       };
-      if (cursorFrameRef.current !== null) return;
-      cursorFrameRef.current = requestAnimationFrame(() => {
-        cursorFrameRef.current = null;
+      if (cursorTimerRef.current !== null) return;
+      cursorTimerRef.current = window.setTimeout(() => {
+        cursorTimerRef.current = null;
         sendUpdate();
-      });
+      }, SEND_INTERVAL_MS);
     },
     [canPresent, sendUpdate],
   );
@@ -237,22 +262,22 @@ export function useRoomPresentation({
     (y: number): void => {
       if (!canPresent) return;
       scrollRef.current = Math.max(0, Math.min(1, y));
-      if (!isPresentingRef.current || scrollFrameRef.current !== null) return;
-      scrollFrameRef.current = requestAnimationFrame(() => {
-        scrollFrameRef.current = null;
+      if (!isPresentingRef.current || scrollTimerRef.current !== null) return;
+      scrollTimerRef.current = window.setTimeout(() => {
+        scrollTimerRef.current = null;
         sendUpdate();
-      });
+      }, SEND_INTERVAL_MS);
     },
     [canPresent, sendUpdate],
   );
 
   useEffect(
     () => () => {
-      if (cursorFrameRef.current !== null) {
-        cancelAnimationFrame(cursorFrameRef.current);
+      if (cursorTimerRef.current !== null) {
+        clearTimeout(cursorTimerRef.current);
       }
-      if (scrollFrameRef.current !== null) {
-        cancelAnimationFrame(scrollFrameRef.current);
+      if (scrollTimerRef.current !== null) {
+        clearTimeout(scrollTimerRef.current);
       }
       stopPresenting();
     },

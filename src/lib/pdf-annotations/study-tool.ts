@@ -1,8 +1,39 @@
-import { clampUnit, type PdfAnnotationType, type PdfPoint } from "./model";
+import {
+  clampUnit,
+  type PdfAnnotation,
+  type PdfAnnotationType,
+  type PdfPoint,
+} from "./model";
 import type { RoomPdfAsset } from "@/lib/rooms/repository";
 
 export function annotationUsesComments(type: PdfAnnotationType): boolean {
   return type === "sticky" || type === "comment";
+}
+
+/**
+ * Page width at 100% zoom. On wider screens the whole page fits the space
+ * (width and height), like "fit page" in PDF viewers; on phones, which scroll
+ * vertically by design, it fits the width. Never narrower than 280px.
+ */
+export function fitPageWidth(
+  space: { width: number; height: number },
+  pageAspect: number,
+  isPhone: boolean,
+): number {
+  const byHeight = space.height > 0 ? space.height * pageAspect : Infinity;
+  return Math.max(280, isPhone ? space.width : Math.min(space.width, byHeight));
+}
+
+/** Drawings, highlights and underlines: marks with no text or replies. */
+export function isVisualMark(type: PdfAnnotationType): boolean {
+  return type === "draw" || type === "highlight" || type === "underline";
+}
+
+/** Ids of every visual mark, on all pages, that "Clear marks" removes. */
+export function visualMarkIds(annotations: readonly PdfAnnotation[]): string[] {
+  return annotations
+    .filter((annotation) => isVisualMark(annotation.type))
+    .map((annotation) => annotation.id);
 }
 
 export function isRoomPdfAsset(value: unknown): value is RoomPdfAsset {

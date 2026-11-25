@@ -68,6 +68,13 @@ All database tables implement RLS policies:
 - Owners and editors can open an authenticated writable Yjs connection. Viewers receive persisted read-only content without opening a writable WebSocket or offline-editing database.
 - Notes, PDF annotations, and whiteboard scenes resolve to separate validated document names and database rows; the same owner/editor upgrade check applies to every writable channel.
 
+#### Implemented live activity authorization
+
+- Live tables have RLS on, no policies and no client grants. Only the live routes reach them, with the service role, after checking the caller with their own session.
+- Hosting follows the room role (owner or editor). Viewer collaboration never makes a viewer a host.
+- In a breakout, the room's owner and editors host in every breakout. A viewer must be a room member and have joined that breakout; the route checks both on every request and never joins anyone. Holding a code is not enough.
+- A breakout's questions, answers, Q&A, exports and images live in separate tables and a separate image folder, so an id from one breakout or from the main room is not found in another. `npm run verify:live-breakouts` checks this.
+
 #### Implemented private PDF controls
 
 - Only members can select objects from `boardprep-pdfs`; only owners/editors can insert, replace, or delete within their room UUID prefix. Object-name helpers reject malformed and cross-room paths before membership evaluation.
@@ -150,14 +157,21 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 
 ## Third-Party Integrations
 
-### OpenAI API
+### Claude API
 
-- `OPENAI_API_KEY` is read only by the Next.js Route Handler and is never prefixed with `NEXT_PUBLIC_`, serialized in props, or returned in errors
+- `ANTHROPIC_API_KEY` is read only by the study-pack and whiteboard-answer Route Handlers and is never prefixed with `NEXT_PUBLIC_`, serialized in props, or returned in errors
 - Every request validates the Supabase cookie claim and current room membership before provider invocation
-- Requests accept only one bounded note snapshot, label it untrusted, isolate it from instructions, cap output tokens, and abort after 30 seconds
+- Requests accept only one bounded note snapshot, label it untrusted, isolate it from instructions, cap output tokens, and abort after 55 seconds
 - Strict structured output, explicit refusal handling, and runtime validation prevent malformed content from reaching result views
-- Provider response storage is disabled and generated packs remain ephemeral browser state; note snapshots are not persisted by the application
+- The Anthropic account's data-retention settings apply to requests; generated packs remain ephemeral browser state; note snapshots are not persisted by the application
 - The study-aid notice and cautious confidence labels mitigate medical overreliance, but users must still verify every generated claim
+
+### Whiteboard voice input
+
+- Speech to text runs in a web worker on the device (Whisper base through Transformers.js and ONNX Runtime). The recording is held in memory, never uploaded or stored; only the words reach the board
+- The model files come from Hugging Face at a pinned revision and are cached by the browser. The ONNX Runtime script and WASM are served by Qollab, not a third-party script host
+- The microphone starts only from the voice button, shows a "Listening" panel while it is on, and stops after one minute. Hiding the tab, leaving the whiteboard, or losing edit permission turns it off at once
+- Only owners and editors can use it, matching the whiteboard-answer route; viewers with temporary editing cannot
 
 ### Supabase
 

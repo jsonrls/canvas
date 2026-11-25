@@ -26,7 +26,7 @@ export default async function ProfilePage(): Promise<React.ReactElement> {
       displayName={profile.displayName}
       email={context.email}
       intro="Choose the name your study partners see when you collaborate, present, and leave notes."
-      title="Your study identity."
+      title="Your study identity"
     >
       <ProfilePanel displayName={profile.displayName} email={context.email} />
     </AccountShell>

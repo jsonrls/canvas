@@ -1,8 +1,16 @@
-import { ButtonControl } from "@/components/ui/button";
-import { ArrowLeft, Bookmark, Trash2 } from "@/components/ui/icons";
+import { Dialog } from "@astryxdesign/core/Dialog";
+import { Heading } from "@astryxdesign/core/Heading";
+import { HStack, VStack } from "@astryxdesign/core/Layout";
+import { List } from "@astryxdesign/core/List";
+import { Text } from "@astryxdesign/core/Text";
+import { useEffect, useId, useRef } from "react";
+
+import { Button, ButtonControl, IconButton } from "@/components/ui/button";
+import { Trash2 } from "@/components/ui/icons";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
+import { PANEL_HEADING, PANEL_MUTED } from "@/components/ui/panel";
 import type { SavedStudyGuideMetadata } from "@/lib/ai/saved-study-guides";
-import { formatGenerationTime } from "@/lib/ai/study-tool-payload";
+import { formatRoomDate } from "@/lib/rooms/directory-summary";
 
 export function SavedGuideLibrary({
   savedGuides,
@@ -12,6 +20,7 @@ export function SavedGuideLibrary({
   loadSavedGuide,
   pendingDeleteId,
   deletingGuideId,
+  deleteError,
   deleteSavedGuide,
   setPendingDeleteId,
 }: {
@@ -22,104 +31,159 @@ export function SavedGuideLibrary({
   loadSavedGuide: (id: string) => Promise<void>;
   pendingDeleteId: string | null;
   deletingGuideId: string | null;
+  deleteError: string;
   deleteSavedGuide: (id: string) => Promise<void>;
   setPendingDeleteId: (id: string | null) => void;
 }) {
+  const deleteTitleId = useId();
+  const deleteDescriptionId = useId();
+  const pendingGuide = savedGuides.find(
+    (guide) => guide.id === pendingDeleteId,
+  );
+  const isDeleting = deletingGuideId !== null;
+  const panelRef = useRef<HTMLElement>(null);
+  const lastPendingId = useRef<string | null>(null);
+
+  // A deleted row takes its trash button with it, so focus has nowhere to return.
+  useEffect(() => {
+    if (pendingDeleteId !== null) {
+      lastPendingId.current = pendingDeleteId;
+      return;
+    }
+    const closedId = lastPendingId.current;
+    lastPendingId.current = null;
+    if (closedId && !savedGuides.some((guide) => guide.id === closedId)) {
+      panelRef.current?.focus();
+    }
+  }, [pendingDeleteId, savedGuides]);
+
   return (
-    <section className="ai-saved-guides" aria-labelledby="saved-guides-heading">
-      <div className="ai-saved-guides__heading">
-        <div>
-          <p className="ai-section-kicker">Private library</p>
-          <h2 id="saved-guides-heading">Saved study guides</h2>
-          <p>Only you can reopen or remove guides saved in this room.</p>
-        </div>
-        <span className="ai-count-badge">{savedGuides.length}/50</span>
-      </div>
+    <VStack
+      as="section"
+      ref={panelRef}
+      tabIndex={-1}
+      gap={4}
+      className={`${PANEL_MUTED} outline-none`}
+      aria-labelledby="saved-guides-heading"
+    >
+      <VStack gap={1}>
+        <HStack gap={3} hAlign="between" vAlign="center">
+          <Heading
+            level={3}
+            id="saved-guides-heading"
+            className={PANEL_HEADING}
+          >
+            Saved study guides
+          </Heading>
+          <Text type="supporting">{savedGuides.length} of 50</Text>
+        </HStack>
+        <Text as="p" type="supporting">
+          Only you can open or delete these.
+        </Text>
+      </VStack>
 
       {isLoadingSavedGuides ? (
-        <LoadingIndicator
-          className="ai-saved-guides__state"
-          label="Loading saved guides…"
-          size="compact"
-        />
+        <LoadingIndicator label="Loading saved guides…" size="compact" />
       ) : savedGuides.length > 0 ? (
-        <div className="ai-saved-guides__list">
-          {savedGuides.map((guide) => (
-            <article
-              className={`ai-saved-guide-card${activeSavedGuideId === guide.id ? " ai-saved-guide-card--active" : ""}`}
-              key={guide.id}
-            >
-              <ButtonControl
-                variant="custom"
-                className="ai-saved-guide-card__open"
-                aria-busy={loadingGuideId === guide.id}
-                disabled={Boolean(loadingGuideId)}
-                onClick={() => void loadSavedGuide(guide.id)}
-                type="button"
+        <List
+          aria-label="Saved study guides"
+          className="flex w-full flex-col gap-2"
+        >
+          {savedGuides.map((guide) => {
+            const isActive = activeSavedGuideId === guide.id;
+            return (
+              <VStack
+                as="li"
+                gap={0}
+                key={guide.id}
+                className={`w-full min-w-0 rounded-2xl ${isActive ? "bg-accent-muted" : "bg-surface"}`}
               >
-                <Bookmark aria-hidden="true" size={17} />
-                <span>
-                  <strong>{guide.title}</strong>
-                  <small>
-                    Generated {formatGenerationTime(guide.generatedAt)} · Saved{" "}
-                    {formatGenerationTime(guide.createdAt)}
-                  </small>
-                </span>
-                {loadingGuideId === guide.id ? (
-                  <LoadingIndicator size="icon" />
-                ) : (
-                  <ArrowLeft aria-hidden="true" size={16} />
-                )}
-              </ButtonControl>
-              {pendingDeleteId === guide.id ? (
-                <div
-                  className="ai-saved-guide-card__confirm"
-                  role="group"
-                  aria-label={`Confirm deleting ${guide.title}`}
-                >
-                  <span>Delete this saved guide?</span>
+                <HStack gap={1} vAlign="center" className="pe-2">
                   <ButtonControl
-                    variant="destructive"
-                    aria-busy={deletingGuideId === guide.id}
-                    disabled={deletingGuideId === guide.id}
-                    onClick={() => void deleteSavedGuide(guide.id)}
-                    type="button"
+                    variant="custom"
+                    className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-2xl p-4 text-start text-primary"
+                    aria-busy={loadingGuideId === guide.id}
+                    aria-current={isActive ? "true" : undefined}
+                    disabled={Boolean(loadingGuideId)}
+                    onClick={() => void loadSavedGuide(guide.id)}
                   >
-                    {deletingGuideId === guide.id ? (
+                    <Text
+                      weight="medium"
+                      className="min-w-0 flex-1 break-words"
+                    >
+                      {guide.title}
+                      <Text as="span" type="supporting" className="block">
+                        Saved {formatRoomDate(guide.createdAt)}
+                      </Text>
+                    </Text>
+                    {loadingGuideId === guide.id ? (
                       <LoadingIndicator size="icon" />
                     ) : null}
-                    {deletingGuideId === guide.id ? "Deleting…" : "Delete"}
                   </ButtonControl>
-                  <ButtonControl
-                    variant="secondary"
-                    disabled={deletingGuideId === guide.id}
-                    onClick={() => setPendingDeleteId(null)}
-                    type="button"
-                  >
-                    Keep
-                  </ButtonControl>
-                </div>
-              ) : (
-                <ButtonControl
-                  variant="danger-ghost"
-                  size="sm"
-                  aria-label={`Delete ${guide.title}`}
-                  className="ai-saved-guide-card__delete"
-                  onClick={() => setPendingDeleteId(guide.id)}
-                  type="button"
-                >
-                  <Trash2 aria-hidden="true" size={16} />
-                </ButtonControl>
-              )}
-            </article>
-          ))}
-        </div>
+                  <IconButton
+                    label={`Delete ${guide.title}`}
+                    tooltip="Delete guide"
+                    icon={<Trash2 aria-hidden="true" size={16} />}
+                    onClick={() => setPendingDeleteId(guide.id)}
+                  />
+                </HStack>
+              </VStack>
+            );
+          })}
+        </List>
       ) : (
-        <div className="ai-saved-guides__state">
-          <Bookmark aria-hidden="true" size={18} />
-          <span>Saved guides appear here after you choose “Save guide.”</span>
-        </div>
+        <Text as="p" color="secondary">
+          Guides you save appear here.
+        </Text>
       )}
-    </section>
+      <Dialog
+        isOpen={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setPendingDeleteId(null);
+        }}
+        purpose="form"
+        role="alertdialog"
+        aria-labelledby={deleteTitleId}
+        aria-describedby={deleteDescriptionId}
+      >
+        <VStack gap={4} padding={4}>
+          <Heading level={2} id={deleteTitleId}>
+            Delete this saved guide?
+          </Heading>
+          <Text
+            as="p"
+            color="secondary"
+            id={deleteDescriptionId}
+            className="break-words"
+          >
+            {pendingGuide ? `“${pendingGuide.title}”` : "This guide"} will be
+            permanently deleted. This can’t be undone.
+          </Text>
+          {deleteError && pendingGuide ? (
+            <Text as="p" role="alert" className="text-error">
+              {deleteError}
+            </Text>
+          ) : null}
+          <HStack gap={2} hAlign="end" wrap="wrap">
+            <Button
+              label="Keep guide"
+              variant="ghost"
+              data-autofocus
+              onClick={() => {
+                if (!isDeleting) setPendingDeleteId(null);
+              }}
+            />
+            <Button
+              label={isDeleting ? "Deleting…" : "Delete guide"}
+              variant="destructive"
+              aria-busy={isDeleting}
+              onClick={() => {
+                if (pendingDeleteId) void deleteSavedGuide(pendingDeleteId);
+              }}
+            />
+          </HStack>
+        </VStack>
+      </Dialog>
+    </VStack>
   );
 }

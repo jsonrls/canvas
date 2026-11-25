@@ -13,7 +13,7 @@ import { RoomDomainError } from "@/lib/rooms/repository";
 
 const JPEG_START = [0xff, 0xd8, 0xff] as const;
 
-async function hasJpegSignature(file: File): Promise<boolean> {
+export async function hasJpegSignature(file: File): Promise<boolean> {
   const bytes = new Uint8Array(
     await file.slice(0, JPEG_START.length).arrayBuffer(),
   );

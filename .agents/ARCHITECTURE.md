@@ -60,11 +60,12 @@ cache, Vite runtime, Sentry integration, or installed general-purpose test runne
 Server pages, actions, and routes use `src/lib/supabase/` to establish authenticated
 context. Domain repositories apply room membership rules using user-scoped data
 access and database RLS. Privileged operations remain server-side; neither the
-service-role key nor the OpenAI key belongs in browser props or public variables.
+service-role key nor the Anthropic key belongs in browser props or public variables.
 
 The deployed schema is defined by migrations, including profiles, rooms,
 room_members, documents, document_versions, saved_study_guides, breakout_rooms,
-breakout_documents, and breakout_room_members. Supabase owns `auth.users`.
+breakout_documents, breakout_room_members, and the service-role-only live_* and
+breakout_live_* tables. Supabase owns `auth.users`.
 Profiles expose constrained application identity; they are readable by the user
 and authorized shared-room collaborators.
 
@@ -122,12 +123,28 @@ PDF comments, replies, and bookmarks use independent Yjs entries.
 The whiteboard keeps drawings, shapes, arrows, text, and bounded images as
 independent Yjs objects. Camera geometry maps pointer positions to world space.
 Laser trails are transient awareness state. Detected question/target geometry can
-request an AI answer, stored as ordinary collaborative text.
+request an AI answer, stored as ordinary collaborative text. Voice input places
+its own question, arrow and target and uses the same answer request.
+
+The open tool of a room or breakout is kept in the address (`?tool=live`), so a
+refresh stays on it; notes is the default and has no parameter. The AI assistant
+also keeps its open saved guide and view. An unsaved study pack and quiz answers
+stay in memory only and are lost on refresh. After a refresh the assistant reads
+the notes from the Yjs document, because the editor is not mounted.
+
+Live activities belong to one room or to one breakout. `LiveScope`
+(`src/lib/live/scope.ts`) names the tables and the id that every live query
+filters by: `live_*` for a main room, `breakout_live_*` for a breakout. The
+repository, route handlers, hook and views are shared; only the scope and the
+path differ, so a main room never reads a breakout table. `src/lib/polling.ts`
+sets how often clients poll: two seconds with the tool open on a question, slower
+otherwise, once a minute when the person is idle. They stop when the tab is hidden
+or the workspace is left.
 
 The AI study assistant captures an explicit note snapshot and sends it to a
 room-authorized server endpoint. Server-side request construction uses bounded
 input/output, structured output validation, provider storage disabled, timeouts,
-and instance-local rate limiting. It produces summaries, quizzes, flashcards,
+and rate limits shared across instances (`consume_ai_allowance`). It produces summaries, quizzes, flashcards,
 recommendations, and cautious misconception signals. Saved guides are creator
 private; source note snapshots are not saved with them. General PDF extraction,
 shared saved-guide libraries, and distributed AI quotas remain future work.

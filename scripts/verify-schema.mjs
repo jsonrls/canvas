@@ -23,7 +23,7 @@ const connection = [
 const assertionSql = String.raw`
 do $$
 declare
-  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles', 'saved_study_guides', 'breakout_rooms', 'breakout_documents', 'breakout_room_members'];
+  expected_tables text[] := array['rooms', 'room_members', 'documents', 'document_versions', 'profiles', 'saved_study_guides', 'breakout_rooms', 'breakout_documents', 'breakout_room_members', 'live_questions', 'live_sessions', 'live_responses', 'live_qa_items', 'live_qa_votes', 'breakout_live_questions', 'breakout_live_sessions', 'breakout_live_responses', 'breakout_live_qa_items', 'breakout_live_qa_votes'];
   table_name text;
 begin
   foreach table_name in array expected_tables loop
@@ -110,6 +110,28 @@ begin
     or has_table_privilege('authenticated', 'public.document_versions', 'DELETE')
   then
     raise exception 'Authenticated users can mutate existing version rows';
+  end if;
+
+  if has_table_privilege('authenticated', 'public.live_questions', 'SELECT')
+    or has_table_privilege('authenticated', 'public.live_sessions', 'SELECT')
+    or has_table_privilege('authenticated', 'public.live_responses', 'SELECT')
+    or has_table_privilege('authenticated', 'public.live_responses', 'INSERT')
+    or has_table_privilege('anon', 'public.live_responses', 'SELECT')
+    or has_table_privilege('authenticated', 'public.live_qa_items', 'SELECT')
+    or has_table_privilege('authenticated', 'public.live_qa_votes', 'SELECT')
+    or has_table_privilege('anon', 'public.live_qa_items', 'SELECT')
+    or has_table_privilege('authenticated', 'public.breakout_live_questions', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('anon', 'public.breakout_live_questions', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('authenticated', 'public.breakout_live_sessions', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('anon', 'public.breakout_live_sessions', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('authenticated', 'public.breakout_live_responses', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('anon', 'public.breakout_live_responses', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('authenticated', 'public.breakout_live_qa_items', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('anon', 'public.breakout_live_qa_items', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('authenticated', 'public.breakout_live_qa_votes', 'SELECT, INSERT, UPDATE, DELETE')
+    or has_table_privilege('anon', 'public.breakout_live_qa_votes', 'SELECT, INSERT, UPDATE, DELETE')
+  then
+    raise exception 'Live activity tables must stay service-role only';
   end if;
 
   if not has_table_privilege('authenticated', 'public.saved_study_guides', 'SELECT')
@@ -292,12 +314,12 @@ begin
     )
     or not has_function_privilege(
       'authenticated',
-      'public.create_breakout_room(uuid,text)',
+      'public.create_breakout_room(uuid,text,text)',
       'EXECUTE'
     )
     or has_function_privilege(
       'anon',
-      'public.create_breakout_room(uuid,text)',
+      'public.create_breakout_room(uuid,text,text)',
       'EXECUTE'
     )
     or not has_function_privilege(

@@ -1,14 +1,19 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 import {
-  buildWhiteboardAnswerProviderRequest,
+  buildWhiteboardAnswerRequest,
+  DEFAULT_WHITEBOARD_MODEL,
   MAX_WHITEBOARD_ANSWER_REQUEST_BYTES,
+  normalizeWhiteboardContext,
   normalizeWhiteboardQuestion,
-  readWhiteboardAnswerProviderResponse,
+  readWhiteboardAnswer,
+  type WhiteboardAnswer,
   WhiteboardAnswerInputError,
   WhiteboardAnswerProviderError,
   type WhiteboardAnswerResponse,
 } from "@/lib/ai/whiteboard-answer";
+import { consumeSharedAiAllowance } from "@/lib/ai/usage-limit";
 import { getRoomMemberAccess, RoomDomainError } from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
@@ -23,7 +28,6 @@ const PRIVATE_HEADERS = {
 const GENERATION_WINDOW_MS = 10 * 60 * 1_000;
 const GENERATION_LIMIT = 12;
 const PROVIDER_TIMEOUT_MS = 25_000;
-const DEFAULT_WHITEBOARD_MODEL = "gpt-4o-mini";
 const generationBuckets = new Map<string, number[]>();
 
 export const maxDuration = 30;
@@ -70,7 +74,7 @@ async function readRequestBody(
   }
 
   const body = value as Record<string, unknown>;
-  const allowedKeys = new Set(["question"]);
+  const allowedKeys = new Set(["question", "context"]);
 
   if (
     !("question" in body) ||
@@ -113,49 +117,31 @@ function consumeGenerationAllowance(key: string): number | null {
 
 async function callWhiteboardAnswerProvider(
   request: Request,
-  roomSlug: string,
   question: string,
-): Promise<unknown> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  boardNotes: string,
+): Promise<WhiteboardAnswer> {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
 
   if (!apiKey) {
     throw new Error("AI_CONFIGURATION_MISSING");
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
-  const abortProviderRequest = (): void => controller.abort();
-  request.signal.addEventListener("abort", abortProviderRequest, {
-    once: true,
+  const client = new Anthropic({
+    apiKey,
+    maxRetries: 1,
+    timeout: PROVIDER_TIMEOUT_MS,
   });
+  const message = await client.beta.messages.create(
+    buildWhiteboardAnswerRequest({
+      model: process.env.ANTHROPIC_WHITEBOARD_MODEL ?? DEFAULT_WHITEBOARD_MODEL,
+      question,
+      context: boardNotes,
+    }),
+    // Stop generating if the student leaves the page.
+    { signal: request.signal },
+  );
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      body: JSON.stringify(
-        buildWhiteboardAnswerProviderRequest(
-          process.env.OPENAI_WHITEBOARD_MODEL ?? DEFAULT_WHITEBOARD_MODEL,
-          roomSlug,
-          question,
-        ),
-      ),
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error("AI_PROVIDER_UNAVAILABLE");
-    }
-
-    return await response.json();
-  } finally {
-    clearTimeout(timeoutId);
-    request.signal.removeEventListener("abort", abortProviderRequest);
-  }
+  return readWhiteboardAnswer(message);
 }
 
 export async function POST(
@@ -183,25 +169,26 @@ export async function POST(
     }
 
     const question = normalizeWhiteboardQuestion(body.question);
-    const retryAfter = consumeGenerationAllowance(
-      `${context.userId}:${access.id}:whiteboard-answer`,
-    );
+    const boardNotes = normalizeWhiteboardContext(body.context);
+    const retryAfter =
+      consumeGenerationAllowance(context.userId) ??
+      (await consumeSharedAiAllowance(context.userId, "whiteboard-answer"));
 
     if (retryAfter !== null) {
       return errorResponse(
-        "You have generated several whiteboard answers. Try again in a few minutes.",
+        "The whiteboard answer limit has been reached. Try again later.",
         429,
         { "Retry-After": String(retryAfter) },
       );
     }
 
-    const providerPayload = await callWhiteboardAnswerProvider(
+    const answer = await callWhiteboardAnswerProvider(
       request,
-      access.slug,
       question,
+      boardNotes,
     );
     const response: WhiteboardAnswerResponse = {
-      answer: readWhiteboardAnswerProviderResponse(providerPayload),
+      ...answer,
       generatedAt: new Date().toISOString(),
     };
 
@@ -224,10 +211,34 @@ export async function POST(
       );
     }
 
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (
+      error instanceof Anthropic.APIConnectionTimeoutError ||
+      error instanceof Anthropic.APIUserAbortError ||
+      (error instanceof DOMException && error.name === "AbortError")
+    ) {
       return errorResponse(
         "Whiteboard answer generation took too long. Try again.",
         504,
+      );
+    }
+
+    if (error instanceof Anthropic.RateLimitError) {
+      return errorResponse(
+        "The AI assistant is busy right now. Try again in a minute.",
+        503,
+      );
+    }
+
+    if (
+      error instanceof Anthropic.AuthenticationError ||
+      error instanceof Anthropic.PermissionDeniedError
+    ) {
+      console.error("[qollab:whiteboard-answer] AI credential rejected", {
+        status: error.status,
+      });
+      return errorResponse(
+        "The AI assistant is not configured correctly. Check the server AI credential.",
+        503,
       );
     }
 

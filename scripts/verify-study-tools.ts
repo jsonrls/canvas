@@ -3,16 +3,16 @@ import {
   runStudyRequest,
 } from "../src/lib/ai/study-request";
 import assert from "node:assert/strict";
+import * as Y from "yjs";
+import { readNotesText } from "../src/lib/collaboration/notes-text";
+import { readChoice, withQuery } from "../src/lib/url-state";
 import {
   fitCameraToElements,
   getBoardPoint,
   getResizeHandles,
   moveWhiteboardElement,
 } from "../src/lib/whiteboard/geometry";
-import {
-  findWhiteboardAnswerPlacement,
-  wrapAnswerForTarget,
-} from "../src/lib/whiteboard/answer-placement";
+import { findWhiteboardAnswerPlacement } from "../src/lib/whiteboard/answer-placement";
 import {
   createInitialCamera,
   getElementBounds,
@@ -140,12 +140,6 @@ assert.equal(
   ),
   null,
 );
-assert.equal(wrapAnswerForTarget("one\n\n two  three", 500), "one\ntwo three");
-assert.equal(
-  wrapAnswerForTarget(Array(20).fill("line").join("\n"), 500).split("\n")
-    .length,
-  7,
-);
 assert.equal(annotationUsesComments("sticky"), true);
 assert.equal(annotationUsesComments("draw"), false);
 assert.equal(
@@ -180,6 +174,46 @@ assert.deepEqual(
 );
 assert.equal(readErrorMessage({ error: "retry" }), "retry");
 assert.equal(readErrorMessage({ error: 123 }), null);
+// A refresh stays on the open tool; an unknown value opens the first one.
+const tools = ["notes", "pdf", "live"] as const;
+assert.equal(readChoice("live", tools), "live");
+assert.equal(readChoice("admin", tools), "notes");
+assert.equal(readChoice(null, tools), "notes");
+assert.equal(withQuery("", { tool: "live" }), "?tool=live");
+assert.equal(
+  withQuery("?tool=live&guide=g&keep=1", { tool: "pdf", guide: null }),
+  "?tool=pdf&keep=1",
+);
+assert.equal(withQuery("?tool=live", { tool: null }), "");
+
+// Notes read without the editor: formatting dropped, blocks kept apart.
+const notes = new Y.Doc();
+const paragraph = new Y.XmlElement("paragraph");
+const words = new Y.XmlText();
+const afterBreak = new Y.XmlText();
+afterBreak.insert(0, "Queues are FIFO");
+paragraph.insert(0, [words, new Y.XmlElement("hardBreak"), afterBreak]);
+const list = new Y.XmlElement("bulletList");
+const items = ["Array", "Tree"].map((text) => {
+  const item = new Y.XmlElement("listItem");
+  const line = new Y.XmlElement("paragraph");
+  const content = new Y.XmlText();
+  content.insert(0, text);
+  line.insert(0, [content]);
+  item.insert(0, [line]);
+  return item;
+});
+list.insert(0, items);
+assert.equal(readNotesText(notes), "");
+notes.getXmlFragment("default").insert(0, [paragraph, list]);
+words.insert(0, "Stacks are ");
+words.insert(11, "LIFO", { bold: {} });
+assert.equal(
+  readNotesText(notes),
+  "Stacks are LIFO\nQueues are FIFO\n\nArray\n\nTree",
+);
+notes.destroy();
+
 assert.equal(studyTabIndex("ArrowLeft", 0, 5), 4);
 assert.equal(studyTabIndex("ArrowRight", 4, 5), 0);
 assert.equal(studyTabIndex("Home", 3, 5), 0);

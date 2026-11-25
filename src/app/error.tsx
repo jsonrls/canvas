@@ -7,6 +7,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { QollabBrandLogo } from "@/components/brand/qollab-brand-logo";
 import { Button } from "@/components/ui/button";
+import { PANEL_MUTED } from "@/components/ui/panel";
 
 export default function GlobalError({
   error,
@@ -29,8 +30,8 @@ export default function GlobalError({
       minHeight="100dvh"
       hAlign="center"
       vAlign="center"
-      padding={6}
-      className="bg-body"
+      padding={4}
+      className="bg-surface"
     >
       <VStack
         as="section"
@@ -40,22 +41,26 @@ export default function GlobalError({
         aria-labelledby="error-page-title"
       >
         <QollabBrandLogo />
-        <Heading
-          level={1}
-          type="display-2"
-          id="error-page-title"
-          textWrap="balance"
-        >
-          We couldn’t open this page.
-        </Heading>
-        <Text as="p" color="secondary">
-          Try loading it again. If the problem continues, return to your rooms
-          and reopen the workspace.
-        </Text>
-        <HStack gap={3} wrap="wrap">
-          <Button label="Try again" variant="primary" onClick={reset} />
-          <Button href="/rooms" label="Back to rooms" variant="secondary" />
-        </HStack>
+        <VStack gap={5} className={PANEL_MUTED}>
+          <VStack gap={2}>
+            <Heading
+              level={1}
+              id="error-page-title"
+              textWrap="balance"
+              className="text-2xl! md:text-3xl!"
+            >
+              We couldn’t open this page
+            </Heading>
+            <Text as="p" color="secondary">
+              Try loading it again. If the problem continues, return to your
+              rooms and reopen the workspace.
+            </Text>
+          </VStack>
+          <HStack gap={3} wrap="wrap">
+            <Button label="Try again" variant="primary" onClick={reset} />
+            <Button href="/rooms" label="Back to rooms" variant="secondary" />
+          </HStack>
+        </VStack>
       </VStack>
     </VStack>
   );
