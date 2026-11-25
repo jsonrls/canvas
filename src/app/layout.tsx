@@ -1,6 +1,6 @@
 import { Theme } from "@astryxdesign/core/theme";
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
+import { Figtree, JetBrains_Mono, Lexend } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -8,13 +8,13 @@ import { qollabWorkshopTheme } from "../../theme/generated/qollab-workshop.js";
 
 import "./globals.css";
 
-const bodyFont = Inter({
+const bodyFont = Figtree({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-qollab-body",
 });
 
-const headingFont = Bricolage_Grotesque({
+const headingFont = Lexend({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-qollab-heading",

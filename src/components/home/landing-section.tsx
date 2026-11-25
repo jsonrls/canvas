@@ -24,7 +24,7 @@ interface PillLinkProps {
   tone?: keyof typeof PILL_TONES;
 }
 
-/** The pill action; the primary tone is the blue gradient with an arrow. */
+/** The pill action; the primary tone is the ink pill with an arrow. */
 export function PillLink({
   href,
   label,

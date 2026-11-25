@@ -53,7 +53,7 @@ export function createProviderLifecycle({
       retryTimer = undefined;
       void reconnect();
     }, retryDelay);
-    retryDelay = Math.min(10_000, retryDelay * 2);
+    retryDelay = Math.min(60_000, retryDelay * 2);
   };
 
   const reconnect = (): Promise<void> => {

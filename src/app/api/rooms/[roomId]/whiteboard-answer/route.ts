@@ -13,6 +13,7 @@ import {
   WhiteboardAnswerProviderError,
   type WhiteboardAnswerResponse,
 } from "@/lib/ai/whiteboard-answer";
+import { consumeSharedAiAllowance } from "@/lib/ai/usage-limit";
 import { getRoomMemberAccess, RoomDomainError } from "@/lib/rooms/repository";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
@@ -169,13 +170,13 @@ export async function POST(
 
     const question = normalizeWhiteboardQuestion(body.question);
     const boardNotes = normalizeWhiteboardContext(body.context);
-    const retryAfter = consumeGenerationAllowance(
-      `${context.userId}:${access.id}:whiteboard-answer`,
-    );
+    const retryAfter =
+      consumeGenerationAllowance(context.userId) ??
+      (await consumeSharedAiAllowance(context.userId, "whiteboard-answer"));
 
     if (retryAfter !== null) {
       return errorResponse(
-        "You have generated several whiteboard answers. Try again in a few minutes.",
+        "The whiteboard answer limit has been reached. Try again later.",
         429,
         { "Retry-After": String(retryAfter) },
       );
