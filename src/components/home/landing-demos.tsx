@@ -240,7 +240,10 @@ export function FlashcardDemo(): React.ReactElement {
   );
 }
 
-/** Chapter starts, in seconds, of the recording in `public/landing/tour.mp4`. */
+/**
+ * Chapter starts, in seconds, of the recording in `public/landing/tour.mp4`
+ * (and its AV1 copy `tour.av1.mp4`; re-encode both together).
+ */
 const TOUR_CHAPTERS = [
   { label: "Notes", start: 0 },
   { label: "PDF", start: 6.8 },
@@ -303,7 +306,6 @@ export function ProductTour(): React.ReactElement {
       >
         <video
           ref={videoRef}
-          src="/landing/tour.mp4"
           poster="/landing/tour-poster.jpg"
           muted
           loop
@@ -323,7 +325,14 @@ export function ProductTour(): React.ReactElement {
               TOUR_CHAPTERS.findLastIndex(({ start }) => time >= start),
             );
           }}
-        />
+        >
+          {/* AV1 is about 30% smaller; browsers without it fall back to H.264. */}
+          <source
+            src="/landing/tour.av1.mp4"
+            type='video/mp4; codecs="av01.0.08M.08"'
+          />
+          <source src="/landing/tour.mp4" type="video/mp4" />
+        </video>
       </AspectRatio>
       <HStack
         role="group"
