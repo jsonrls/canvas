@@ -60,6 +60,7 @@ import {
 } from "@/hooks/use-room-presentation";
 import { LivePrompt } from "@/components/collaboration/live/live-prompt";
 import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
+import { liveApiPath } from "@/lib/live/scope";
 import { useActiveTool } from "@/hooks/use-active-tool";
 import { useViewerCollaboration } from "@/hooks/use-viewer-collaboration";
 
@@ -155,7 +156,7 @@ export function CollaborativeRoom({
   const canEdit = canManagePdf || viewerCanCollaborate;
   const [activeTool, setActiveTool] = useActiveTool(WORKSPACE_TOOLS);
   const live = useLiveActivities({
-    roomSlug: roomId,
+    endpoint: liveApiPath(roomId),
     isActive: activeTool === "live",
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

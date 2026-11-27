@@ -24,6 +24,7 @@ import {
   reorderLiveQuestions,
   resetLiveResults,
   setLiveAccepting,
+  setLiveGuestAccess,
   setLiveLayout,
   setLiveQaStatus,
   setLiveResultsVisible,
@@ -42,6 +43,7 @@ const HOST_ACTIONS = new Set([
   "reset_results",
   "set_layout",
   "qa_set_status",
+  "set_guest_access",
 ]);
 
 const MAX_BODY_BYTES = 3 * 1024 * 1024;
@@ -187,6 +189,9 @@ export async function POST(
           itemId: readLiveId(body.itemId),
           value: readBoolean(body.value),
         });
+        break;
+      case "set_guest_access":
+        await setLiveGuestAccess(admin, scope, readBoolean(body.value));
         break;
       case "qa_set_status":
         if (!isQaStatus(body.status)) {

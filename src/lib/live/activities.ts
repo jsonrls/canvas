@@ -265,6 +265,8 @@ export interface LiveSnapshot {
   results: LiveResults | null;
   leaderboard: Leaderboard | null;
   qa: QaItem[] | null;
+  /** Hosts of a main room: the guest link code, or null when guests are off. */
+  guestCode: string | null;
 }
 
 export type LiveAction =
@@ -279,7 +281,10 @@ export type LiveAction =
   | { action: "respond"; questionId: string; value: LiveResponseValue }
   | { action: "qa_ask"; questionId: string; text: string }
   | { action: "qa_vote"; itemId: string; value: boolean }
-  | { action: "qa_set_status"; itemId: string; status: QaStatus };
+  | { action: "qa_set_status"; itemId: string; status: QaStatus }
+  | { action: "set_guest_access"; value: boolean }
+  /** Guest link only: the name a guest answers under. */
+  | { action: "join"; name: string };
 
 export class LiveInputError extends Error {
   constructor(message: string) {

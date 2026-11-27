@@ -73,6 +73,7 @@ import {
   Pencil as PencilData,
   Plus as PlusData,
   Presentation as PresentationData,
+  QrCode as QrCodeData,
   Quote as QuoteData,
   Radio as RadioData,
   Redo2 as Redo2Data,
@@ -208,6 +209,10 @@ export function Code2(props: IconProps): React.ReactElement {
 
 export function Copy(props: IconProps): React.ReactElement {
   return <AppIcon {...props} iconData={CopyData} />;
+}
+
+export function QrCode(props: IconProps): React.ReactElement {
+  return <AppIcon {...props} iconData={QrCodeData} />;
 }
 
 export function Crown(props: IconProps): React.ReactElement {
