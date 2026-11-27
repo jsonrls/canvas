@@ -25,9 +25,11 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      eyebrow="Welcome back"
+      eyebrow="Sign in"
       title="Welcome back!"
       intro="Sign in to open your rooms and keep working with your group."
+      art="login"
+      caption="Your rooms are right where you left them."
     >
       {reset === "success" ? (
         <SuccessToastOnMount message="Your password is updated. Sign in with the new one." />

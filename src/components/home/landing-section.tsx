@@ -4,7 +4,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import Link from "next/link";
 
-import { ArrowRight, type IconComponent } from "@/components/ui/icons";
+import { ArrowRight, type LandingIconComponent } from "./landing-icons";
 
 /** Elements carrying `data-reveal` rise in once; `LandingMotion` sets the state. */
 export const REVEAL =
@@ -80,7 +80,7 @@ const HEAD_ROWS: Record<HeadLayout, string> = {
 
 interface SectionHeadProps {
   id: string;
-  Icon: IconComponent;
+  Icon: LandingIconComponent;
   label: string;
   title: string;
   detail: string;

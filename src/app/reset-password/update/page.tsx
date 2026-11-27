@@ -23,6 +23,8 @@ export default async function UpdatePasswordPage(): Promise<React.ReactElement> 
       eyebrow="Secure reset link"
       title="Choose a new password"
       intro="Save your new password, then sign in again to open your rooms."
+      art="reset"
+      caption="Pick a new password, then sign in again."
     >
       <UpdatePasswordForm />
     </AuthShell>

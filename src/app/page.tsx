@@ -54,22 +54,24 @@ export default async function HomePage(): Promise<React.ReactElement> {
       <VStack
         as="header"
         hAlign="center"
-        className="sticky top-0 z-40 bg-surface px-4 md:px-8"
+        className="sticky top-0 z-40 px-3 pt-3 md:px-8 md:pt-4"
       >
+        {/* A floating bar: the page and the hero grid show round and behind it. */}
         <HStack
           width="100%"
           maxWidth={FRAME}
           hAlign="between"
           vAlign="center"
-          gap={4}
-          paddingBlock={3}
+          gap={2}
+          paddingBlock={1}
+          className="landing-float rounded-full bg-surface/85 pr-2 pl-3 backdrop-blur-md md:pl-6"
         >
           <Link
             href="/"
             aria-label="Qollab home"
             className="inline-flex min-h-11 items-center"
           >
-            <QollabBrandLogo />
+            <QollabBrandLogo size="sm" />
           </Link>
           <HStack
             as="nav"
@@ -91,7 +93,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
             {isAuthenticated ? null : (
               <Link
                 href="/login"
-                className="inline-flex min-h-11 items-center px-3 font-medium text-primary hover:text-accent"
+                className="inline-flex min-h-11 items-center px-2 font-medium whitespace-nowrap text-primary hover:text-accent sm:px-3"
               >
                 Log in
               </Link>
