@@ -30,12 +30,20 @@ import {
 } from "../src/lib/live/activities";
 import { buildResultSheets } from "../src/lib/live/export";
 import {
+  guestCookiePath,
+  hashGuestToken,
+  LiveGuestLinkError,
+  readGuestCode,
+  readGuestName,
+} from "../src/lib/live/guests";
+import {
   fitArea,
   gridPercent,
   gridValue,
   hillPath,
   ordinal,
 } from "../src/lib/live/shapes";
+import { createGuestCode } from "../src/lib/live/repository";
 import { answerColor, packWords } from "../src/lib/live/word-cloud";
 import { backoffDelay, IDLE_AFTER_MS, livePollDelay } from "../src/lib/polling";
 import { writeXlsx } from "../src/lib/xlsx";
@@ -800,6 +808,7 @@ const hostSnapshot: LiveSnapshot = {
   results: { type: "choice", counts: [1, 1], total: 2 },
   leaderboard: null,
   qa: null,
+  guestCode: null,
 };
 const projected = projectorView(hostSnapshot);
 assert.equal(projected.current?.correctOption, null);
@@ -1010,5 +1019,32 @@ assert.deepEqual(fitArea({ x: 97.6, y: -4, width: 1, height: 240 }), {
 assert.doesNotThrow(() =>
   pinDraft(fitArea({ x: 99, y: 99, width: 0, height: 0 })),
 );
+
+// Guest links: room slug plus 10 letters or digits, trimmed names, hashed tokens.
+const guestCode = "biology-101-a8kd93lmqz";
+assert.equal(readGuestCode(guestCode), guestCode);
+assert.match(createGuestCode("biology-101"), /^biology-101-[a-z0-9]{10}$/);
+assert.notEqual(createGuestCode("x"), createGuestCode("x"));
+for (const bad of [
+  "",
+  "biology-101",
+  "biology-101-a8kd93lmq",
+  "biology-101-a8kd93lmqz1",
+  "biology-101-A8KD93LMQZ",
+  "Biology-101-a8kd93lmqz",
+  "../x-a8kd93lmqz",
+  42,
+]) {
+  assert.throws(() => readGuestCode(bad), LiveGuestLinkError);
+}
+assert.equal(guestCookiePath(guestCode), `/live/${guestCode}`);
+assert.equal(readGuestName("  Ana   Reyes "), "Ana Reyes");
+assert.throws(() => readGuestName("   "), LiveInputError);
+assert.throws(() => readGuestName("x".repeat(41)), LiveInputError);
+assert.throws(() => readGuestName(undefined), LiveInputError);
+const tokenHash = hashGuestToken("token-a");
+assert.match(tokenHash, /^[0-9a-f]{64}$/);
+assert.equal(hashGuestToken("token-a"), tokenHash);
+assert.notEqual(hashGuestToken("token-b"), tokenHash);
 
 console.log("Live activity checks passed.");

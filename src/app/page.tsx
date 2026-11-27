@@ -17,6 +17,7 @@ import {
   LandingWhy,
 } from "@/components/home/landing-content";
 import { LandingMotion } from "@/components/home/landing-demos";
+import { LandingPricing } from "@/components/home/landing-pricing";
 import { FRAME, PillLink } from "@/components/home/landing-section";
 import { getAuthenticatedContext } from "@/lib/supabase/server";
 
@@ -31,6 +32,7 @@ const NAVIGATION = [
   { href: "#live", label: "Live activities" },
   { href: "#how", label: "How it works" },
   { href: "#roles", label: "Roles" },
+  { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -109,6 +111,7 @@ export default async function HomePage(): Promise<React.ReactElement> {
         <LandingSession />
         <LandingPacks />
         <LandingRoles />
+        <LandingPricing destination={isAuthenticated ? "/rooms" : "/signup"} />
         <LandingFaq destination={destination} action={action} />
         <LandingClosing destination={destination} action={action} />
       </VStack>

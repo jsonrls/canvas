@@ -3,8 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 type Row = Record<string, unknown>;
 
 const UNIQUE: Record<string, string[]> = {
-  responses: ["question_id", "user_id"],
-  votes: ["item_id", "user_id"],
+  responses: ["question_id", "participant_id"],
+  votes: ["item_id", "participant_id"],
 };
 
 function uniqueKey(table: string): string[] | undefined {
@@ -91,6 +91,10 @@ class Query implements PromiseLike<unknown> {
       });
     }
     if (change.kind === "insert") {
+      // Like the generated column on answer, Q&A and vote tables.
+      if ("user_id" in change.row || "guest_id" in change.row) {
+        change.row.participant_id = change.row.user_id ?? change.row.guest_id;
+      }
       const key = uniqueKey(this.table);
       if (
         key &&

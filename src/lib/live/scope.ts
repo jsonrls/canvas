@@ -8,6 +8,8 @@ export interface LiveScope {
     responses: string;
     qaItems: string;
     qaVotes: string;
+    /** Guests without an account; null where only members take part. */
+    guests: string | null;
   };
 }
 
@@ -21,6 +23,7 @@ export function roomLiveScope(roomId: string): LiveScope {
       responses: "live_responses",
       qaItems: "live_qa_items",
       qaVotes: "live_qa_votes",
+      guests: "live_guests",
     },
   };
 }
@@ -35,6 +38,7 @@ export function breakoutLiveScope(breakoutRoomId: string): LiveScope {
       responses: "breakout_live_responses",
       qaItems: "breakout_live_qa_items",
       qaVotes: "breakout_live_qa_votes",
+      guests: null,
     },
   };
 }

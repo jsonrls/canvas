@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import { getBreakoutMemberAccess } from "../src/lib/breakout-rooms/repository";
-import { readQuestionDraft } from "../src/lib/live/activities";
+import { LiveInputError, readQuestionDraft } from "../src/lib/live/activities";
 import { liveErrorResponse, resolveLiveAccess } from "../src/lib/live/http";
 import {
   askLiveQuestion,
@@ -19,6 +19,7 @@ import {
   reorderLiveQuestions,
   resetLiveResults,
   setLiveAccepting,
+  setLiveGuestAccess,
   setLiveLayout,
   setLiveQaStatus,
   setLiveResultsVisible,
@@ -78,6 +79,12 @@ db.seed(
 
 const admin = db.client;
 const MAIN = roomLiveScope(ROOM);
+
+function tablesOf(scope: LiveScope): string[] {
+  return Object.values(scope.tables).filter(
+    (table): table is string => table !== null,
+  );
+}
 const A = breakoutLiveScope(BREAKOUT_A);
 const B = breakoutLiveScope(BREAKOUT_B);
 const access = (userId: string, code?: string, roomId = SLUG) =>
@@ -95,11 +102,10 @@ async function main(): Promise<void> {
     "/api/rooms/a%2Fb/breakouts/c%2Fd/live",
   );
 
-  // Main and breakout share no table.
-  const mainTables: string[] = Object.values(MAIN.tables);
-  assert.ok(
-    Object.values(A.tables).every((table) => !mainTables.includes(table)),
-  );
+  // Main and breakout share no table. Only main rooms admit guests.
+  const mainTables = tablesOf(MAIN);
+  assert.ok(tablesOf(A).every((table) => !mainTables.includes(table)));
+  assert.equal(A.tables.guests, null);
 
   // Hosts: the room's owner and editors, in every breakout of that room.
   for (const userId of ["owner", "editor"]) {
@@ -191,9 +197,9 @@ async function main(): Promise<void> {
   assert.deepEqual(await ids(MAIN), []);
   await run(MAIN);
   db.touched.clear();
-  const [mainPoll, , , mainPin] = await ids(MAIN);
+  const [mainPoll, mainQuiz, , mainPin] = await ids(MAIN);
   assert.ok(
-    Object.values(A.tables).every((table) => !db.touched.has(table)),
+    tablesOf(A).every((table) => !db.touched.has(table)),
     "the main room works without the breakout tables",
   );
   const [pollA, quizA, qaA, pinA] = await ids(A);
@@ -322,6 +328,52 @@ async function main(): Promise<void> {
   await removeLiveImages(admin, folders);
   assert.equal(db.files.size, 0);
 
+  // Guests: only main rooms have a guest link; turning it on again replaces it.
+  await assert.rejects(setLiveGuestAccess(admin, A, true), LiveInputError);
+  const guestCodeOf = async (userId = "owner", canHost = true) =>
+    (await buildLiveSnapshot(admin, { scope: MAIN, userId, canHost }))
+      .guestCode;
+  assert.equal(await guestCodeOf(), null);
+  await setLiveGuestAccess(admin, MAIN, true);
+  const firstCode = await guestCodeOf();
+  assert.match(firstCode ?? "", /^biology-101-[a-z0-9]{10}$/);
+  assert.equal(await guestCodeOf("in-a", false), null, "students never see it");
+  await setLiveGuestAccess(admin, MAIN, true);
+  assert.equal(await guestCodeOf(), firstCode, "a repeat click keeps the code");
+  await setLiveGuestAccess(admin, MAIN, false);
+  assert.equal(await guestCodeOf(), null);
+  await setLiveGuestAccess(admin, MAIN, true);
+  assert.notEqual(await guestCodeOf(), firstCode);
+
+  // A guest answers through guest_id, once, and ranks under their own name.
+  const GUEST = "99999999-9999-4999-8999-999999999999";
+  db.seed("live_guests", { id: GUEST, room_id: ROOM, display_name: "Ana" });
+  await presentLiveQuestion(admin, MAIN, mainQuiz);
+  await setLiveAccepting(admin, MAIN, true);
+  const guestAnswer = () =>
+    submitLiveResponse(admin, {
+      scope: MAIN,
+      userId: GUEST,
+      isGuest: true,
+      questionId: mainQuiz,
+      value: { option: 1 },
+    });
+  await guestAnswer();
+  await assert.rejects(guestAnswer(), LiveConflictError);
+  const guestRow = db.tables
+    .get("live_responses")!
+    .find((row) => row.guest_id === GUEST);
+  assert.equal(guestRow?.user_id, undefined, "guests never write user_id");
+  await setLiveResultsVisible(admin, MAIN, true);
+  const guestView = await buildLiveSnapshot(admin, {
+    scope: MAIN,
+    userId: GUEST,
+    canHost: false,
+  });
+  assert.deepEqual(guestView.myResponse, { option: 1 });
+  assert.equal(guestView.leaderboard?.me?.name, "Ana");
+  await resetLiveResults(admin, MAIN);
+
   // Every live query filters by scope, and every table is closed to clients.
   const repository = readFileSync("src/lib/live/repository.ts", "utf8");
   assert.doesNotMatch(repository, /\.from\("live_/);
@@ -329,7 +381,7 @@ async function main(): Promise<void> {
     "supabase/migrations/20261125120000_add_breakout_live_activities.sql",
     "utf8",
   );
-  for (const table of Object.values(A.tables)) {
+  for (const table of tablesOf(A)) {
     assert.match(
       migration,
       new RegExp(`alter table public\\.${table} enable row level security`),
