@@ -47,14 +47,17 @@ homepage rules. The token table below is historical;
 `theme/qollab-workshop.ts` is the source.
 
 - Look: white page, soft grey rounded cards (`bg-muted`, `rounded-3xl`) holding
-  white insets, one saturated blue panel (`.landing-sky`), pale blue photo
-  fields (`.landing-photo`), navy pill actions (`PillLink`), small label chips
+  white insets, one flat saturated blue panel (`bg-accent-bg`), flat pale blue
+  illustration fields (`bg-accent-muted`; no gradients or photos on the landing
+  page since 2026-11-28), navy pill actions (`PillLink`), small label chips
   above section headings, medium-weight Lexend headings with tight tracking.
 - Landing order: top bar (logo, centred links, Log in, Get started pill),
-  centred hero, photo card beside the `ProductTour` panel (a looping screen
-  recording of the real app with a glass chapter dock; selecting the recording
-  pauses it;
-  2026-11-25, section previews are real screenshots in `public/landing/`), eight tool tiles, `#why`
+  centred hero, an illustrated study-group card beside the `RoomTour` panel
+  (2026-11-28, after Notion's homepage: one drawn app window per chapter with a
+  glass chapter dock that auto-advances until a chapter is picked; the
+  screenshots, tour video and gradient grounds are gone, and every landing
+  preview is a flat SVG in `landing-art.tsx`), eight tool tiles with small
+  drawings, `#why`
   three cards, `#workspace` two tall cards, the wide "Ask the whiteboard" card
   and four small ones, `#live` activity picker beside a blue panel (2026-11-25, redesigned after Notion's product pages: the heading, a row of four activity tab cards, and one large `bg-muted` frame holding a white big screen drawn with the real charts and a phone whose taps change that screen; from `lg` it pins at full height and scrolling steps through the tabs) (after
   Mentimeter's type list and preview; it draws the room's own charts from
@@ -243,8 +246,9 @@ homepage rules. The token table below is historical;
   error state keep their status border. Buttons and links keep the outline.
 - Liquid glass (`src/components/home/liquid-glass.ts`) stays on the room's tool
   dock and the figure panel in `SessionSteps`.
-- The one photograph is `home-study-collaboration.png`. Its white ground is
-  multiplied onto pale fields, so do not place it on saturated colour.
+- No photographs since 2026-11-28: the landing and sign-in pages use flat SVG
+  drawings from `landing-art.tsx`. `home-study-collaboration.png` is still in
+  `public/images/` but nothing renders it.
 - The reference's testimonials, logos, prices, stats and blog are replaced with
   real content: study packs, roles and product facts. Do not add invented
   proof or prices. Room fragments are labelled as a sample.

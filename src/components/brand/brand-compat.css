@@ -31,3 +31,9 @@
     width: 116px;
   }
 }
+
+/* The lockup in a compact bar. Placed last so it also beats the narrow-screen width. */
+.brand-logo[data-size="sm"]:not([data-variant="mark"]) {
+  width: 6.25rem;
+  height: 2rem;
+}

@@ -23,6 +23,8 @@ export default async function SignUpPage({
       eyebrow="Start studying together"
       title="Create your account"
       intro="Create or join a room to work on notes with your group."
+      art="signup"
+      caption="Pull up a seat. Create a room or join your group’s."
     >
       <LoginForm mode="signup" nextPath={nextPath} />
     </AuthShell>
