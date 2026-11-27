@@ -10,7 +10,7 @@ import {
   REVEAL,
   SectionHead,
 } from "./landing-section";
-import { BadgeCheck, Check } from "@/components/ui/icons";
+import { Check, PriceTag } from "./landing-icons";
 
 // Source: artifacts/qollab-pricing-model.pdf (25 Nov 2026). AI quotas are capped
 // so every plan keeps a margin at full use; free AI is a one-time trial.
@@ -160,7 +160,7 @@ export function LandingPricing({
     <LandingSection id="pricing" labelledBy="pricing-title">
       <SectionHead
         id="pricing-title"
-        Icon={BadgeCheck}
+        Icon={PriceTag}
         label="Pricing"
         title="The host pays. Everyone they invite joins free."
         detail="Start free. When paid plans open, choose monthly, a 5-month pass for a school term, or a year."

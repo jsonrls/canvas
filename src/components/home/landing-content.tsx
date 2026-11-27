@@ -4,24 +4,22 @@ import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
-import Image from "next/image";
 
-import {
-  FaqList,
-  FlashcardDemo,
-  OfflineDemo,
-  ProductTour,
-  SessionSteps,
-} from "./landing-demos";
+import { FaqList, HeroGrid, RoomTour, SessionSteps } from "./landing-demos";
 import {
   AskArt,
   BoardArt,
+  ClosingArt,
   FactArt,
   type FactArtName,
+  HeroGroupArt,
+  SceneArt,
+  type SceneArtName,
+  ToolArt,
+  type ToolArtName,
   PdfArt,
   QuestionKindArt,
 } from "./landing-art";
-import { LiveActivitiesDemo } from "./landing-live";
 import {
   FRAME,
   LandingSection,
@@ -30,80 +28,28 @@ import {
   SectionHead,
 } from "./landing-section";
 import {
-  Bookmark,
   BrainCircuit,
   ChartColumnBig,
   Check,
-  Crown,
   DoorOpen,
-  Eye,
-  FileText,
   Highlighter,
-  History,
-  type IconComponent,
   Layers3,
   MessageCircleQuestion,
   Mic,
   PenTool,
-  Pencil,
   Presentation,
   RefreshCw,
   Route,
   ShieldCheck,
   Sparkles,
-  Split,
-} from "@/components/ui/icons";
+  type LandingIconComponent,
+} from "./landing-icons";
 
 import { LIVE_KIND_LABELS, LIVE_QUESTION_KINDS } from "@/lib/live/activities";
 
 interface LandingAction {
   destination: string;
   action: string;
-}
-
-const STUDENTS = "/images/home-study-collaboration.png";
-
-/* The photo's white ground is pushed to pure white, then multiplied away. */
-const PHOTO = "object-cover brightness-105 contrast-105 mix-blend-multiply";
-
-/** Screenshots of the real app, taken in the sample room of the hero recording. */
-const SHOTS = {
-  notes: {
-    width: 860,
-    height: 1120,
-    alt: "Shared notes on the printing press, with Lea Tan’s cursor at the end of a line.",
-  },
-  summary: {
-    width: 796,
-    height: 1080,
-    alt: "A study pack summary with an overview and numbered key points.",
-  },
-  quiz: {
-    width: 796,
-    height: 1067,
-    alt: "A practice quiz question with the correct answer marked and explained.",
-  },
-};
-
-function Shot({
-  name,
-  className = "",
-}: {
-  name: keyof typeof SHOTS;
-  className?: string;
-}): React.ReactElement {
-  const { width, height, alt } = SHOTS[name];
-
-  return (
-    <Image
-      src={`/landing/${name}.webp`}
-      alt={alt}
-      width={width}
-      height={height}
-      sizes="(max-width: 768px) 100vw, 560px"
-      className={`h-auto w-full ${className}`}
-    />
-  );
 }
 
 const HERO_FACTS = ["Live", "Works offline", "Role-based"];
@@ -113,15 +59,15 @@ const HERO_PRESENCE = [
   { name: "Marco Diaz", detail: "Highlighted page 12", place: "PDF" },
 ];
 
-const ROOM_TOOLS = [
-  { label: "Shared notes", Icon: PenTool },
-  { label: "PDF markup", Icon: FileText },
-  { label: "Whiteboard", Icon: Presentation },
-  { label: "Live activities", Icon: ChartColumnBig },
-  { label: "Voice questions", Icon: Mic },
-  { label: "Study packs", Icon: BrainCircuit },
-  { label: "Offline edits", Icon: RefreshCw },
-  { label: "Member roles", Icon: ShieldCheck },
+const ROOM_TOOLS: { label: string; art: ToolArtName }[] = [
+  { label: "Shared notes", art: "notes" },
+  { label: "PDF markup", art: "pdf" },
+  { label: "Whiteboard", art: "board" },
+  { label: "Live activities", art: "live" },
+  { label: "Voice questions", art: "voice" },
+  { label: "Study packs", art: "packs" },
+  { label: "Offline edits", art: "offline" },
+  { label: "Member roles", art: "roles" },
 ];
 
 export function LandingHero({
@@ -133,21 +79,26 @@ export function LandingHero({
       as="section"
       aria-labelledby="home-title"
       hAlign="center"
-      className="px-4 pt-12 pb-14 md:px-8 lg:pt-20 lg:pb-20"
+      className="relative px-4 pt-12 pb-14 md:px-8 lg:pt-20 lg:pb-20"
     >
-      <VStack width="100%" maxWidth={FRAME} gap={10} hAlign="center">
+      <HeroGrid />
+      <VStack
+        width="100%"
+        maxWidth={FRAME}
+        gap={10}
+        hAlign="center"
+        className="relative"
+      >
         <VStack gap={6} hAlign="center" className="text-center">
           <HStack
-            gap={3}
+            gap={2}
             vAlign="center"
-            className="rounded-full border border-border bg-surface px-4 py-1"
+            className="rounded-full bg-accent-muted px-3 py-1"
           >
-            <ShieldCheck size={14} aria-hidden="true" />
-            {HERO_FACTS.map((fact) => (
-              <Text key={fact} weight="medium">
-                {fact}
-              </Text>
-            ))}
+            <ShieldCheck size={14} aria-hidden="true" className="text-accent" />
+            <Text weight="medium" className="text-accent!">
+              {HERO_FACTS.join(" · ")}
+            </Text>
           </HStack>
           <Heading
             level={1}
@@ -168,16 +119,11 @@ export function LandingHero({
           </HStack>
         </VStack>
         <HStack gap={4} className="w-full flex-col items-stretch! lg:flex-row">
-          <VStack className="landing-photo relative min-h-120 min-w-0 overflow-hidden rounded-3xl lg:w-4/12">
-            <Image
-              src={STUDENTS}
-              alt="Two people smiling, one holding a laptop."
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 380px"
-              className={`landing-crop-a ${PHOTO}`}
-            />
-            <VStack gap={2} className="relative mt-auto p-4">
+          <VStack className="min-w-0 overflow-hidden rounded-3xl bg-accent-muted lg:w-4/12">
+            <VStack className="px-4 pt-6">
+              <HeroGroupArt />
+            </VStack>
+            <VStack gap={2} className="mt-auto p-4">
               {HERO_PRESENCE.map(({ name, detail, place }) => (
                 <HStack
                   key={name}
@@ -199,9 +145,9 @@ export function LandingHero({
           </VStack>
           <VStack
             hAlign="center"
-            className="landing-sky min-w-0 justify-center rounded-3xl p-4 md:p-6 lg:w-8/12"
+            className="min-w-0 justify-center rounded-3xl bg-accent-bg p-4 md:p-6 lg:w-8/12"
           >
-            <ProductTour />
+            <RoomTour />
           </VStack>
         </HStack>
         <VStack gap={5} hAlign="center" className="w-full">
@@ -212,16 +158,20 @@ export function LandingHero({
             a study group needs, in one room
           </Text>
           <Grid columns={{ minWidth: 130, max: 4 }} gap={3} className="w-full">
-            {ROOM_TOOLS.map(({ label, Icon }) => (
-              <VStack
+            {ROOM_TOOLS.map(({ label, art }) => (
+              <HStack
                 key={label}
-                gap={2}
-                hAlign="center"
-                className="rounded-2xl bg-muted px-2 py-5 text-center"
+                data-reveal=""
+                data-art=""
+                gap={3}
+                vAlign="center"
+                className="group rounded-2xl bg-muted p-3"
               >
-                <Icon size={20} aria-hidden="true" />
-                <Text weight="semibold">{label}</Text>
-              </VStack>
+                <ToolArt name={art} />
+                <Text weight="semibold" className="text-base!">
+                  {label}
+                </Text>
+              </HStack>
             ))}
           </Grid>
         </VStack>
@@ -231,7 +181,7 @@ export function LandingHero({
 }
 
 interface CardProps {
-  Icon: IconComponent;
+  Icon: LandingIconComponent;
   title: string;
   detail: string;
   children: React.ReactNode;
@@ -241,8 +191,8 @@ function WhyCard({
   Icon,
   title,
   detail,
-  children,
-}: CardProps): React.ReactElement {
+  art,
+}: Omit<CardProps, "children"> & { art: SceneArtName }): React.ReactElement {
   return (
     <VStack
       as="article"
@@ -259,8 +209,12 @@ function WhyCard({
           {detail}
         </Text>
       </VStack>
-      <VStack className="mt-auto overflow-hidden rounded-2xl bg-surface">
-        {children}
+      <VStack
+        data-reveal=""
+        data-art=""
+        className="group mt-auto overflow-hidden rounded-2xl"
+      >
+        <SceneArt name={art} />
       </VStack>
     </VStack>
   );
@@ -282,63 +236,43 @@ export function LandingWhy(): React.ReactElement {
           Icon={PenTool}
           title="Notes you write together"
           detail="One document, live cursors and every version kept."
-        >
-          <Shot name="notes" className="max-h-80 object-cover object-top" />
-        </WhyCard>
-        <VStack
-          as="article"
-          data-reveal=""
-          className={`landing-photo min-h-96 min-w-0 overflow-hidden rounded-3xl lg:flex-1 ${REVEAL}`}
-        >
-          <VStack gap={2} className="p-6">
-            <DoorOpen size={22} aria-hidden="true" className="text-accent" />
-            <Heading level={3} className="landing-h3">
-              Rooms for your whole group
-            </Heading>
-            <Text as="p" color="secondary">
-              Add people by email. Keep a room private, or open it up.
-            </Text>
-          </VStack>
-          <VStack className="relative mt-auto h-64">
-            <Image
-              src={STUDENTS}
-              alt="Two people looking up from their notebooks."
-              fill
-              sizes="(max-width: 640px) 100vw, 380px"
-              className={`landing-crop-b ${PHOTO}`}
-            />
-          </VStack>
-        </VStack>
+          art="notes"
+        />
+        <WhyCard
+          Icon={DoorOpen}
+          title="Rooms for your whole group"
+          detail="Add people by email. Keep a room private, or open it up."
+          art="room"
+        />
         <WhyCard
           Icon={RefreshCw}
           title="Keep writing offline"
-          detail="Edits wait on your device and merge when you’re back. Try it."
-        >
-          <OfflineDemo />
-        </WhyCard>
+          detail="Edits wait on your device and merge when you’re back."
+          art="offline"
+        />
       </HStack>
     </LandingSection>
   );
 }
 
-const MORE_TOOLS = [
+const MORE_TOOLS: { art: ToolArtName; title: string; detail: string }[] = [
   {
-    Icon: Split,
+    art: "breakout",
     title: "Breakout rooms",
     detail: "Split off a few people, with their own board, activities and Q&A.",
   },
   {
-    Icon: Presentation,
+    art: "presenter",
     title: "Presenter mode",
     detail: "Lead with a laser pointer while your group follows.",
   },
   {
-    Icon: History,
+    art: "history",
     title: "Version history",
     detail: "Name a snapshot of your notes and restore it later.",
   },
   {
-    Icon: Bookmark,
+    art: "saved",
     title: "Saved guides",
     detail: "Keep a study pack and reopen it when you review.",
   },
@@ -433,14 +367,15 @@ export function LandingTools(): React.ReactElement {
         </VStack>
       </HStack>
       <Grid columns={{ minWidth: 250, max: 4 }} gap={4}>
-        {MORE_TOOLS.map(({ Icon, title, detail }) => (
+        {MORE_TOOLS.map(({ art, title, detail }) => (
           <VStack
             key={title}
             data-reveal=""
-            gap={3}
-            className={`rounded-3xl bg-muted p-6 ${REVEAL}`}
+            data-art=""
+            gap={4}
+            className={`group rounded-3xl bg-muted p-6 ${REVEAL}`}
           >
-            <Icon size={20} aria-hidden="true" className="text-accent" />
+            <ToolArt name={art} />
             <VStack gap={1}>
               <Text weight="semibold" className="text-base!">
                 {title}
@@ -477,7 +412,13 @@ const LIVE_FACTS: { art: FactArtName; title: string; detail: string }[] = [
 export function LandingLive(): React.ReactElement {
   return (
     <LandingSection id="live" labelledBy="live-title">
-      <LiveActivitiesDemo />
+      <SectionHead
+        id="live-title"
+        Icon={ChartColumnBig}
+        label="Live activities"
+        title="Ask the room, watch it answer"
+        detail="Polls, quizzes, word clouds, Q&A and more, answered from any phone."
+      />
       <VStack
         data-reveal=""
         gap={6}
@@ -552,31 +493,22 @@ export function LandingSession(): React.ReactElement {
   );
 }
 
-const PACK_PARTS = [
+const PACK_PARTS: { art: SceneArtName; title: string; detail: string }[] = [
   {
+    art: "summary",
     title: "A summary to read first",
     detail: "The key points of your room’s notes, in one short read.",
-    preview: (
-      <VStack className="overflow-hidden rounded-2xl bg-surface">
-        <Shot name="summary" className="max-h-80 object-cover object-top" />
-      </VStack>
-    ),
   },
   {
+    art: "quiz",
     title: "A quiz to test yourself",
     detail:
       "Questions drawn from the same notes, so you find the gaps early. Choose 3 to 20.",
-    preview: (
-      <VStack className="overflow-hidden rounded-2xl bg-surface">
-        <Shot name="quiz" className="max-h-80 object-cover object-top" />
-      </VStack>
-    ),
   },
   {
+    art: "flashcards",
     title: "Flashcards for the last pass",
-    detail:
-      "Choose 4 to 20 and flip through them alone or with your group. Try the sample card.",
-    preview: <FlashcardDemo />,
+    detail: "Choose 4 to 20 and flip through them alone or with your group.",
   },
 ];
 
@@ -591,7 +523,7 @@ export function LandingPacks(): React.ReactElement {
         detail="A pack is generated from a snapshot of the room’s notes. Treat it as a starting point and check it against your sources."
       />
       <VStack gap={4}>
-        {PACK_PARTS.map(({ title, detail, preview }) => (
+        {PACK_PARTS.map(({ art, title, detail }) => (
           <HStack
             as="article"
             key={title}
@@ -599,8 +531,12 @@ export function LandingPacks(): React.ReactElement {
             gap={2}
             className={`flex-col items-stretch! rounded-3xl bg-muted p-3 md:flex-row md:items-center! ${REVEAL}`}
           >
-            <VStack className="min-w-0 shrink-0 rounded-2xl bg-accent-muted p-3 md:w-96">
-              {preview}
+            <VStack
+              data-reveal=""
+              data-art=""
+              className="group min-w-0 shrink-0 overflow-hidden rounded-2xl md:w-96"
+            >
+              <SceneArt name={art} />
             </VStack>
             <VStack gap={3} className="min-w-0 p-3 md:p-8">
               <Heading level={3} className="landing-subtitle">
@@ -620,7 +556,7 @@ export function LandingPacks(): React.ReactElement {
 const ROLES = [
   {
     name: "Viewer",
-    Icon: Eye,
+    art: "viewer" as ToolArtName,
     summary: "Follows along and reviews.",
     abilities: [
       "Read the notes, PDF and whiteboard",
@@ -634,7 +570,7 @@ const ROLES = [
   },
   {
     name: "Editor",
-    Icon: Pencil,
+    art: "editor" as ToolArtName,
     summary: "Works in the room with you.",
     abilities: [
       "Everything a viewer can do",
@@ -649,7 +585,7 @@ const ROLES = [
   },
   {
     name: "Owner",
-    Icon: Crown,
+    art: "owner" as ToolArtName,
     summary: "Runs the room they created.",
     abilities: [
       "Everything an editor can do",
@@ -674,7 +610,7 @@ export function LandingRoles(): React.ReactElement {
       />
       <HStack gap={4} className="flex-col items-stretch! lg:flex-row">
         {ROLES.map(
-          ({ name, Icon, summary, abilities, verb, scope, isFeatured }) => {
+          ({ name, art, summary, abilities, verb, scope, isFeatured }) => {
             const ink = isFeatured ? "text-surface!" : "";
 
             return (
@@ -682,20 +618,14 @@ export function LandingRoles(): React.ReactElement {
                 as="article"
                 key={name}
                 data-reveal=""
+                data-art=""
                 gap={8}
-                className={`min-w-0 rounded-3xl p-6 lg:flex-1 ${
+                className={`group min-w-0 rounded-3xl p-6 lg:flex-1 ${
                   isFeatured ? "bg-inverted" : "bg-surface"
                 } ${REVEAL}`}
               >
-                <HStack gap={3} vAlign="center">
-                  <VStack
-                    hAlign="center"
-                    className={`size-10 shrink-0 justify-center rounded-xl ${
-                      isFeatured ? "bg-surface" : "bg-accent-muted"
-                    }`}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                  </VStack>
+                <HStack gap={4} vAlign="center">
+                  <ToolArt name={art} />
                   <VStack gap={0} className="min-w-0">
                     <Heading level={3} className={`landing-h3 ${ink}`}>
                       {name}
@@ -840,7 +770,7 @@ export function LandingClosing({
         width="100%"
         maxWidth={FRAME}
         gap={6}
-        className="landing-photo flex-col items-stretch! overflow-hidden rounded-3xl p-6 md:p-10 lg:flex-row lg:items-center!"
+        className="flex-col items-stretch! overflow-hidden rounded-3xl bg-accent-muted p-6 md:p-10 lg:flex-row lg:items-center!"
       >
         <VStack gap={6} hAlign="start" className="min-w-0 lg:w-5/12">
           <Heading
@@ -853,14 +783,9 @@ export function LandingClosing({
           </Heading>
           <PillLink href={destination} label={action} />
         </VStack>
-        <Image
-          src={STUDENTS}
-          alt="Five people with laptops and notebooks, surrounded by study notes and tool icons."
-          width={1942}
-          height={809}
-          sizes="(max-width: 1024px) 100vw, 620px"
-          className="h-auto w-full min-w-0 brightness-105 contrast-105 mix-blend-multiply lg:w-7/12"
-        />
+        <VStack className="min-w-0 lg:w-7/12">
+          <ClosingArt />
+        </VStack>
       </HStack>
     </VStack>
   );

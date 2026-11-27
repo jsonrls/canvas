@@ -1,17 +1,22 @@
 "use client";
 
-import { AspectRatio } from "@astryxdesign/core/AspectRatio";
 import { Collapsible, CollapsibleGroup } from "@astryxdesign/core/Collapsible";
 import { HStack } from "@astryxdesign/core/HStack";
-import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  type SceneArtName,
+  SceneArt,
+  type TourChapter,
+  TourArt,
+} from "./landing-art";
 import { attachRefraction, supportsRefraction } from "./liquid-glass";
-import { Button, ButtonControl } from "@/components/ui/button";
-import { CheckCircle2, Clock3, RefreshCw } from "@/components/ui/icons";
+import { ButtonControl } from "@/components/ui/button";
+
+const ENTER =
+  "transition duration-500 ease-out starting:translate-y-4 starting:opacity-0";
 
 function trackSheen(element: HTMLElement): () => void {
   const move = (event: PointerEvent): void => {
@@ -112,231 +117,116 @@ export function LandingMotion(): null {
   return null;
 }
 
-const OFFLINE_LINES = [
-  "Use estar for states and locations.",
-  "Use ser for identity and origin.",
-  "Ask the group: which one do events take?",
-];
-
-function offlineStatus(
-  isOnline: boolean,
-  pendingEdits: number,
-  mergedEdits: number | null,
-): string {
-  if (!isOnline) {
-    return pendingEdits === 0
-      ? "Offline. Keep writing."
-      : `Offline. ${pendingEdits} saved on this device.`;
-  }
-  if (mergedEdits === null) return "Connected and up to date.";
-  if (mergedEdits === 0) return "Back online. Nothing to merge.";
-  return `Back online. ${mergedEdits} merged into the note.`;
-}
-
-/** A small simulation of offline recovery; it does not touch real room data. */
-export function OfflineDemo(): React.ReactElement {
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingEdits, setPendingEdits] = useState(0);
-  const [mergedEdits, setMergedEdits] = useState<number | null>(null);
-
-  function changeConnection(next: boolean): void {
-    setIsOnline(next);
-    setMergedEdits(next ? pendingEdits : null);
-    if (next) setPendingEdits(0);
-  }
-
-  const StatusIcon = isOnline ? CheckCircle2 : Clock3;
-
-  return (
-    <VStack data-ui="" gap={3} className="w-full rounded-2xl bg-surface p-5">
-      <HStack gap={2} vAlign="center" aria-live="polite">
-        <StatusIcon size={20} />
-        <Text weight="semibold" className="text-base!">
-          {offlineStatus(isOnline, pendingEdits, mergedEdits)}
-        </Text>
-      </HStack>
-      <Switch
-        label="Connection"
-        value={isOnline}
-        onChange={(next) => changeConnection(next)}
-        labelSpacing="spread"
-        labelPosition="start"
-      />
-      <VStack gap={1} className="min-h-24 rounded-xl bg-muted p-3">
-        {OFFLINE_LINES.slice(0, pendingEdits).map((line) => (
-          <Text key={line} as="p">
-            {line}
-          </Text>
-        ))}
-        {pendingEdits === 0 ? (
-          <Text as="p" color="secondary">
-            {isOnline
-              ? "Turn the connection off, then write a line."
-              : "Nothing written yet."}
-          </Text>
-        ) : null}
-      </VStack>
-      <Button
-        label="Write a line"
-        variant="secondary"
-        isDisabled={isOnline || pendingEdits === OFFLINE_LINES.length}
-        onClick={() => setPendingEdits((count) => count + 1)}
-      />
-    </VStack>
-  );
-}
-
-const FLASHCARDS = [
-  {
-    prompt: "What did movable type let printers reuse?",
-    answer: "The same metal letters, page after page.",
-  },
-  {
-    prompt: "Which city was Gutenberg printing in by about 1450?",
-    answer: "Mainz.",
-  },
-  {
-    prompt: "Where did movable type appear earlier?",
-    answer: "East Asia.",
-  },
-];
-
-export function FlashcardDemo(): React.ReactElement {
-  const [cardIndex, setCardIndex] = useState(0);
-  const [isRevealed, setIsRevealed] = useState(false);
-  const card = FLASHCARDS[cardIndex];
-
-  return (
-    <VStack data-ui="" gap={3} className="w-full">
-      <ButtonControl
-        variant="custom"
-        aria-pressed={isRevealed}
-        onClick={() => setIsRevealed((revealed) => !revealed)}
-        className="flex min-h-56 w-full cursor-pointer flex-col justify-between gap-6 rounded-2xl bg-surface p-6 text-left transition-colors hover:bg-muted"
-      >
-        <Text color="secondary">
-          {isRevealed ? "Answer" : "Question"}, sample card {cardIndex + 1} of{" "}
-          {FLASHCARDS.length}
-        </Text>
-        <Text weight="medium" className="landing-h3">
-          {isRevealed ? card.answer : card.prompt}
-        </Text>
-        <Text color="secondary">
-          {isRevealed
-            ? "Select to see the question"
-            : "Select to see the answer"}
-        </Text>
-      </ButtonControl>
-      <Button
-        label="Next card"
-        variant="secondary"
-        icon={<RefreshCw size={16} />}
-        onClick={() => {
-          setCardIndex((index) => (index + 1) % FLASHCARDS.length);
-          setIsRevealed(false);
-        }}
-      />
-    </VStack>
-  );
-}
+/** One grid box, in rem. Keep in step with --landing-grid-size in landing.css. */
+const GRID_CELL_REM = 3.5;
+/** How long the highlight stays after the pointer stops. */
+const GRID_IDLE_MS = 1200;
 
 /**
- * Chapter starts, in seconds, of the recording in `public/landing/tour.mp4`
- * (and its AV1 copy `tour.av1.mp4`; re-encode both together).
+ * A box grid behind the whole hero, fading out towards the bottom. With a mouse, the lines near the pointer
+ * light up and the box under it fills in and follows; both fade once the
+ * pointer rests or leaves. Touch screens and reduced motion get the still grid.
  */
-const TOUR_CHAPTERS = [
-  { label: "Notes", start: 0 },
-  { label: "PDF", start: 6.8 },
-  { label: "Board", start: 14.4 },
-  { label: "Live", start: 22.7 },
-  { label: "Pack", start: 30.9 },
-];
-
-/**
- * A screen recording of the real app. It plays only while it is on screen and
- * the glass dock jumps between its chapters. Selecting the recording pauses or
- * resumes it. Reduced motion leaves it paused; chapters then show still frames.
- */
-export function ProductTour(): React.ReactElement {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  // A pause the visitor chose must survive scrolling away and back.
-  const isHeldRef = useRef(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+export function HeroGrid(): React.ReactElement {
+  const fieldRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      isHeldRef.current = true;
+    const field = fieldRef.current;
+    const hero = field?.parentElement;
+    if (!field || !hero) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches)
       return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) video.pause();
-        else if (!isHeldRef.current) void video.play().catch(() => undefined);
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const cell =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) *
+      GRID_CELL_REM;
+    let idleTimer = 0;
+
+    const rest = (): void => field.removeAttribute("data-active");
+    const follow = (event: PointerEvent): void => {
+      const box = field.getBoundingClientRect();
+      const x = event.clientX - box.left;
+      const y = event.clientY - box.top;
+      field.style.setProperty("--landing-grid-x", `${x}px`);
+      field.style.setProperty("--landing-grid-y", `${y}px`);
+      field.style.setProperty(
+        "--landing-grid-cell-x",
+        `${Math.floor(x / cell) * cell}px`,
+      );
+      field.style.setProperty(
+        "--landing-grid-cell-y",
+        `${Math.floor(y / cell) * cell}px`,
+      );
+      field.setAttribute("data-active", "");
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(rest, GRID_IDLE_MS);
+    };
+
+    hero.addEventListener("pointermove", follow, { passive: true });
+    hero.addEventListener("pointerleave", rest);
+    return () => {
+      window.clearTimeout(idleTimer);
+      hero.removeEventListener("pointermove", follow);
+      hero.removeEventListener("pointerleave", rest);
+    };
   }, []);
 
-  function togglePlayback(): void {
-    const video = videoRef.current;
-    if (!video) return;
-    isHeldRef.current = !video.paused;
-    if (video.paused) void video.play().catch(() => undefined);
-    else video.pause();
-  }
+  // The negative top equals the floating header's height (see app/page.tsx),
+  // so the grid also runs behind the nav bar.
+  return (
+    <VStack
+      ref={fieldRef}
+      aria-hidden="true"
+      className="landing-grid pointer-events-none absolute inset-x-0 -top-16 bottom-0 overflow-hidden md:-top-17"
+    >
+      <VStack className="landing-grid-cell absolute top-0 left-0" />
+      <VStack className="landing-grid-lines absolute inset-0" />
+      <VStack className="landing-grid-glow absolute inset-0" />
+    </VStack>
+  );
+}
 
-  function openChapter(index: number): void {
-    const video = videoRef.current;
-    if (!video) return;
-    // Just past the start, so the cross-fade from the last chapter is over.
-    video.currentTime = TOUR_CHAPTERS[index].start + 0.3;
-    setActiveIndex(index);
-  }
+const TOUR_CHAPTERS: { label: string; chapter: TourChapter }[] = [
+  { label: "Notes", chapter: "notes" },
+  { label: "PDF", chapter: "pdf" },
+  { label: "Board", chapter: "board" },
+  { label: "Live", chapter: "live" },
+  { label: "Pack", chapter: "pack" },
+];
+const TOUR_STEP_MS = 5000;
+
+/**
+ * An illustrated tour of one room. It moves to the next chapter every few
+ * seconds until the visitor picks one from the glass dock; reduced motion
+ * leaves it on the chosen chapter.
+ */
+export function RoomTour(): React.ReactElement {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHeld, setIsHeld] = useState(false);
+
+  useEffect(() => {
+    if (isHeld) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(
+      () => setActiveIndex((index) => (index + 1) % TOUR_CHAPTERS.length),
+      TOUR_STEP_MS,
+    );
+    return () => window.clearInterval(timer);
+  }, [isHeld]);
+
+  const active = TOUR_CHAPTERS[activeIndex];
 
   return (
     <VStack gap={4} hAlign="center" className="w-full">
-      <AspectRatio
-        ratio={16 / 10}
-        fit="cover"
-        className="landing-float w-full overflow-hidden rounded-2xl bg-surface md:rounded-3xl"
-      >
-        <video
-          ref={videoRef}
-          poster="/landing/tour-poster.jpg"
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label="Screen recording of a Qollab room. Three people write notes together, mark up a PDF, ask the whiteboard a question, run a live poll and build a study pack."
-          tabIndex={0}
-          onClick={togglePlayback}
-          onKeyDown={(event) => {
-            if (event.key !== " " && event.key !== "Enter") return;
-            event.preventDefault();
-            togglePlayback();
-          }}
-          onTimeUpdate={(event) => {
-            const time = event.currentTarget.currentTime;
-            setActiveIndex(
-              TOUR_CHAPTERS.findLastIndex(({ start }) => time >= start),
-            );
-          }}
-        >
-          {/* AV1 is about 30% smaller; browsers without it fall back to H.264. */}
-          <source
-            src="/landing/tour.av1.mp4"
-            type='video/mp4; codecs="av01.0.08M.08"'
-          />
-          <source src="/landing/tour.mp4" type="video/mp4" />
-        </video>
-      </AspectRatio>
+      <VStack className="landing-float w-full overflow-hidden rounded-2xl bg-surface md:rounded-3xl">
+        <VStack key={active.chapter} className={ENTER}>
+          <TourArt chapter={active.chapter} />
+        </VStack>
+      </VStack>
       <HStack
         role="group"
-        aria-label="Recording chapters"
+        aria-label="Tour chapters"
         gap={1}
         className="landing-glass max-w-full p-1"
       >
@@ -345,7 +235,10 @@ export function ProductTour(): React.ReactElement {
             key={label}
             variant="custom"
             aria-pressed={index === activeIndex}
-            onClick={() => openChapter(index)}
+            onClick={() => {
+              setIsHeld(true);
+              setActiveIndex(index);
+            }}
             className={`min-h-11 cursor-pointer rounded-full px-2 whitespace-nowrap transition-colors sm:px-3 ${
               index === activeIndex
                 ? "bg-surface font-semibold text-primary!"
@@ -364,31 +257,35 @@ const SESSION_STEPS = [
   {
     title: "Create the room",
     detail: "Name it after the subject. Keep it private, or open it up.",
+    art: "create" as SceneArtName,
     figure: "1 room",
     caption: "Notes, a PDF, a whiteboard and live activities.",
   },
   {
     title: "Bring in your group",
     detail: "Add people by email and give each person a role.",
+    art: "group" as SceneArtName,
     figure: "3 roles",
     caption: "Owner, editor and viewer.",
   },
   {
     title: "Work it through",
     detail: "Write, read, draw and vote, all changing as you watch.",
+    art: "work" as SceneArtName,
     figure: "5 tools",
     caption: "Notes, PDF, whiteboard, live activities and study packs.",
   },
   {
     title: "Review what you learned",
     detail: "Turn your notes into a study pack and save it for later.",
+    art: "review" as SceneArtName,
     figure: "5 parts",
     caption:
       "Summary, quiz, flashcards, recommendations and a misconception review.",
   },
 ];
 
-/** The numbered steps; choosing one changes the figure on the glass panel. */
+/** The numbered steps; choosing one changes the drawing and figure beside them. */
 export function SessionSteps(): React.ReactElement {
   const [activeIndex, setActiveIndex] = useState(0);
   const active = SESSION_STEPS[activeIndex];
@@ -435,21 +332,19 @@ export function SessionSteps(): React.ReactElement {
           );
         })}
       </VStack>
-      <VStack className="landing-photo relative min-h-96 min-w-0 overflow-hidden rounded-3xl lg:w-1/2">
-        <Image
-          src="/images/home-study-collaboration.png"
-          alt="Two people smiling, holding notebooks and a laptop."
-          fill
-          sizes="(max-width: 1024px) 100vw, 560px"
-          className="landing-crop-c object-cover brightness-105 contrast-105 mix-blend-multiply"
-        />
+      <VStack
+        gap={4}
+        className="min-w-0 justify-center rounded-3xl bg-muted p-4 lg:w-1/2"
+      >
         <VStack
-          gap={1}
-          aria-live="polite"
-          className="landing-glass absolute right-4 bottom-4 left-4 rounded-3xl p-5 sm:right-auto sm:w-72"
+          key={active.title}
+          className={`overflow-hidden rounded-2xl ${ENTER}`}
         >
-          <Text className="landing-title text-surface!">{active.figure}</Text>
-          <Text className="text-surface!">{active.caption}</Text>
+          <SceneArt name={active.art} />
+        </VStack>
+        <VStack gap={1} aria-live="polite" className="px-2 pb-2">
+          <Text className="landing-title">{active.figure}</Text>
+          <Text color="secondary">{active.caption}</Text>
         </VStack>
       </VStack>
     </HStack>

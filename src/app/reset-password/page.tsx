@@ -26,6 +26,8 @@ export default async function ResetPasswordPage({
       eyebrow="Account recovery"
       title="Reset your password"
       intro="Enter the email address you use to sign in to Qollab."
+      art="reset"
+      caption="A time-limited link gets you back into your rooms."
     >
       <ResetPasswordForm initialError={initialError} />
     </AuthShell>
