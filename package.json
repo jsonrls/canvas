@@ -10,7 +10,7 @@
     "theme:check": "astryx theme build theme/qollab-workshop.ts --out theme/generated/qollab-workshop.css --check",
     "prebuild": "npm run verify:workspace && npm run theme:build",
     "dev": "next dev --turbopack",
-    "dev:yjs": "node --watch --env-file=.env server/yjs-server.mjs",
+    "dev:yjs": "node --watch --env-file=.env --env-file-if-exists=.env.local server/yjs-server.mjs",
     "dev:all": "concurrently -k -n WEB,YJS -c blue,yellow \"npm:dev\" \"npm:dev:yjs\"",
     "build": "next build",
     "start": "next start",
