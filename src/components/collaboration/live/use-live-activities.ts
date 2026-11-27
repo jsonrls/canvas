@@ -3,15 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { LiveAction, LiveSnapshot } from "@/lib/live/activities";
-import { liveApiPath } from "@/lib/live/scope";
 import { IDLE_AFTER_MS, livePollDelay } from "@/lib/polling";
 
 const INPUT_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
 
 interface UseLiveActivitiesOptions {
-  roomSlug: string;
-  /** Set inside a breakout, whose activities are its own. */
-  breakoutCode?: string;
+  /** The member route (`liveApiPath`) or a guest link's route. */
+  endpoint: string;
   isActive: boolean;
 }
 
@@ -38,8 +36,7 @@ async function readError(response: Response): Promise<string> {
  * socket if rooms grow past classroom size.
  */
 export function useLiveActivities({
-  roomSlug,
-  breakoutCode,
+  endpoint,
   isActive,
 }: UseLiveActivitiesOptions): LiveActivitiesState {
   const [snapshot, setSnapshot] = useState<LiveSnapshot | null>(null);
@@ -52,7 +49,6 @@ export function useLiveActivities({
   const requestSequence = useRef(0);
   const failures = useRef(0);
   const hasQuestion = useRef(false);
-  const endpoint = liveApiPath(roomSlug, breakoutCode);
 
   const apply = useCallback(
     async (

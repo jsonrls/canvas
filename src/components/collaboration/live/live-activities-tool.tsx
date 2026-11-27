@@ -30,6 +30,7 @@ import {
   LiveProjector,
 } from "@/components/collaboration/live/live-projector";
 import { LiveQa } from "@/components/collaboration/live/live-qa";
+import { LiveShareDialog } from "@/components/collaboration/live/live-share";
 import {
   LiveLeaderboard,
   LiveResults,
@@ -49,6 +50,7 @@ import {
   Maximize2,
   Play,
   Plus,
+  QrCode,
   RotateCcw,
   Square,
   Trash2,
@@ -180,7 +182,7 @@ function Verdict({
   );
 }
 
-function StudentStage({
+export function StudentStage({
   imageUrl,
   isBusy,
   onAct,
@@ -879,6 +881,7 @@ function HostPanel({
   snapshot: LiveSnapshot;
 }): React.ReactElement {
   const [isAdding, setIsAdding] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const titleId = useId();
   const listRef = useRef<HTMLElement>(null);
   const count = snapshot.questions.length;
@@ -900,10 +903,31 @@ function HostPanel({
         <Heading level={2} id={titleId} className="text-lg!">
           Questions{count > 0 ? ` (${count})` : ""}
         </Heading>
-        {count > 0 ? (
-          <ExportButton breakoutCode={breakoutCode} roomSlug={roomSlug} />
-        ) : null}
+        <HStack gap={2} vAlign="center">
+          {/* Guests join main rooms only; breakouts stay member-only. */}
+          {breakoutCode ? null : (
+            <IconButton
+              label="Invite guests with a link or QR code"
+              tooltip="Invite guests"
+              variant="accent-soft"
+              icon={<QrCode aria-hidden="true" size={16} />}
+              onClick={() => setIsSharing(true)}
+            />
+          )}
+          {count > 0 ? (
+            <ExportButton breakoutCode={breakoutCode} roomSlug={roomSlug} />
+          ) : null}
+        </HStack>
       </HStack>
+      {breakoutCode ? null : (
+        <LiveShareDialog
+          guestCode={snapshot.guestCode}
+          isBusy={isBusy}
+          isOpen={isSharing}
+          onAct={onAct}
+          onOpenChange={setIsSharing}
+        />
+      )}
       <VStack
         ref={listRef}
         className="px-5 py-2 @2xl:min-h-0 @2xl:flex-1 @2xl:overflow-y-auto"

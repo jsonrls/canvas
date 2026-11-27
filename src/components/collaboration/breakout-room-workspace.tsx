@@ -44,6 +44,7 @@ import {
 } from "@/components/collaboration/breakout-qa-panel";
 import { LivePrompt } from "@/components/collaboration/live/live-prompt";
 import { useLiveActivities } from "@/components/collaboration/live/use-live-activities";
+import { liveApiPath } from "@/lib/live/scope";
 import { RichTextEditor } from "@/components/collaboration/rich-text-editor";
 import { RoomHeader } from "@/components/collaboration/room-header";
 import { LoadingIndicator } from "@/components/ui/LoadingScreen";
@@ -158,8 +159,7 @@ export function BreakoutRoomWorkspace({
   const canEdit = canManagePdf || viewerCanCollaborate;
   const [activeTool, setActiveTool] = useActiveTool(BREAKOUT_TOOLS);
   const live = useLiveActivities({
-    roomSlug: breakout.parentRoomSlug,
-    breakoutCode: breakout.code,
+    endpoint: liveApiPath(breakout.parentRoomSlug, breakout.code),
     isActive: activeTool === "live",
   });
   const [connection, setConnection] = useState<Connection | null>(null);

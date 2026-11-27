@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -49,6 +49,7 @@ interface SessionRow {
   is_accepting: boolean;
   show_results: boolean;
   opened_at: string | null;
+  guest_code?: string | null;
 }
 
 interface StoredSession {
@@ -56,6 +57,15 @@ interface StoredSession {
   isAccepting: boolean;
   showResults: boolean;
   openedAt: string | null;
+  /** Main rooms only: the code in the guest link, or null when guests are off. */
+  guestCode: string | null;
+}
+
+/** Who wrote a row: members by user id, guests (main rooms only) by guest id. */
+function participantColumn(
+  isGuest: boolean | undefined,
+): "guest_id" | "user_id" {
+  return isGuest ? "guest_id" : "user_id";
 }
 
 const QUESTION_COLUMNS =
@@ -97,9 +107,13 @@ async function loadSession(
   admin: SupabaseClient,
   scope: LiveScope,
 ): Promise<StoredSession> {
+  // Only scopes that admit guests have a guest_code column.
+  const columns = `question_id, is_accepting, show_results, opened_at${
+    scope.tables.guests ? ", guest_code" : ""
+  }`;
   const { data, error } = await admin
     .from(scope.tables.sessions)
-    .select("question_id, is_accepting, show_results, opened_at")
+    .select(columns)
     .eq(scope.column, scope.id)
     .maybeSingle<SessionRow>();
   if (error) throw new Error("LIVE_SESSION_LOAD_FAILED");
@@ -108,6 +122,7 @@ async function loadSession(
     isAccepting: data?.is_accepting ?? false,
     showResults: data?.show_results ?? false,
     openedAt: data?.opened_at ?? null,
+    guestCode: data?.guest_code ?? null,
   };
 }
 
@@ -129,7 +144,7 @@ async function saveSession(
 
 interface ResponseRow {
   question_id: string;
-  user_id: string;
+  participant_id: string;
   value: LiveResponseValue;
   points: number;
 }
@@ -146,7 +161,7 @@ async function loadRoomResponses(
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await admin
       .from(scope.tables.responses)
-      .select("question_id, user_id, value, points")
+      .select("question_id, participant_id, value, points")
       .eq(scope.column, scope.id)
       .in("question_id", questionIds)
       .order("id", { ascending: true })
@@ -166,17 +181,26 @@ async function loadScores(
   if (quizIds.length === 0) return [];
   const totals = new Map<string, number>();
   for (const row of await loadRoomResponses(admin, scope, quizIds)) {
-    totals.set(row.user_id, (totals.get(row.user_id) ?? 0) + row.points);
+    totals.set(
+      row.participant_id,
+      (totals.get(row.participant_id) ?? 0) + row.points,
+    );
   }
   const userIds = [...totals.keys()];
   const names = new Map<string, string>();
   if (userIds.length > 0) {
-    const { data: profiles } = await admin
-      .from("profiles")
-      .select("id, display_name")
-      .in("id", userIds);
-    for (const profile of profiles ?? []) {
-      names.set(String(profile.id), String(profile.display_name));
+    const [{ data: profiles }, { data: guests }] = await Promise.all([
+      admin.from("profiles").select("id, display_name").in("id", userIds),
+      scope.tables.guests
+        ? admin
+            .from(scope.tables.guests)
+            .select("id, display_name")
+            .eq("room_id", scope.id)
+            .in("id", userIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+    for (const person of [...(profiles ?? []), ...(guests ?? [])]) {
+      names.set(String(person.id), String(person.display_name));
     }
   }
   return userIds.map((id) => ({
@@ -236,9 +260,9 @@ interface QaItemResult {
   id: string;
   body: string;
   status: QaStatus;
-  user_id: string;
+  participant_id: string;
   created_at: string;
-  votes: { user_id: string }[];
+  votes: { participant_id: string }[];
 }
 
 async function loadQaItems(
@@ -249,7 +273,7 @@ async function loadQaItems(
   const { data, error } = await admin
     .from(scope.tables.qaItems)
     .select(
-      `id, body, status, user_id, created_at, votes:${scope.tables.qaVotes}(user_id)`,
+      `id, body, status, participant_id, created_at, votes:${scope.tables.qaVotes}(participant_id)`,
     )
     .eq("question_id", questionId)
     .returns<QaItemResult[]>();
@@ -258,9 +282,9 @@ async function loadQaItems(
     id: row.id,
     body: row.body,
     status: row.status,
-    userId: row.user_id,
+    userId: row.participant_id,
     createdAt: row.created_at,
-    voterIds: row.votes.map((vote) => vote.user_id),
+    voterIds: row.votes.map((vote) => vote.participant_id),
   }));
 }
 
@@ -326,6 +350,10 @@ export async function loadLiveImage(
   return file.data;
 }
 
+/**
+ * What one participant sees. `userId` is a guest id for guests; both kinds are
+ * matched through participant_id.
+ */
 export async function buildLiveSnapshot(
   admin: SupabaseClient,
   options: { scope: LiveScope; userId: string; canHost: boolean; now?: Date },
@@ -354,6 +382,7 @@ export async function buildLiveSnapshot(
     results: null,
     leaderboard: null,
     qa: null,
+    guestCode: canHost ? session.guestCode : null,
   };
   if (!current) return base;
 
@@ -369,13 +398,13 @@ export async function buildLiveSnapshot(
 
   const { data, error } = await admin
     .from(scope.tables.responses)
-    .select("user_id, value, points")
+    .select("participant_id, value, points")
     .eq("question_id", current.id)
     .order("submitted_at", { ascending: true });
   if (error) throw new Error("LIVE_RESPONSES_LOAD_FAILED");
 
   const rows = data ?? [];
-  const mine = rows.find((row) => row.user_id === userId);
+  const mine = rows.find((row) => row.participant_id === userId);
   const canSeeResults =
     canHost || (session.showResults && canShareResults(current.kind));
   const values = rows.map((row) => row.value as LiveResponseValue);
@@ -641,6 +670,7 @@ export async function submitLiveResponse(
   options: {
     scope: LiveScope;
     userId: string;
+    isGuest?: boolean;
     questionId: string;
     value: unknown;
   },
@@ -675,7 +705,7 @@ export async function submitLiveResponse(
   const { error } = await admin.from(scope.tables.responses).insert({
     question_id: question.id,
     [scope.column]: scope.id,
-    user_id: userId,
+    [participantColumn(options.isGuest)]: userId,
     value,
     points,
     submitted_at: now.toISOString(),
@@ -707,6 +737,7 @@ export async function askLiveQuestion(
   options: {
     scope: LiveScope;
     userId: string;
+    isGuest?: boolean;
     questionId: string;
     text: unknown;
   },
@@ -718,7 +749,7 @@ export async function askLiveQuestion(
     .from(scope.tables.qaItems)
     .select("id")
     .eq("question_id", questionId)
-    .eq("user_id", userId);
+    .eq("participant_id", userId);
   if (countError) throw new Error("LIVE_QA_LOAD_FAILED");
   if ((data ?? []).length >= QA_LIMIT_PER_PERSON) {
     throw new LiveConflictError(
@@ -728,7 +759,7 @@ export async function askLiveQuestion(
   const { error } = await admin.from(scope.tables.qaItems).insert({
     question_id: questionId,
     [scope.column]: scope.id,
-    user_id: userId,
+    [participantColumn(options.isGuest)]: userId,
     body,
     status: question.settings.moderated ? "pending" : "visible",
   });
@@ -737,25 +768,34 @@ export async function askLiveQuestion(
 
 export async function voteLiveQuestion(
   admin: SupabaseClient,
-  options: { scope: LiveScope; userId: string; itemId: string; value: boolean },
+  options: {
+    scope: LiveScope;
+    userId: string;
+    isGuest?: boolean;
+    itemId: string;
+    value: boolean;
+  },
 ): Promise<void> {
   const { scope, userId, itemId, value } = options;
   const { data, error } = await admin
     .from(scope.tables.qaItems)
-    .select("question_id, status, user_id")
+    .select("question_id, status, participant_id")
     .eq("id", itemId)
     .eq(scope.column, scope.id)
     .maybeSingle();
   if (error) throw new Error("LIVE_QA_LOAD_FAILED");
   if (!data || data.status !== "visible") throw new LiveNotFoundError();
-  if (data.user_id === userId) {
+  if (data.participant_id === userId) {
     throw new LiveConflictError("You can't vote for your own question.");
   }
   await requireOpenQa(admin, scope, String(data.question_id));
   const votes = admin.from(scope.tables.qaVotes);
   const { error: voteError } = value
-    ? await votes.insert({ item_id: itemId, user_id: userId })
-    : await votes.delete().eq("item_id", itemId).eq("user_id", userId);
+    ? await votes.insert({
+        item_id: itemId,
+        [participantColumn(options.isGuest)]: userId,
+      })
+    : await votes.delete().eq("item_id", itemId).eq("participant_id", userId);
   // 23505: already voted, for example from a second tab.
   if (voteError && voteError.code !== "23505") {
     throw new Error("LIVE_QA_SAVE_FAILED");
@@ -777,4 +817,49 @@ export async function setLiveQaStatus(
     .maybeSingle();
   if (error) throw new Error("LIVE_QA_SAVE_FAILED");
   if (!data) throw new LiveNotFoundError();
+}
+
+const GUEST_CODE_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/**
+ * A guest link code: the room slug, then 10 random lowercase letters or
+ * digits. The slug makes the link readable; the suffix keeps it unguessable.
+ */
+export const GUEST_CODE_PATTERN = /^[a-z0-9-]{1,64}-[a-z0-9]{10}$/;
+
+export function createGuestCode(roomSlug: string): string {
+  let suffix = "";
+  for (let index = 0; index < 10; index += 1) {
+    suffix += GUEST_CODE_ALPHABET[randomInt(GUEST_CODE_ALPHABET.length)];
+  }
+  return `${roomSlug}-${suffix}`;
+}
+
+/**
+ * Turns the main room's guest link on or off. Turning it on again makes a new
+ * code, so links and QR codes shared before stop working.
+ */
+export async function setLiveGuestAccess(
+  admin: SupabaseClient,
+  scope: LiveScope,
+  value: boolean,
+): Promise<void> {
+  if (!scope.tables.guests) {
+    throw new LiveInputError("Guest links are only available in main rooms.");
+  }
+  const session = await loadSession(admin, scope);
+  // A second click from a stale screen must not replace a shared code.
+  if (value === (session.guestCode !== null)) return;
+  if (!value) {
+    await saveSession(admin, scope, { guest_code: null });
+    return;
+  }
+  const { data, error } = await admin
+    .from("rooms")
+    .select("slug")
+    .eq("id", scope.id)
+    .maybeSingle();
+  if (error) throw new Error("LIVE_ROOM_LOAD_FAILED");
+  if (typeof data?.slug !== "string") throw new LiveNotFoundError();
+  await saveSession(admin, scope, { guest_code: createGuestCode(data.slug) });
 }
